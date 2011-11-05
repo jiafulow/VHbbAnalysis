@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.6: http://docutils.sourceforge.net/" />
+<title>ZmumuHbbSkim for MET = 0 constraint study</title>
+<meta name="author" content="Jia Fu Low &lt;jlow&#64;phys.ufl.edu&gt;" />
+<meta name="date" content="2011-11-04" />
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 5951 2009-05-18 18:03:10Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left{
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: left }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="zmumuhbbskim-for-met-0-constraint-study">
+<h1 class="title">ZmumuHbbSkim for MET = 0 constraint study</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Jia Fu Low &lt;<a class="reference external" href="mailto:jlow&#64;phys.ufl.edu">jlow&#64;phys.ufl.edu</a>&gt;</td></tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>2011-11-04</td></tr>
+<tr><th class="docinfo-name">Revision:</th>
+<td>1</td></tr>
+<tr class="field"><th class="docinfo-name">Description:</th><td class="field-body">The ZmumuHbbSkim package is based on the <tt class="docutils literal">CMS <span class="pre">AN-2011/240</span></tt> VHbb Analysis. In this channel, MET should be zero if the energies of the final state particles (2 muons &amp; 2 b-tagged jets) are well-measured. So the constraint MET = 0 can be used to fit the b-jet energies. The following are instructions of how to use this preliminary package to produced ntuples, and then make histograms from those ntuples.</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="analysis-event-selection">
+<h1>Analysis Event Selection</h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Applied:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><p class="first">p<sub>T</sub> (b<sub>1</sub>) &gt; 20 GeV</p>
+</li>
+<li><p class="first">p<sub>T</sub> (b<sub>2</sub>) &gt; 20 GeV</p>
+</li>
+<li><p class="first">|η| (b<sub>1</sub>) &lt; 2.5</p>
+</li>
+<li><p class="first">|η| (b<sub>2</sub>) &lt; 2.5</p>
+</li>
+<li><p class="first">p<sub>T</sub> (mu<sub>1</sub>) &gt; 20 GeV</p>
+</li>
+<li><p class="first">p<sub>T</sub> (mu<sub>2</sub>) &gt; 20 GeV</p>
+</li>
+<li><p class="first">|η| (mu<sub>1</sub>) &lt; 2.4</p>
+</li>
+<li><p class="first">|η| (mu<sub>2</sub>) &lt; 2.4</p>
+</li>
+<li><p class="first">max(CSV(b<sub>1</sub>), CSV(b<sub>2</sub>)) &gt; 0.898</p>
+</li>
+<li><p class="first">min(CSV(b<sub>1</sub>), CSV(b<sub>2</sub>)) &gt; 0.5</p>
+</li>
+<li><p class="first">muon pair has opposite charges, electron veto</p>
+<p>(along with standard muon id and jet energy correction)</p>
+</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Not applied:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>p<sub>T</sub> (dijet) &gt; 100 GeV</li>
+<li>p<sub>T</sub> (dimuon) &gt; 100 GeV</li>
+<li>|Δϕ| (dijet, dimuon) &gt; 2.9</li>
+<li>|M - M<sub>H</sub>| (dijet) &lt; 15 GeV</li>
+<li>primary vertex selection</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name" colspan="2">Also applied but not used in the AN:</th></tr>
+<tr><td>&nbsp;</td><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>exactly 2 b-tagged jets</li>
+<li>exactly 2 muons</li>
+<li>skip events where a b-tagged jet has no GenJet match</li>
+</ul>
+</div>
+<div class="section" id="recipe">
+<h1>Recipe</h1>
+<div class="section" id="current-ntuples">
+<h2>Current Ntuples</h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">CMSSW version:</th><td class="field-body"><p class="first"><tt class="docutils literal">CMSSW_4_2_8_patch3</tt></p>
+</td>
+</tr>
+<tr class="field"><th class="field-name">MC Dataset:</th><td class="field-body"><p class="first"><tt class="docutils literal"><span class="pre">/ZH_ZToLL_HToBB_M-115_7TeV-powheg-herwigpp/Summer11-PU_S4_START42_V11-v1/AODSIM</span></tt></p>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Location:</th><td class="field-body"><p class="first"><tt class="docutils literal">(on CMSLPC) /pnfs/cms/WAX/11/store/user/jiafu/ZmumuHbb/zmumuHbbM115/</tt></p>
+<p class="last"><tt class="docutils literal">(on LXPLUS) /afs/cern.ch/user/j/jiafulow/public/ZmumuHbbEdmNtuples/</tt></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="code-checkout">
+<h2>Code checkout</h2>
+<pre class="literal-block">
+scram p CMSSW CMSSW_4_2_8_patch3
+cd CMSSW_4_2_8_patch3    /src
+cmsenv
+cvs co -d VHbbAnalysis UserCode/jiafulow/VHbbAnalysis
+cvs co -d Utilities/Parang UserCode/SAKoay/Utilities/Parang
+addpkg RecoJets/Configuration          V02-04-17
+addpkg RecoBTag/SecondaryVertex        V01-07-00
+addpkg RecoVertex/AdaptiveVertexFinder V02-01-00
+addpkg JetMETCorrections/Type1MET      V04-04-04
+scram b -c
+scram b -j 4
+</pre>
+<p>The current <em>official</em> VHbbAnalysis framework &lt;<a class="reference external" href="https://twiki.cern.ch/twiki/bin/viewauth/CMS/VHbbAnalysisNewCode">https://twiki.cern.ch/twiki/bin/viewauth/CMS/VHbbAnalysisNewCode</a>&gt; is too complicated for a simple analysis. However, their framework is used as the reference, so this package should be able to be integrated into their framework in the future.</p>
+<p>The Parang package &lt;<a class="reference external" href="https://twiki.cern.ch/twiki/bin/view/Main/Parang">https://twiki.cern.ch/twiki/bin/view/Main/Parang</a>&gt; is a plot-making suite developed by Sue Ann Koay at UCSB. Its most useful feature is to book histograms with a single command.</p>
+</div>
+<div class="section" id="how-to-create-ntuples">
+<h2>How to create ntuples</h2>
+<p>In directory <tt class="docutils literal">VHbbAnalysis/ZmumuHbbSkim/test</tt>, the cmsRun config file <tt class="docutils literal">zmumuHbbSkim_cfg.py</tt> is used to create EDM ntuples from a MC dataset. The CRAB config file <tt class="docutils literal">crab_zmumuHbbSkim_cfg.py</tt> is used to submit CRAB jobs. The created ntuples on both CMSLPC and LXPLUS are listed above.</p>
+</div>
+<div class="section" id="how-to-make-histograms">
+<h2>How to make histograms</h2>
+<p>In the same directory, the FWLite config file <tt class="docutils literal">fwliteAnalysis_cfg.py</tt> is used to make histograms from the created ntuples. Running &quot;<tt class="docutils literal">FWLiteBasicPlotter fwliteAnalyzer_cfg.py</tt>&quot; should output a ROOT file with histograms plotted using RECO quantities. Alternatively, <tt class="docutils literal">fwliteAnalysisParton_cfg.py</tt> makes histograms using GEN quantities. <tt class="docutils literal">FWLiteBasicPlotter</tt> is the FWLite program compiled from the <tt class="docutils literal">bin</tt> subdirectory. (Run <tt class="docutils literal">rehash</tt> first if the shell complains about &quot;command not found&quot;.) The first set of histograms made by the current codes can be found in the <tt class="docutils literal">histos_analysis.root</tt> file in:</p>
+<pre class="literal-block">
+(on CMSLPC) /uscms/home/jiafu/shared/
+(on LXPLUS) /afs/cern.ch/user/j/jiafulow/public/
+</pre>
+<p>Inside each directory, the histograms printed as PNG files can be found in the subdirectory <tt class="docutils literal">images</tt>. <tt class="docutils literal">histograms.html</tt> shows all the histograms on a single webpage.</p>
+</div>
+</div>
+<div class="section" id="to-do">
+<h1>TO DO</h1>
+<ul class="simple">
+<li>pileup treatment on jet energy and muon isolation</li>
+<li>primary vertex selection</li>
+</ul>
+<!-- Substitutions
+- - - - - - - - - - - - - -->
+</div>
+</div>
+</body>
+</html>
