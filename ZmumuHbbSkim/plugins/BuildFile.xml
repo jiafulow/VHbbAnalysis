@@ -1,0 +1,10 @@
+<export>
+</export>
+<library   name="ZmumuHbbSkim_plugins" file="*.cc">
+  <use   name="VHbbAnalysis/ZmumuHbbSkim"/>
+  <use   name="FWCore/Framework"/>
+  <use   name="FWCore/ParameterSet"/>
+  <use   name="DataFormats/Candidate"/>
+  <use   name="DataFormats/PatCandidates"/>
+  <use   name="CommonTools/Utils"/>
+</library>
