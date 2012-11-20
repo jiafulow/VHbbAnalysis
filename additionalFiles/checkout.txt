@@ -1,0 +1,81 @@
+# https://twiki.cern.ch/twiki/bin/viewauth/CMS/VHbbAnalysisNewCode#NtupleV42_CMSSW_5_3_3_patch2 r50
+
+#scram p CMSSW CMSSW_5_3_3_patch2
+#cd CMSSW_5_3_3_patch2/src
+#cmsenv
+#PAT:
+addpkg DataFormats/PatCandidates   V06-05-01 
+
+#IVF tags:
+addpkg RecoBTag/SecondaryVertex V01-08-01
+addpkg RecoVertex/AdaptiveVertexFinder V02-02-01 
+
+#compile the bfilter
+cvs up -A RecoBTag/SecondaryVertex/plugins/BuildFile.xml
+cvs up -A RecoBTag/SecondaryVertex/plugins/BVertexFilter.cc RecoBTag/SecondaryVertex/python/bVertexFilter_cfi.py
+
+#met filters 
+cvs co -r V00-00-08 RecoMET/METFilters
+cvs co -r V00-00-08 RecoMET/METAnalyzers
+
+
+#MHT producer, really we do not have a better MHT producer??
+#This does not work anymore with out the extra tag:  -r RA253X_15Sep2012V1.
+#Stick to the version of 10 September
+cvs co -D 9/10/2012 -d SandBox/Skims/plugins UserCode/seema/SandBox/Skims/plugins
+#Bcandidate for xcheck analysis of Vbb backgrounds
+cvs co -d IVF/BCandidateProducer UserCode/BbCorrelation/CMSSW/BAnalysis/BCandidateProducer
+cvs co -d ZSV/BAnalysis UserCode/ZSV/BAnalysis/
+
+#Our files
+cvs co -d VHbbAnalysis -r EDMV42_Step2_V4a UserCode/VHbbAnalysis
+                                                                                                                                                             
+
+#in conflict with PAT recipe
+#cvs co -r V00-00-09 CommonTools/RecoUtils                                                                                       
+#cvs co -r b5_2_X_cvMEtCorr_2012May02 PhysicsTools/PatUtils                                                                                                   
+
+# updated PAT recipe
+addpkg CommonTools/ParticleFlow   V00-03-16
+addpkg CommonTools/RecoAlgos  V00-03-23
+addpkg CommonTools/RecoUtils   V00-00-12
+addpkg DataFormats/ParticleFlowCandidate   V15-03-02
+addpkg DataFormats/TrackReco   V10-02-02
+addpkg DataFormats/VertexReco   V02-00-04
+addpkg PhysicsTools/PatAlgos   V08-09-23
+addpkg PhysicsTools/PatUtils   V03-09-23
+addpkg RecoParticleFlow/PFProducer V15-01-11
+
+
+                                                                                                                                        
+#pfMET corrections (from Christian mails)                                                                                                                    
+cvs co -r V04-06-09 JetMETCorrections/Type1MET                                                                                                               
+cvs up -r 1.6 PhysicsTools/PatUtils/python/patPFMETCorrections_cff.py  
+ 
+# Jia Fu 2012-11-20: disabled the following because it's been checked out 
+#                  : update patTemplate_cfg.py as per PhysicsTools/PatAlgos V08-09-23
+#addpkg PhysicsTools/PatAlgos
+cvs up -r V08-09-07-05 PhysicsTools/PatAlgos/python/patTemplate_cfg.py
+
+# add new btaggers in PAT
+cp VHbbAnalysis/additionalFiles/jetTools.py PhysicsTools/PatAlgos/python/tools/jetTools.py
+
+# MVA Electron ID
+cvs co -r V00-00-10 -d EGamma/EGammaAnalysisTools UserCode/EGamma/EGammaAnalysisTools
+cd EGamma/EGammaAnalysisTools/data
+cat download.url | xargs wget
+cd -
+
+# puJetId info
+cvs co -r  V00-02-02 -d CMGTools/External UserCode/CMG/CMGTools/External
+
+# Jia Fu 2012-11-20: no need to check dependencies
+#checkdeps -a
+#rm -rf RecoParticleFlow/PFRootEvent
+
+#compile
+scram build -c
+scramv1 b -j 8 
+
+#test
+cmsRun VHbbAnalysis/HbbAnalyzer/test/patData.py
