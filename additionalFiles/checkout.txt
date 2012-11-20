@@ -1,0 +1,147 @@
+# ==============================================================================
+# VHbbAnalysis
+#   https://twiki.cern.ch/twiki/bin/view/CMS/VHbbAnalysisNewCode#NtupleV42_CMSSW_5_3_3_patch2
+# Ntuple tag        : NtupleV42
+# CMSSW release     : CMSSW_5_3_3_patch2
+# TWiki revision    : r50
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# Setup for the first time (at FNAL)
+# ------------------------------------------------------------------------------
+#source /uscmst1/prod/sw/cms/cshrc prod
+#setenv SCRAM_ARCH slc5_amd64_gcc462
+#scram p -n NtupleV42 CMSSW CMSSW_5_3_3_patch2
+#cd NtupleV42/src
+#cmsenv
+#kserver_init
+
+# ------------------------------------------------------------------------------
+# VHbbAnalysis
+# CVS tag           : EDMV42_Step2_V4a
+# ------------------------------------------------------------------------------
+cvs co -r EDMV42_Step2_V4a -d VHbbAnalysis UserCode/VHbbAnalysis
+
+# ------------------------------------------------------------------------------
+# PAT
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATReleaseNotes52X#V08_09_23
+# PAT recipe        : V08-09-23
+# CMSSW release     : CMSSW_5_3_3_patch2
+# TWiki revision    : ?
+# ------------------------------------------------------------------------------
+addpkg PhysicsTools/PatAlgos                V08-09-23
+cvs up -r V08-09-07-05 PhysicsTools/PatAlgos/python/patTemplate_cfg.py
+addpkg PhysicsTools/PatUtils                V03-09-23
+addpkg CommonTools/ParticleFlow             V00-03-16
+addpkg CommonTools/RecoUtils                V00-00-12
+addpkg CommonTools/RecoAlgos                V00-03-23
+addpkg DataFormats/ParticleFlowCandidate    V15-03-02
+addpkg DataFormats/TrackReco                V10-02-02
+addpkg DataFormats/VertexReco               V02-00-04
+# Note: The following are not in official recipe
+# Next package is needed for correct CandIsoDepositProducer config
+addpkg RecoParticleFlow/PFProducer          V15-01-11
+# Next package should not be needed since V06-05-01 is equivalent to CMSSW_5_3_3_patch2
+addpkg DataFormats/PatCandidates            V06-05-01 
+
+# ------------------------------------------------------------------------------
+# MET Analysis
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis
+# We are using Christian Veelken's instructions instead of the official, see 
+#   https://hypernews.cern.ch/HyperNews/CMS/get/met/242.html
+# CMSSW release     : CMSSW_5_3_3_patch2
+# TWiki revision    : ?
+# ------------------------------------------------------------------------------
+# Note: Please check for update:
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis#Type_I_0_with_PAT
+# Next package should not be needed since V04-06-09 is equivalent to CMSSW_5_3_3_patch2
+addpkg JetMETCorrections/Type1MET           V04-06-09
+# Next package is already checked out
+#addpkg PhysicsTools/PatUtils                V03-09-23
+# Next package is not needed since V00-00-13 is equivalent to V00-00-12, already checked out
+#addpkg CommonTools/RecoUtils                V00-00-13
+# Enable the Type-0 corrections
+cvs up -r 1.6 PhysicsTools/PatUtils/python/patPFMETCorrections_cff.py
+
+# ------------------------------------------------------------------------------
+# MET Filters
+#   https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFilters
+# CMSSW release     : ?
+# TWiki revision    : ?
+# ------------------------------------------------------------------------------
+# Note: Please update to include anomalous ECAL laser corrections in 2012A+B rereco datasets
+#   https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1892.html
+# Note: Please update to include HCAL laser event filter in 2012 Data
+#   https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1905.html
+addpkg RecoMET/METFilters                   V00-00-08
+addpkg RecoMET/METAnalyzers                 V00-00-08
+# Next package is already checked out
+#addpkg CommonTools/RecoAlgos                V00-03-23
+
+# ------------------------------------------------------------------------------
+# MVA Electron ID
+#   https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMultivariateIsoElectrons
+# CMSSW release     : ?
+# TWiki revision    : ?
+# ------------------------------------------------------------------------------
+# Note: Please update
+cvs co -r V00-00-10 -d EGamma/EGammaAnalysisTools UserCode/EGamma/EGammaAnalysisTools
+cd EGamma/EGammaAnalysisTools/data
+cat download.url | xargs wget
+cd -
+
+# ------------------------------------------------------------------------------
+# Pileup Jet ID
+#   https://twiki.cern.ch/twiki/bin/view/CMS/PileupJetID
+# CMSSW release     : CMSSW_5_X_Y
+# TWiki revision    : r10
+# ------------------------------------------------------------------------------
+# Note: Please update
+cvs co -r V00-02-02 -d CMGTools/External UserCode/CMG/CMGTools/External
+
+# ------------------------------------------------------------------------------
+# b-tagging
+# ------------------------------------------------------------------------------
+# IVF tags
+# Next package should not be needed since V01-08-01 is equivalent to CMSSW_5_3_3_patch2
+addpkg RecoBTag/SecondaryVertex             V01-08-01
+# Next package should not be needed since V02-02-01 is equivalent to CMSSW_5_3_3_patch2
+addpkg RecoVertex/AdaptiveVertexFinder      V02-02-01 
+
+# Compile the bfilter
+cvs up -A RecoBTag/SecondaryVertex/plugins/BuildFile.xml
+cvs up -A RecoBTag/SecondaryVertex/plugins/BVertexFilter.cc RecoBTag/SecondaryVertex/python/bVertexFilter_cfi.py
+
+# Bcandidate for xcheck analysis of Vbb backgrounds
+cvs co -d IVF/BCandidateProducer UserCode/BbCorrelation/CMSSW/BAnalysis/BCandidateProducer
+cvs co -d ZSV/BAnalysis UserCode/ZSV/BAnalysis/
+
+# Add new btaggers in PAT
+# Note: Please resynchronise the file to PhysicsTools/PatAlgos V08-09-23
+cp VHbbAnalysis/additionalFiles/jetTools.py PhysicsTools/PatAlgos/python/tools/jetTools.py
+
+# ------------------------------------------------------------------------------
+# MHT Producer
+# ------------------------------------------------------------------------------
+# Question: really we do not have a better MHT producer?
+# Stick to the version of 10 September
+cvs co -D 9/10/2012 -d SandBox/Skims/plugins UserCode/seema/SandBox/Skims/plugins
+
+# ------------------------------------------------------------------------------
+# Check dependencies (optional)
+# ------------------------------------------------------------------------------
+#checkdeps -a
+#rm -rf RecoParticleFlow/PFRootEvent
+
+# ------------------------------------------------------------------------------
+# Compile
+# ------------------------------------------------------------------------------
+scram build -c
+scramv1 b -j 8 
+
+# ------------------------------------------------------------------------------
+# Test
+# ------------------------------------------------------------------------------
+#cmsRun VHbbAnalysis/HbbAnalyzer/test/patData.py
+
