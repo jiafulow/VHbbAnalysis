@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  David Lopes Pegna,Address unknown,NONE,
 //         Created:  Thu Mar  5 13:51:28 EST 2009
-// $Id: HbbAnalyzerNew.cc,v 1.76 2012/06/12 19:40:16 arizzi Exp $
+// $Id: HbbAnalyzerNew.cc,v 1.77 2012/08/27 21:34:22 dlopes Exp $
 //
 //
 

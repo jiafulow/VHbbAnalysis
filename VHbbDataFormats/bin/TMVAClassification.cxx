@@ -1,4 +1,4 @@
-// @(#)root/tmva $Id: TMVAClassification.cxx 37399 2010-12-08 15:22:07Z evt $
+// @(#)root/tmva $Id: TMVAClassification.cxx,v 1.1 2011/08/11 18:43:10 bortigno Exp $
 /**********************************************************************************
  * Project   : TMVA - a ROOT-integrated toolkit for multivariate data analysis    *
  * Package   : TMVA                                                               *
