@@ -345,32 +345,35 @@ from PhysicsTools.PatAlgos.tools.jetTools import *
 # taken from RecoJets/Configuration/python/RecoPFJets_cff.py
 from RecoJets.JetProducers.kt4PFJets_cfi import kt4PFJets
 process.kt6PFJets25 = kt4PFJets.clone(
-    src = "pfNoElectron"+postfix, 
-    rParam = 0.6, 
-    doRhoFastjet = True, 
-    #doAreaFastjet = True,  # default is False
-    Ghost_EtaMax = 2.5, 
-    Rho_EtaMax = 2.5, 
+    src              = cms.InputTag("pfNoElectron"+postfix),
+    rParam           = 0.6,
+    doRhoFastjet     = True,
+    #doAreaFastjet    = True,  # default is False
+    Ghost_EtaMax     = 2.5,
+    Rho_EtaMax       = 2.5,
     )
 
 # For CMSSW_5XY, this should be taken from RECO or AOD: double_kt6PFJets_rho_RECO
 process.kt6PFJetsForIsolation = kt4PFJets.clone(
-    rParam = 0.6, 
-    doRhoFastjet = True, 
-    Rho_EtaMax = 2.5, 
+    rParam           = 0.6,
+    doRhoFastjet     = True,
+    Rho_EtaMax       = 2.5,
     )
 
 # For CMSSW_5XY, this should be taken from RECO or AOD: double_kt6PFJetsCentralNeutral_rho_RECO
-process.kt6PFJetsCentralNeutral = process.kt6PFJets.clone(
-    src = cms.InputTag("pfAllNeutralHadronsAndPhotons"+postfix),
-    Ghost_EtaMax = cms.double(3.1),
-    Rho_EtaMax = cms.double(2.5),
-    inputEtMin = cms.double(0.5)
+process.kt6PFJetsCentralNeutral = kt4PFJets.clone(
+    src              = cms.InputTag("pfAllNeutralHadronsAndPhotons"+postfix),
+    rParam           = 0.6,
+    doRhoFastjet     = True,
+    doAreaFastjet    = True,
+    Ghost_EtaMax     = 3.1,
+    Rho_EtaMax       = 2.5,
+    inputEtMin       = 0.5,
     )
 
 from RecoJets.JetProducers.ak5PFJets_cfi import ak5PFJets
 process.ak7PFJets = ak5PFJets.clone(  # clone from process.ak5PFJets instead?
-    rParam = cms.double(0.7)
+    rParam           = 0.7,
     )
 
 addJetCollection(process, cms.InputTag("ak7PFJets"),
@@ -791,6 +794,7 @@ process.out.fileName = 'PAT.edm.root'
 process.out.dropMetaData = cms.untracked.string('ALL')
 process.out.outputCommands = cms.untracked.vstring(
     'drop *',
+    'keep double_kt6PFJets*_rho_*',
     'keep *_puJetId_*_*',
     'keep *_puJetMva_*_*',
     'keep *_savedGenParticles_*_*',
