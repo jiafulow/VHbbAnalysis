@@ -225,6 +225,7 @@ process.pfPileUpPFlow.checkClosestZVertex = False
 # Lepton                                                                       #
 ################################################################################
 # TODO: Review both electron and muon isolation
+# TODO: Add/Modify tau ID
 
 # ------------------------------------------------------------------------------
 # Electron ID
@@ -331,9 +332,8 @@ process.selectedPatMuons.cut = cms.string("")
 ################################################################################
 # TODO: Check rho25
 # TODO: Remove kt6PFJetsForIsolation, kt6PFJetsCentralNeutral
-# TODO: Remove ak7PFJets if not used
 # TODO: Reduce btagInfo and btagdiscriminators
-# TODO: Check/Remove jet cleaning
+# TODO: Check/Review jet cleaning. What about selectedPatJetsAK7PF?
 # TODO: Update pileup jet ID to the stable version
 
 from PhysicsTools.PatAlgos.tools.jetTools import *
@@ -461,9 +461,6 @@ addJetCollection(process, cms.InputTag("caVHPFJets:filter"),
 # ------------------------------------------------------------------------------
 # Cleaning
 # ------------------------------------------------------------------------------
-# TODO: Review the electron selection
-# TODO: Why use cleanPatJets instead of PF2PAT version?
-
 process.cleanPatJets.checkOverlaps.electrons.requireNoOverlaps = cms.bool(True)
 process.cleanPatJets.checkOverlaps.electrons.preselection = (
     "pt > 15.0 && abs(eta) < 2.5 &&"
@@ -563,9 +560,10 @@ process.bhadrons = cms.EDProducer('MCBHadronProducer',
 ################################################################################
 # MET                                                                          #
 ################################################################################
-# TODO: Check track-MET
+# TODO: Type-0 correction is currently disabled, but could be helpful?
+# TODO: MET x/y Shift Correction is currently not applied, but could be useful?
 # TODO: MET smearing should be applied to MC only. If it's dropped for data, then 
-#       process.producePatPFMETCorrections has to be included in process.common sequence.
+#       process.producePatPFMETCorrections has to be added into process.common sequence.
 # TODO: Update MET filters to HCP recommendation, in particularly:
 #       to include anomalous ECAL laser corrections in 2012A+B rereco datasets
 #         https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1892.html
