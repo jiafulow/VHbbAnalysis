@@ -117,10 +117,6 @@ cvs up -A RecoBTag/SecondaryVertex/plugins/BVertexFilter.cc RecoBTag/SecondaryVe
 cvs co -d IVF/BCandidateProducer UserCode/BbCorrelation/CMSSW/BAnalysis/BCandidateProducer
 cvs co -d ZSV/BAnalysis UserCode/ZSV/BAnalysis/
 
-# Add new btaggers in PAT
-# Note: Please resynchronise the file to PhysicsTools/PatAlgos V08-09-23
-cp VHbbAnalysis/additionalFiles/jetTools.py PhysicsTools/PatAlgos/python/tools/jetTools.py
-
 # ------------------------------------------------------------------------------
 # MHT Producer
 # ------------------------------------------------------------------------------
