@@ -13,8 +13,8 @@ class VHbbEventAuxInfo {
   public:
     class PrimaryVertexInfo {
       public:
-        PrimaryVertexInfo(): nVertices(-99) {}
-        int nVertices;
+        PrimaryVertexInfo(): nVertices(-99), nGoodVertices(-99) {}
+        int nVertices, nGoodVertices;
         TVector3 firstPVInPT2, firstPVInProb;
         ROOT::Math::SMatrix < double, 3, 3, ROOT::Math::MatRepSym < double, 3 > > efirstPVInPT2, efirstPVInProb;
     };
