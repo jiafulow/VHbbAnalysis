@@ -214,16 +214,12 @@ class VHbbEvent {
     std::vector < SimpleJet > filterJets;
     std::vector < HardJet > hardJets;
 
-    METInfo calomet;  // remove this?
-    METInfo tcmet;  // remove this?
-    METInfo pfmet;
-    METInfo pfmetType1corr;
-    METInfo pfmetType1p2corr;
-    METInfo pfmetNoPUType1corr;
-    METInfo pfmetNoPUType1p2corr;
+    METInfo met;
+    METInfo metType1;
+    METInfo metType1p2;
     METInfo mht;
-    METInfo metNoPU;
-    METInfo metCh;
+    METInfo pfmetNoPU;
+    METInfo pfmetNoPUCh;
     
     std::vector < METInfo > metUncInfo;
     std::vector < MuonInfo > muInfo;
