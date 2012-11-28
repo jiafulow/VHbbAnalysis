@@ -1,3 +1,6 @@
+#ifndef HbbAnalyzerNew__H
+#define HbbAnalyzerNew__H
+
 #include <memory>
 #include <iostream>
 //#include <cmath>
@@ -12,14 +15,14 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Utilities/interface/InputTag.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
+//#include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include "DataFormats/Math/interface/deltaPhi.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 //#include "DataFormats/Math/interface/Vector3D.h"
 //#include "Math/GenVector/PxPyPzM4D.h"
 
-//#include "DataFormats/BeamSpot/interface/BeamSpot.h"
 //#include "DataFormats/Candidate/interface/Candidate.h"
 //#include "DataFormats/Candidate/interface/Particle.h"
 //#include "DataFormats/Common/interface/View.h"
@@ -44,7 +47,8 @@
 #include "TTree.h"
 #include "TString.h"
 #include "TVector2.h"
-#include "TArrayD.h"
+#include "TVector3.h"
+//#include "TArrayD.h"
 #include "TLorentzVector.h"
 
 using namespace std;
@@ -61,13 +65,14 @@ class GenericMVAJetTagComputer;
 class JetCorrectionUncertainty;
 
 struct BTagSFContainer {
-    const BtagPerformance *BTAGSF_CSVL;
-    const BtagPerformance *BTAGSF_CSVM;
-    const BtagPerformance *BTAGSF_CSVT;
-    const BtagPerformance *MISTAGSF_CSVL;
-    const BtagPerformance *MISTAGSF_CSVM;
-    const BtagPerformance *MISTAGSF_CSVT;
+    const BtagPerformance * BTAGSF_CSVL;
+    const BtagPerformance * BTAGSF_CSVM;
+    const BtagPerformance * BTAGSF_CSVT;
+    const BtagPerformance * MISTAGSF_CSVL;
+    const BtagPerformance * MISTAGSF_CSVM;
+    const BtagPerformance * MISTAGSF_CSVT;
 };
+
 
 class HbbAnalyzerNew: public edm::EDProducer {
 
@@ -80,47 +85,53 @@ class HbbAnalyzerNew: public edm::EDProducer {
 
     TLorentzVector getChargedTracksMomentum(const pat::Jet * patJet);
 
+    void fillScaleFactors(VHbbEvent::SimpleJet & sj, const BTagSFContainer& iSF);
+
+    void fillMET(VHbbEvent::METInfo & met,
+                 edm::View < reco::MET >::const_iterator met_iter);
+
+    void fillMuBlock(edm::View < pat::Muon >::const_iterator mu, int muInfo[15]);  // not used
+
+    void fillSimpleJet(VHbbEvent::SimpleJet & sj,
+                       edm::View < pat::Jet >::const_iterator jet_iter);
+
+    void setJecUnc(VHbbEvent::SimpleJet & sj, 
+                   JetCorrectionUncertainty * jecunc);
+
+    float metSignificance(const reco::MET * met);
+
   private:
     virtual void beginJob();
     virtual void produce(edm::Event &, const edm::EventSetup &);
     virtual void endJob();
-    virtual void fillMuBlock(edm::View < pat::Muon >::const_iterator mu,
-                             int muInfo[15]);
-    virtual void fillScaleFactors(VHbbEvent::SimpleJet &, BTagSFContainer);
 
+    bool runOnMC_;
     edm::InputTag eleLabel_;
     edm::InputTag muoLabel_;
-    edm::InputTag elenoCutsLabel_;
-    edm::InputTag muonoCutsLabel_;
-    edm::InputTag jetLabel_;
-    edm::InputTag subjetLabel_;
-    edm::InputTag filterjetLabel_;
+    edm::InputTag tauLabel_;
     edm::InputTag simplejet1Label_;
     edm::InputTag simplejet2Label_;
     edm::InputTag simplejet3Label_;
-    edm::InputTag simplejet4Label_;
-    edm::InputTag tauLabel_;
-    edm::InputTag metLabel_;
+    edm::InputTag fatjetLabel_;
+    edm::InputTag subjetLabel_;
+    edm::InputTag filterjetLabel_;
     edm::InputTag phoLabel_;
+    edm::InputTag metLabel_;
+    edm::InputTag metType1Label_;
+    edm::InputTag metType1p2Label_;
+    edm::InputTag eleNoCutsLabel_;
+    edm::InputTag muoNoCutsLabel_;
     edm::InputTag hltResults_;
-
-    bool runOnMC_;
     double lep_ptCutForBjets_;
-    
-    //TMatrixD *pointerPt;
-    TMatrixD *pointerEta;
-    TMatrixD *pointerPhi;
-
-    // The computer for the CSV variables
-    const GenericMVAJetTagComputer *computer;
-
     bool verbose_;
-  
-  protected:
-    void fillSimpleJet(VHbbEvent::SimpleJet & sj,
-                       edm::View < pat::Jet >::const_iterator iter);
-    void setJecUnc(VHbbEvent::SimpleJet & sj,
-                   JetCorrectionUncertainty * jecunc);
-    float metSignificance(const reco::MET * met);
+        
+    //TMatrixD * pointerPt;
+    //TMatrixD * pointerEta;
+    //TMatrixD * pointerPhi;
+
+    /// The computer for the CSV
+    const GenericMVAJetTagComputer * computer;
+
 };
+#endif // HbbAnalyzerNew__H
 
