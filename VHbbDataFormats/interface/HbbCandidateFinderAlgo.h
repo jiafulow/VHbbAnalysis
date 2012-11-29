@@ -2,6 +2,7 @@
 #define HbbCandidateFinderAlgo__H
 
 #include "VHbbAnalysis/VHbbDataFormats/interface/VHbbCandidate.h"
+#include "VHbbAnalysis/VHbbDataFormats/interface/VHbbCandidateTools.h"
 #include "VHbbAnalysis/VHbbDataFormats/interface/VHbbEvent.h"
 #include "VHbbAnalysis/VHbbDataFormats/interface/VHbbEventAuxInfo.h"
 
@@ -11,29 +12,31 @@ class HbbCandidateFinderAlgo {
     explicit HbbCandidateFinderAlgo(bool verbose, float jetPt, bool useH)
       : verbose_(verbose), jetPtThreshold_(jetPt), useHighestPtHiggs_(useH) {}
 
-    void run(const VHbbEvent *, std::vector < VHbbCandidate > &, const VHbbEventAuxInfo & aux);
-
-    static bool jetID(const VHbbEvent::SimpleJet &);
+    static bool jetID(const VHbbEvent::SimpleJet & j);
 
     VHbbCandidate changeHiggs(bool useHighestPtHiggs, const VHbbCandidate & old);
 
-    bool findDiJets(const std::vector < VHbbEvent::SimpleJet > &,
-                    VHbbEvent::SimpleJet &, VHbbEvent::SimpleJet &,
-                    std::vector < VHbbEvent::SimpleJet > &);
+    void run(const VHbbEvent * event, 
+             std::vector < VHbbCandidate > & candidates, 
+             const VHbbEventAuxInfo & aux);
 
-    bool findDiJetsHighestPt(const std::vector < VHbbEvent::SimpleJet > &,
-                             VHbbEvent::SimpleJet &, VHbbEvent::SimpleJet &,
-                             std::vector < VHbbEvent::SimpleJet > &);
+    bool findDiJets(const std::vector < VHbbEvent::SimpleJet > & jetsin,
+                    VHbbEvent::SimpleJet & j1, VHbbEvent::SimpleJet & j2,
+                    std::vector < VHbbEvent::SimpleJet > & addJets);
 
-    bool findFatJet(const std::vector < VHbbEvent::HardJet > &,
-                    const std::vector < VHbbEvent::SimpleJet > &,
-                    const std::vector < VHbbEvent::SimpleJet > &,
-                    VHbbEvent::HardJet &,
-                    std::vector < VHbbEvent::SimpleJet > &,
-                    const std::vector < VHbbEvent::SimpleJet > &,
-                    std::vector < VHbbEvent::SimpleJet > &,
-                    const std::vector < VHbbEvent::MuonInfo > &muons,
-                    const std::vector < VHbbEvent::ElectronInfo > &electrons);
+    bool findDiJetsHighestPt(const std::vector < VHbbEvent::SimpleJet > & jetsin,
+                             VHbbEvent::SimpleJet & j1, VHbbEvent::SimpleJet & j2,
+                             std::vector < VHbbEvent::SimpleJet > & addJets);
+
+    bool findFatJet(const std::vector < VHbbEvent::HardJet > & jetsin,
+                    const std::vector < VHbbEvent::SimpleJet > & subjetsin,
+                    const std::vector < VHbbEvent::SimpleJet > & filterjetsin,
+                    VHbbEvent::HardJet & fatj1,
+                    std::vector < VHbbEvent::SimpleJet > & subJetsout,
+                    const std::vector < VHbbEvent::SimpleJet > & ak5jetsin,
+                    std::vector < VHbbEvent::SimpleJet > & addJetsFat,
+                    const std::vector < VHbbEvent::MuonInfo > & muons,
+                    const std::vector < VHbbEvent::ElectronInfo > & electrons);
 
   protected:
     void findMuons(const std::vector < VHbbEvent::MuonInfo > & muons,
@@ -49,9 +52,9 @@ class HbbCandidateFinderAlgo {
     void findMET(const VHbbEvent::METInfo & met,
                  std::vector < VHbbEvent::METInfo > & out);
 
-    void findTaus(const std::vector < VHbbEvent::TauInfo > &taus,
+    void findTaus(const std::vector < VHbbEvent::TauInfo > & taus,
                   std::vector < VHbbEvent::TauInfo > & out,
-                  std::vector < unsigned int >& positions);
+                  std::vector < unsigned int > & positions);
 
     void removeTauOverlapWithJets(const std::vector < VHbbEvent::TauInfo > & taus,
                                   const std::vector < VHbbEvent::SimpleJet > & jets,
