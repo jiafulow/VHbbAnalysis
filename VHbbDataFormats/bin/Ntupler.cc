@@ -31,7 +31,6 @@
 //#include "PhysicsTools/Utilities/interface/Lumi3DReWeighting.h"
 
 #include "VHbbAnalysis/VHbbDataFormats/interface/HbbCandidateFinderAlgo.h"
-#include "VHbbAnalysis/VHbbDataFormats/src/HbbCandidateFinderAlgo.cc"
 #include "VHbbAnalysis/VHbbDataFormats/interface/VHbbEvent.h"
 #include "VHbbAnalysis/VHbbDataFormats/interface/VHbbEventAuxInfo.h"
 #include "VHbbAnalysis/VHbbDataFormats/interface/VHbbCandidate.h"
@@ -107,6 +106,12 @@ float resolutionBias(float eta) {
     return 0;  // Nominal
 }
 
+struct CompareJetPt {
+    bool operator() (const VHbbEvent::SimpleJet & j1,
+                     const VHbbEvent::SimpleJet & j2) const {
+        return j1.p4.Pt() > j2.p4.Pt();
+    }
+};
 
 // -----------------------------------------------------------------------------
 // Classes
@@ -795,8 +800,9 @@ int main(int argc, char *argv[]) {
 
     TriggerWeight triggerWeight(ana);
     TriggerWeight triggerWeightAB(anaAB);
-    TriggerReader trigger(false);
-    TriggerReader patFilters(false);
+    bool passAllTriggers = false;
+    TriggerReader trigger(passAllTriggers);
+    TriggerReader patFilters(passAllTriggers);
 
     JECFWLite jec(ana.getParameter < std::string > ("jecFolder"));
 
@@ -1391,7 +1397,7 @@ int main(int argc, char *argv[]) {
                 
             	H.dR = deltaR(vhCand.H.jets[0].p4.Eta(),vhCand.H.jets[0].p4.Phi(),vhCand.H.jets[1].p4.Eta(),vhCand.H.jets[1].p4.Phi());
 	            H.dPhi = deltaPhi(vhCand.H.jets[0].p4.Phi(),vhCand.H.jets[1].p4.Phi());
-	            H.dEta= TMath::Abs( vhCand.H.jets[0].p4.Eta() - vhCand.H.jets[1].p4.Eta() );
+	            H.dEta = TMath::Abs( vhCand.H.jets[0].p4.Eta() - vhCand.H.jets[1].p4.Eta() );
 	            HVdPhi = fabs( deltaPhi(vhCand.H.p4.Phi(),vhCand.V.p4.Phi()) ) ;
 	            HVMass = (vhCand.H.p4 + vhCand.V.p4).M() ;
 	            HMETdPhi = fabs( deltaPhi(vhCand.H.p4.Phi(),vhCand.V.mets.at(0).p4.Phi()) ) ;
@@ -1582,7 +1588,7 @@ int main(int argc, char *argv[]) {
                 eventFlav = 4;
 
             /// Triggers
-            trigger.setEvent(&ev);
+            trigger.setEvent(&ev, "HLT");
             for (size_t j = 0; j < triggers.size(); j++)
                 triggerFlags[j] = trigger.accept(triggers[j]);
             
