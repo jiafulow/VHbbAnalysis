@@ -1,5 +1,3 @@
-
-
 float mistag_CSVL(float eta,float x, float scale) {
   float mean=-1.,min=-1.,max=-1.;
   if(eta >= 0.0 && eta <= 0.5) { 
@@ -22,15 +20,14 @@ float mistag_CSVL(float eta,float x, float scale) {
     min = ((1.00294+(0.000289844*x))+(-7.9845e-07*(x*x)))+(5.38525e-10*(x*(x*x)));
     max = ((1.16292+(0.000659848*x))+(-2.07868e-06*(x*x)))+(1.72763e-09*(x*(x*x)));
   }
-  if(eta > 1.5 && eta <= 2.4) { 
+  if(eta > 1.5 && eta <= 2.5) { 
     mean = ((1.0617+(0.000173654*x))+(-5.29009e-07*(x*x)))+(5.55931e-10*(x*(x*x)));
     min = ((0.979816+(0.000138797*x))+(-3.14503e-07*(x*x)))+(2.38124e-10*(x*(x*x)));
     max = ((1.14357+(0.00020854*x))+(-7.43519e-07*(x*x)))+(8.73742e-10*(x*(x*x)));
   }
   
-  
   if(scale > 0)     return (mean + (max-mean)*scale) * (  0.979396 + 0.000205898*x + 2.49868e-07*x*x);
-  if(scale< 0)     return (mean + (mean-min)*scale) * (  0.979396 + 0.000205898*x + 2.49868e-07*x*x);
+  if(scale < 0)     return (mean + (mean-min)*scale) * (  0.979396 + 0.000205898*x + 2.49868e-07*x*x);
   return mean * (  0.979396 + 0.000205898*x + 2.49868e-07*x*x); 
 }
 
@@ -51,26 +48,27 @@ float mistag_CSVM(float eta,float x, float scale) {
     min = ((1.02055+(-0.000378856*x))+(1.49029e-06*(x*x)))+(-1.74966e-09*(x*(x*x)));
     max = ((1.20146+(0.000359543*x))+(-1.12866e-06*(x*x)))+(6.59918e-10*(x*(x*x)));
   }
-  if(eta > 1.6 && eta <= 2.4) { 
+  if(eta > 1.6 && eta <= 2.5) { 
     mean = ((1.08498+(-0.000701422*x))+(3.43612e-06*(x*x)))+(-4.11794e-09*(x*(x*x)));
     min = ((0.983476+(-0.000607242*x))+(3.17997e-06*(x*x)))+(-4.01242e-09*(x*(x*x)));
     max = ((1.18654+(-0.000795808*x))+(3.69226e-06*(x*x)))+(-4.22347e-09*(x*(x*x)));
   }
+
   if(scale > 0)     return (mean + (max-mean)*scale) * (1.10422 + -0.000523856*x + 1.14251e-06*x*x);
-  if(scale< 0)     return (mean + (mean-min)*scale)  * (1.10422 + -0.000523856*x + 1.14251e-06*x*x);
+  if(scale < 0)     return (mean + (mean-min)*scale)  * (1.10422 + -0.000523856*x + 1.14251e-06*x*x);
   return mean  * (1.10422 + -0.000523856*x + 1.14251e-06*x*x);
   
 }
 
 float mistag_CSVT(float eta,float x, float scale) {
   float mean=-1.,min=-1.,max=-1.;
-  if(eta > 0.0 && eta <= 2.4) { 
+  if(eta >= 0.0 && eta <= 2.5) { 
     mean = ((0.948463+(0.00288102*x))+(-7.98091e-06*(x*x)))+(5.50157e-09*(x*(x*x)));
     min = ((0.899715+(0.00102278*x))+(-2.46335e-06*(x*x)))+(9.71143e-10*(x*(x*x)));
     max = ((0.997077+(0.00473953*x))+(-1.34985e-05*(x*x)))+(1.0032e-08*(x*(x*x)));
   }
+
   if(scale > 0)     return (mean + (max-mean)*scale) *( 1.19275 + -0.00191042*x + 2.92205e-06*x*x);
-  if(scale< 0)     return (mean + (mean-min)*scale)*  (1.19275 + -0.00191042*x + 2.92205e-06*x*x);
-  return mean *( 1.19275 + -0.00191042*x + 2.92205e-06*x*x);
-  
+  if(scale < 0)     return (mean + (mean-min)*scale)*  (1.19275 + -0.00191042*x + 2.92205e-06*x*x);
+  return mean *( 1.19275 + -0.00191042*x + 2.92205e-06*x*x);  
 }

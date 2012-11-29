@@ -17,7 +17,6 @@ CSV_T = 0.96 +/- 0.04
 float CSVL_SFb(float x) { if(x < 210) return 1.01 ; return 1.02658*((1.+(0.0195388*x))/(1.+(0.0209145*x))); }
 float CSVL_SFb_error[] = {
  0.04,
- 0.0257175,
  0.026424,
  0.0264928,
  0.0315127,
@@ -26,7 +25,7 @@ float CSVL_SFb_error[] = {
 
 // Tagger: CSVM within 30 < pt < 670 GeV, abs(eta) < 2.4, x = pt
 float CSVM_SFb(float x) {  if(x < 210) return 0.97 ; return  0.6981*((1.+(0.414063*x))/(1.+(0.300155*x)));}
- float CSVM_SFb_error[] = {
+float CSVM_SFb_error[] = {
  0.04,
  0.0409675,
  0.0420284,
