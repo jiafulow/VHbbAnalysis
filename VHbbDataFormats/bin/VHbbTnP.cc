@@ -936,7 +936,7 @@ int main(int argc, char* argv[])
 
       iEvent = vhbbHandle.product();
 
-      met = iEvent->pfmet.p4.Et();
+      met = iEvent->met.p4.Et();
 
 
 	float trigMatchCut = 0.1;
@@ -1507,7 +1507,7 @@ int main(int argc, char* argv[])
 	      muTrigTree_probe_passingDiMu17Dz = muTrigTree_probe_passingDiMu17 && muTrigTree_probe_passingDiMuDz;
 	      muTrigTree_probe_passingDiMuTk17Dz = muTrigTree_probe_passingDiMuTk17&& muTrigTree_probe_passingDiMuTkDz;
 
-              TLorentzVector WCand = iEvent->pfmet.p4 + iEvent->muInfo[probeNumber].p4;
+              TLorentzVector WCand = iEvent->met.p4 + iEvent->muInfo[probeNumber].p4;
 
               muTrigTree_probe_WCandPt= WCand.Pt();
               for (size_t i=0 ; i < mu20WCand.size(); i++) {
@@ -1549,14 +1549,14 @@ int main(int argc, char* argv[])
 
 	    } // potential HLT probe size > 0
 
-	    if (iEvent->pfmet.p4.Et() > 0.) {
+	    if (iEvent->met.p4.Et() > 0.) {
 
-	      TLorentzVector WCand = iEvent->pfmet.p4 + iEvent->muInfo[tagNumber].p4;
+	      TLorentzVector WCand = iEvent->met.p4 + iEvent->muInfo[tagNumber].p4;
 
               muWCandTree_probe_pt= WCand.Pt();
               muWCandTree_probe_phi = WCand.Phi();
-	      muWCandTree_probe_met = iEvent->pfmet.p4.Et();
-	      muWCandTree_probe_metPhi = iEvent->pfmet.p4.Phi();
+	      muWCandTree_probe_met = iEvent->met.p4.Et();
+	      muWCandTree_probe_metPhi = iEvent->met.p4.Phi();
 	      muWCandTree_probe_passingWCandPt = (mu20WCand.size() > 0);
 
 	      muWCandTree->Fill();
@@ -2198,7 +2198,7 @@ int main(int argc, char* argv[])
 	  if (verbose_) std::cout << "FOUND Ele " << iEvent->eleInfo[m].p4.Pt() <<  " " << EVENT.event << " " << candW->size() << " " << candZ->size() << std::endl;
         }
 	cout << "Before PFMET" << endl;
-	cout << "PFMET: " << iEvent->pfmet.p4.Et() << endl;
+	cout << "PFMET: " << iEvent->met.p4.Et() << endl;
 	*/
 
 	if (verbose_) {
