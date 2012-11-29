@@ -269,11 +269,16 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
     /// Primary Vertices
     edm::Handle < reco::VertexCollection > recVtxs;
-    iEvent.getByLabel("offlinePrimaryVertices", recVtxs);  // not goodOfflinePrimaryVertices?
+    iEvent.getByLabel("offlinePrimaryVertices", recVtxs);
     auxInfo->pvInfo.nVertices = recVtxs->size();
     if (recVtxs->size() == 0) {
         std::cerr << "ERROR: No primary vertex!" << std::endl;
     }
+    
+    /// Primary Vertices (with minNdof and maxZ cuts)
+    edm::Handle < reco::VertexCollection > goodVertices;
+    iEvent.getByLabel("goodOfflinePrimaryVertices", goodVertices);
+    auxInfo->pvInfo.nGoodVertices = goodVertices->size();
 
     double MinVtxProb = -999.;  // change name to MaxVtxProb?
     int VtxIn = -99;
