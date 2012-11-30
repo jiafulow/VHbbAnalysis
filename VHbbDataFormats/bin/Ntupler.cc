@@ -681,6 +681,7 @@ int main(int argc, char *argv[]) {
     METInfo METnoPUCh;
     METInfo METtype1corr;
     METInfo METtype1p2corr;
+    METInfo caloMET;
     MHTInfo MHT;
     METUncInfo metUnc;
     
@@ -1209,17 +1210,18 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("rhoN", &rhoN, "rhoN/F");
     _outTree->Branch("nPVs", &nPVs, "nPVs/I");
     _outTree->Branch("nGoodPVs", &nGoodPVs, "nGoodPVs/I");
-    _outTree->Branch("METnoPU", &METnoPU, "et/F:sumet:sig/F:phi/F");
-    _outTree->Branch("METnoPUCh", &METnoPUCh, "et/F:sumet:sig/F:phi/F");
     _outTree->Branch("MET", &MET, "et/F:sumet:sig/F:phi/F");
+    _outTree->Branch("fakeMET", &fakeMET, "et/F:sumet:sig/F:phi/F");
     _outTree->Branch("METtype1corr", &METtype1corr, "et/F:sumet:sig/F:phi/F");
     _outTree->Branch("METtype1p2corr", &METtype1p2corr, "et/F:sumet:sig/F:phi/F");
+    _outTree->Branch("METnoPU", &METnoPU, "et/F:sumet:sig/F:phi/F");
+    _outTree->Branch("METnoPUCh", &METnoPUCh, "et/F:sumet:sig/F:phi/F");
+    _outTree->Branch("caloMET", &caloMET, "et/F:sumet:sig/F:phi/F");
+    _outTree->Branch("MHT", &MHT, "mht/F:ht:sig/F:phi/F");
     _outTree->Branch("metUnc_et", &metUnc.et, "et[12]/F");
     _outTree->Branch("metUnc_phi", &metUnc.phi, "phi[12]/F");
     _outTree->Branch("metUnc_sumet", &metUnc.sumet, "sumet[12]/F");
 
-    _outTree->Branch("fakeMET", &fakeMET, "et/F:sumet:sig/F:phi/F");
-    _outTree->Branch("MHT", &MHT, "mht/F:ht:sig/F:phi/F");
     _outTree->Branch("minDeltaPhijetMET", &minDeltaPhijetMET, "minDeltaPhijetMET/F");
     _outTree->Branch("jetPt_minDeltaPhijetMET", &jetPt_minDeltaPhijetMET, "jetPt_minDeltaPhijetMET/F");
 
@@ -1501,7 +1503,7 @@ int main(int argc, char *argv[]) {
             rho25 = aux.puInfo.rho25;
             rhoN = aux.puInfo.rhoNeutral;
             nPVs = aux.pvInfo.nVertices;
-            nGoodPVs = aux.pvInfo.nGoodVertices;
+            //nGoodPVs = aux.pvInfo.nGoodVertices;
 
             /// LHE Info
             fwlite::Handle < LHEEventProduct > evt;
@@ -1773,16 +1775,6 @@ int main(int argc, char *argv[]) {
                 fakeMET.sumet = vhCand.V.mets.at(0).sumEt - mu1.Pt() - mu2.Pt();
             }
 
-            METnoPU.et = iEvent->pfmetNoPU.p4.Pt();
-            METnoPU.phi = iEvent->pfmetNoPU.p4.Phi();
-            METnoPU.sumet = iEvent->pfmetNoPU.sumEt;
-            METnoPU.sig = iEvent->pfmetNoPU.metSig;
-            
-            METnoPUCh.et = iEvent->pfmetNoPUCh.p4.Pt();
-            METnoPUCh.phi = iEvent->pfmetNoPUCh.p4.Phi();
-            METnoPUCh.sumet = iEvent->pfmetNoPUCh.sumEt;
-            METnoPUCh.sig = iEvent->pfmetNoPUCh.metSig;
-            
             METtype1corr.et = iEvent->metType1.p4.Pt();
             METtype1corr.phi = iEvent->metType1.p4.Phi();
             METtype1corr.sumet = iEvent->metType1.sumEt;
@@ -1792,6 +1784,21 @@ int main(int argc, char *argv[]) {
             METtype1p2corr.phi = iEvent->metType1p2.p4.Phi();
             METtype1p2corr.sumet = iEvent->metType1p2.sumEt;
             METtype1p2corr.sig = iEvent->metType1p2.metSig;
+
+            METnoPU.et = iEvent->pfmetNoPU.p4.Pt();
+            METnoPU.phi = iEvent->pfmetNoPU.p4.Phi();
+            METnoPU.sumet = iEvent->pfmetNoPU.sumEt;
+            METnoPU.sig = iEvent->pfmetNoPU.metSig;
+            
+            METnoPUCh.et = iEvent->pfmetNoPUCh.p4.Pt();
+            METnoPUCh.phi = iEvent->pfmetNoPUCh.p4.Phi();
+            METnoPUCh.sumet = iEvent->pfmetNoPUCh.sumEt;
+            METnoPUCh.sig = iEvent->pfmetNoPUCh.metSig;
+
+            //caloMET.et = iEvent->calomet.p4.Pt();
+            //caloMET.phi = iEvent->calomet.p4.Phi();
+            //caloMET.sumet = iEvent->calomet.sumEt;
+            //caloMET.sig = iEvent->calomet.metSig;
 
             MHT.mht = iEvent->mht.p4.Pt();
             MHT.phi = iEvent->mht.p4.Phi();
