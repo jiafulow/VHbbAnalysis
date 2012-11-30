@@ -218,6 +218,7 @@ class VHbbEvent {
     METInfo metType1;
     METInfo metType1p2;
     METInfo mht;
+    METInfo calomet;
     METInfo pfmetNoPU;
     METInfo pfmetNoPUCh;
     

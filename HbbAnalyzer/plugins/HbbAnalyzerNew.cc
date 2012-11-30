@@ -224,6 +224,11 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     iEvent.getByLabel("pfMETNoPUCharge", pfMETNoPUChargeHandle);
     edm::View < reco::MET > pfmetsNoPUCharge = *pfMETNoPUChargeHandle;
     
+    /// caloMET
+    edm::Handle < edm::View < reco::MET > > calometHandle;
+    iEvent.getByLabel("met", calometHandle);
+    edm::View < reco::MET > calomets = *calometHandle;
+    
     /// MHT
     edm::Handle < edm::View < reco::MET > > mHTHandle;
     iEvent.getByLabel("patMETsHT", mHTHandle);
@@ -821,6 +826,9 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     }
     if (pfmetsNoPUCharge.size()) {
         fillMET(hbbInfo->pfmetNoPUCh, pfmetsNoPUCharge.begin());
+    }
+    if (calomets.size()) {
+        fillMET(hbbInfo->calomet, calomets.begin());
     }
     if (metsHT.size()) {
         fillMET(hbbInfo->mht, metsHT.begin());
