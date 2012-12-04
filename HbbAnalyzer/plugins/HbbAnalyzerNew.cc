@@ -624,7 +624,8 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
         }  // end if runOnMC_
 
-        // add flag if a reco lepton is found inside a cone around the jets... 
+        /// Add flag if a reco lepton is found inside a cone around the jets
+        /// FIXME: if there are more than 1 lepton, the softest lepton is used? Also, if muon and electron are both present, the electron is used?
         for (edm::View < reco::Candidate >::const_iterator mu = muonsNoCuts.begin();
              mu != muonsNoCuts.end() && sj.isSemiLept != 1; ++mu) {
             //std::cout<< "found a reco muon with pt " << mu->pt() << std::endl;
@@ -1500,6 +1501,9 @@ void HbbAnalyzerNew::fillSimpleJet(VHbbEvent::SimpleJet & sj,
     sj.SF_CSVLerr = 0;
     sj.SF_CSVMerr = 0;
     sj.SF_CSVTerr = 0;
+    // For quark-gluon tagger
+    sj.constituentPtDistribution = jet_iter->constituentPtDistribution();
+    sj.constituentEtaPhiSpread = jet_iter->constituentEtaPhiSpread();
 
     if (jet_iter->isPFJet()) {
         sj.chargedHadronEFraction = jet_iter->chargedHadronEnergyFraction();
