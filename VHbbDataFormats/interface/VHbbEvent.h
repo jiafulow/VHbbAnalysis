@@ -21,6 +21,7 @@ class VHbbEvent {
             chargedHadronEFraction(-99), neutralHadronEFraction(-99),
             chargedEmEFraction(-99), neutralEmEFraction(-99),
             nConstituents(-99), ptRaw(-99), ptLeadTrack(-99), jetArea(-99),
+            constituentPtDistribution(-99), constituentEtaPhiSpread(-99), 
             bestMCid(-99), bestMCmomid(-99), puJetIdL(-99), puJetIdM(-99),
             puJetIdT(-99), puJetIdMva(-99) {
         }
@@ -48,6 +49,8 @@ class VHbbEvent {
         int nConstituents;
         float ptRaw, ptLeadTrack;
         float jetArea;
+        // For quark-gluon tagger
+        float constituentPtDistribution, constituentEtaPhiSpread;
         // MC parton matching
         TLorentzVector bestMCp4, bestMCp4mom;
         int bestMCid, bestMCmomid;
