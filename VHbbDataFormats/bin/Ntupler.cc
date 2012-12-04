@@ -294,7 +294,7 @@ struct LeptonInfo {
             genEta[j] = i.mcFourMomentum.Eta();
             genPhi[j] = i.mcFourMomentum.Phi();
         }
-        setSpecific(i, j, aux);  // which does this call?
+        setSpecific(i, j, aux);
     }
     template < class Input > void setSpecific(const Input & i, int j,
                                               const VHbbEventAuxInfo & aux);
@@ -1426,7 +1426,7 @@ int main(int argc, char *argv[]) {
             if (vhCand.FatH.FatHiggsFlag) {
                 FatH.mass = vhCand.FatH.p4.M();
                 FatH.pt = vhCand.FatH.p4.Pt();
-                if (FatH.pt > 0.1)  FatH.eta = vhCand.FatH.p4.Eta();  else FatH.eta = -99.;
+                FatH.eta = vhCand.FatH.p4.Eta();
                 FatH.phi = vhCand.FatH.p4.Phi();
 
                 nfathFilterJets = vhCand.FatH.subjetsSize;
@@ -1728,15 +1728,11 @@ int main(int argc, char *argv[]) {
             
             /// SimBHadron
             const SimBHadronCollection * sbhc;
+            SimBs.reset();
             if (isMC_) {
                 fwlite::Handle < SimBHadronCollection > SBHC;
                 SBHC.getByLabel(ev, "bhadrons");
                 sbhc = SBHC.product();
-            }
-            
-            /// SimBHadron
-            SimBs.reset();
-            if (isMC_) {
                 nSimBs = sbhc->size();
                 for (int j = 0; j < nSimBs && j < MAXB; ++j)
                     SimBs.set(sbhc->at(j), j);
@@ -2163,13 +2159,13 @@ int main(int argc, char *argv[]) {
                 if (aux.mcW[i].momid == 6 && aux.mcW[i].dauid.size() > 1) {
                     genTop.wdau1mass = aux.mcW[i].dauFourMomentum[0].M();
                     genTop.wdau1pt = aux.mcW[i].dauFourMomentum[0].Pt();
-                    genTop.wdau1eta = aux.mcW[i].dauFourMomentum[0].Eta();
+                    if (genTop.wdau1pt > 0.1) genTop.wdau1eta = aux.mcW[i].dauFourMomentum[0].Eta();  else genTop.wdau1eta = -99;
                     genTop.wdau1phi = aux.mcW[i].dauFourMomentum[0].Phi();
                     genTop.wdau1id = aux.mcW[i].dauid[0];
 
                     genTop.wdau2mass = aux.mcW[i].dauFourMomentum[1].M();
                     genTop.wdau2pt = aux.mcW[i].dauFourMomentum[1].Pt();
-                    genTop.wdau2eta = aux.mcW[i].dauFourMomentum[1].Eta();
+                    if (genTop.wdau2pt > 0.1) genTop.wdau2eta = aux.mcW[i].dauFourMomentum[1].Eta();  else genTop.wdau2eta = -99;
                     genTop.wdau2phi = aux.mcW[i].dauFourMomentum[1].Phi();
                     genTop.wdau2id = aux.mcW[i].dauid[1];
                 }
@@ -2177,13 +2173,13 @@ int main(int argc, char *argv[]) {
                 if (aux.mcW[i].momid == -6 && aux.mcW[i].dauid.size() > 1) {
                     genTbar.wdau1mass = aux.mcW[i].dauFourMomentum[0].M();
                     genTbar.wdau1pt = aux.mcW[i].dauFourMomentum[0].Pt();
-                    genTbar.wdau1eta = aux.mcW[i].dauFourMomentum[0].Eta();
+                    if (genTbar.wdau1pt > 0.1) genTbar.wdau1eta = aux.mcW[i].dauFourMomentum[0].Eta();  else genTbar.wdau1eta = -99;
                     genTbar.wdau1phi = aux.mcW[i].dauFourMomentum[0].Phi();
                     genTbar.wdau1id = aux.mcW[i].dauid[0];
 
                     genTbar.wdau2mass = aux.mcW[i].dauFourMomentum[1].M();
                     genTbar.wdau2pt = aux.mcW[i].dauFourMomentum[1].Pt();
-                    genTbar.wdau2eta = aux.mcW[i].dauFourMomentum[1].Eta();
+                    if (genTbar.wdau2pt > 0.1) genTbar.wdau2eta = aux.mcW[i].dauFourMomentum[1].Eta();  else genTbar.wdau2eta = -99;
                     genTbar.wdau2phi = aux.mcW[i].dauFourMomentum[1].Phi();
                     genTbar.wdau2id = aux.mcW[i].dauid[1];
                 }
@@ -2217,7 +2213,7 @@ int main(int argc, char *argv[]) {
                 if (abs(aux.mcB[i].momid) != 5) {
                     genB.mass = aux.mcB[i].p4.M();
                     genB.pt = aux.mcB[i].p4.Pt();
-                    genB.eta = aux.mcB[i].p4.Eta();
+                    if (genB.pt > 0.1) genB.eta = aux.mcB[i].p4.Eta();  else genB.eta = -99;
                     genB.phi = aux.mcB[i].p4.Phi();
                     genB.status = aux.mcB[i].status;
                     genB.charge = aux.mcB[i].charge;
@@ -2228,7 +2224,7 @@ int main(int argc, char *argv[]) {
                 if (aux.mcB[i].momid == 6) {
                     genTop.bmass = aux.mcB[i].p4.M();
                     genTop.bpt = aux.mcB[i].p4.Pt();
-                    genTop.beta = aux.mcB[i].p4.Eta();
+                    if (genTop.bpt > 0.1) genTop.beta = aux.mcB[i].p4.Eta();  else genTop.beta = -99;
                     genTop.bphi = aux.mcB[i].p4.Phi();
                     genTop.bstatus = aux.mcB[i].status;
                 }
@@ -2238,7 +2234,7 @@ int main(int argc, char *argv[]) {
                 if (abs(aux.mcBbar[i].momid) != 5) {
                     genBbar.mass = aux.mcBbar[i].p4.M();
                     genBbar.pt = aux.mcBbar[i].p4.Pt();
-                    genBbar.eta = aux.mcBbar[i].p4.Eta();
+                    if (genBbar.pt > 0.1) genBbar.eta = aux.mcBbar[i].p4.Eta();  else genBbar.eta = -99;
                     genBbar.phi = aux.mcBbar[i].p4.Phi();
                     genBbar.status = aux.mcBbar[i].status;
                     if (aux.mcBbar[i].momid != -99)
@@ -2248,16 +2244,16 @@ int main(int argc, char *argv[]) {
                 if (aux.mcBbar[i].momid == -6) {
                     genTbar.bmass = aux.mcBbar[i].p4.M();
                     genTbar.bpt = aux.mcBbar[i].p4.Pt();
-                    genTbar.beta = aux.mcBbar[i].p4.Eta();
+                    if (genTbar.bpt > 0.1) genTbar.beta = aux.mcBbar[i].p4.Eta();  else genTbar.beta = -99;
                     genTbar.bphi = aux.mcBbar[i].p4.Phi();
                     genTbar.bstatus = aux.mcBbar[i].status;
                 }
             }
 
-            if (aux.mcH.size() > 0) {
+            if (aux.mcH.size() > 0) {  // come from Z*
                 genH.mass = aux.mcH[0].p4.M();
                 genH.pt = aux.mcH[0].p4.Pt();
-                genH.eta = aux.mcH[0].p4.Eta();
+                if (genH.pt > 0.1) genH.eta = aux.mcH[0].p4.Eta();  else genH.eta = -99;
                 genH.phi = aux.mcH[0].p4.Phi();
                 genH.status = aux.mcH[0].status;
                 genH.charge = aux.mcH[0].charge;
