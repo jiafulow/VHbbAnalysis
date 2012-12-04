@@ -22,7 +22,7 @@
 class BTagShape {
   public:
     BTagShape() {}
-    BTagShape(TFile * file, const char *name, const std::vector < std::pair < float, float > > & cutsAndSF,
+    BTagShape(TFile * file, const char * name, const std::vector < std::pair < float, float > > & cutsAndSF,
               float boundX, float boundY) {
         bool verbose = false;
         TH1F * m_h = (TH1F *) file->Get(name);
@@ -30,7 +30,7 @@ class BTagShape {
         /// Find the equivalent CSV values that give the same efficiencies (area).
         std::vector < std::pair < float, float > > eq;
         const int lastbin = m_h->GetNbinsX()+1; // was 2001;
-        float integral = m_h->Integral(-1, lastbin);
+        //float integral = m_h->Integral(-1, lastbin);
         for (unsigned int i = 0; i < cutsAndSF.size(); i++) {
             float oldCut = cutsAndSF[i].first;
             float sf = cutsAndSF[i].second;
@@ -72,9 +72,9 @@ class BTagShape {
         m_i = new ROOT::Math::Interpolator(x, y, ROOT::Math::Interpolation::kLINEAR);
     }
 
-    ~BTagShape() {
-        delete m_i;
-    }
+    //~BTagShape() {
+    //    delete m_i;
+    //}
 
     float eval(float x) {
         return m_i->Eval(x);
@@ -125,7 +125,7 @@ class BinnedBTagShape {
             if (m_bins[i].contains(fabs(eta), pt))
                 return m_shapes[i].eval(x);
         }
-        if (pt > 20.)
+        if (pt > 20. && fabs(eta) < 2.5)
             std::cerr << "Cannot reshape eta pt discr "  << eta << " " << pt << " " << x << std::endl; 
         return x;
     }
