@@ -102,7 +102,7 @@ void HbbCandidateFinderAlgo::run(const VHbbEvent * event,
     VHbbCandidateTools selector(verbose_);
     std::vector < VHbbEvent::SimpleJet > noOverlap;
     for (size_t j = 0; j < event->simpleJets2.size(); j++) {
-        float overlap = false;
+        bool overlap = false;
         for (size_t i = 0; i < mu.size(); i++) {
             if (deltaR(mu[i].p4.Eta(), mu[i].p4.Phi(), event->simpleJets2[j].p4.Eta(), event->simpleJets2[j].p4.Phi()) < 0.5)
                 overlap = true;
@@ -260,7 +260,7 @@ bool HbbCandidateFinderAlgo::findDiJets(const std::vector < VHbbEvent::SimpleJet
     std::vector < VHbbEvent::SimpleJet > jets = jetsin;
     CompareBTag bTagComparator;
     CompareJetPt ptComparator;
-    float etaThr = 2.5;
+    double etaThr = 2.5;
     
     // Sort the jets so that if i<j, csv(i)>csv(j)
     std::sort(jets.begin(), jets.end(), bTagComparator);
@@ -317,17 +317,17 @@ bool HbbCandidateFinderAlgo::findDiJetsHighestPt(const std::vector < VHbbEvent::
 
     std::vector < VHbbEvent::SimpleJet > jets = jetsin;
     CompareJetPt ptComparator;
-    float etaThr = 2.5;
+    double etaThr = 2.5;
 
     // Sort the jets so that if i<j, pt(i)>pt(j)
     std::sort(jets.begin(), jets.end(), ptComparator);
 
     // jetID and pileup jetID are applied
-    float highestPt = -9999.;
+    double highestPt = -9999.;
     unsigned int highesti = 9999, highestj = 9999;
     for (unsigned int i = 0; i < jets.size() - 1; ++i) {
         for (unsigned int j = i + 1; j < jets.size(); ++j) {
-            float pt = (jets[i].p4 + jets[j].p4).Pt();
+            double pt = (jets[i].p4 + jets[j].p4).Pt();
             if (pt > highestPt && 
                 jets[i].p4.Pt() > jetPtThreshold_ && jets[j].p4.Pt() > jetPtThreshold_ &&
                 fabs(jets[i].p4.Eta()) < etaThr && fabs(jets[j].p4.Eta()) < etaThr && 
@@ -378,7 +378,7 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
     if (jetsin.size() < 1)
         return false;
 
-    float etaThr = 2.5;
+    double etaThr = 2.5;
     std::vector < VHbbEvent::HardJet > hardjets = jetsin;
     std::vector < VHbbEvent::SimpleJet > subjets = subjetsin;
     std::vector < VHbbEvent::SimpleJet > filterjets = filterjetsin;
