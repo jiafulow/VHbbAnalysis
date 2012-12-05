@@ -9,7 +9,7 @@
 
 class HbbCandidateFinderAlgo {
   public:
-    explicit HbbCandidateFinderAlgo(bool verbose, float jetPt, bool useH)
+    explicit HbbCandidateFinderAlgo(bool verbose, double jetPt, bool useH)
       : verbose_(verbose), jetPtThreshold_(jetPt), useHighestPtHiggs_(useH) {}
 
     static bool jetID(const VHbbEvent::SimpleJet & j);
@@ -64,7 +64,7 @@ class HbbCandidateFinderAlgo {
 
   private:
     bool verbose_;
-    float jetPtThreshold_;
+    double jetPtThreshold_;
     bool useHighestPtHiggs_;
 };
 #endif  // HbbCandidateFinderAlgo__H
