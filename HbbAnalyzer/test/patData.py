@@ -5,7 +5,7 @@
 # CMS Official Recommendations
 #   https://twiki.cern.ch/twiki//bin/view/CMS/Internal/ApprovedObjects
 #
-# PF2PAT+PAT
+# PF2PAT+PAT (a.k.a. PFBRECO)
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATPFBRECOExercise
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATTools
 # ==============================================================================
@@ -24,7 +24,7 @@ RUN_ON_MC = False
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideFrontierConditions
 #   TWiki revision: ?
 # ------------------------------------------------------------------------------
-# TODO: Please check if these are the HCP global tags
+# TODO: Please check if these are the HCP global tags, or update to the latest Global Tags
 
 GLOBALTAGS = {
     "Summer12_DR53X"                : "START53_V7E::All",
@@ -32,8 +32,9 @@ GLOBALTAGS = {
     "Run2012A-recover-06Aug2012-v1" : "FT_53_V6C_AN2::All", # "GR_P_V40_AN1::All" was used for HCP?
     "Run2012B-13Jul2012-v1"         : "FT_53_V6_AN2::All",  # "GR_P_V40_AN1::All" was used for HCP?
     "Run2012C-24Aug2012-v1"         : "FT_53_V10_AN2::All",
-    "Run2012C-PromptReco-v1"        : "GR_P_V40_AN1::All",  # "GR_P_V41_AN2::All" was used for HCP?
-    "Run2012C-PromptReco-v2"        : "GR_P_V41_AN1::All",
+    "Run2012C-PromptReco-v1"        : "GR_P_V40_AN1::All",
+    "Run2012C-PromptReco-v2"        : "GR_P_V41_AN2::All",
+    "Run2012D-PromptReco-v1"        : "GR_P_V42_AN2::All",
     }
 
 GLOBALTAG = ""
@@ -114,12 +115,13 @@ from PhysicsTools.SelectorUtils.pvSelector_cfi import pvSelector
 process.goodOfflinePrimaryVertices = cms.EDFilter(
     "PrimaryVertexObjectFilter",
     filterParams = pvSelector.clone( minNdof = cms.double(4.0), maxZ = cms.double(24.0) ),
-    src=cms.InputTag('offlinePrimaryVertices')
+    src = cms.InputTag('offlinePrimaryVertices')
     )
 
 # ------------------------------------------------------------------------------
 # Jet Energy Correction Label
 # ------------------------------------------------------------------------------
+inputJetCorrLabel = None
 if RUN_ON_MC:
     inputJetCorrLabel = ['L1FastJet', 'L2Relative', 'L3Absolute']
 else:
@@ -151,7 +153,8 @@ usePF2PAT(process,runPF2PAT=True, jetAlgo=jetAlgo, runOnMC=RUN_ON_MC, postfix=po
 #usePF2PAT(process,runPF2PAT=True,
 #    jetAlgo=jetAlgo, runOnMC=RUN_ON_MC, postfix=postfix,
 #    jetCorrections=('AK5PFchs', inputJetCorrLabel),
-#    pvCollection=cms.InputTag('goodOfflinePrimaryVertices')
+#    pvCollection=cms.InputTag('goodOfflinePrimaryVertices'),
+#    typeIMetCorrections=False,
 #    )
 
 # to use particle-based isolation in patDefaultSequence
@@ -215,9 +218,14 @@ switchJetCollection(process,
 process.patJets.addTagInfos = True
 
 # ------------------------------------------------------------------------------
-# PF Jets with Charged Hadron Subtraction (a.k.a. PFnoPU)
+# PF Jets with charged hadron subtraction (a.k.a. PFnoPU)
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetEnCorPFnoPU2012
 # ------------------------------------------------------------------------------
+# NB: current JetMET version of PFNoPU leaves about 20% pile-up charged hadrons 
+#     untouched. This compromise was necessary to avoid over-subtracting high 
+#     pT tracks from jets. The L1chs corrections account for these remaining 
+#     pile-up charged hadrons so the following settings must be enabled (these 
+#     are different from lepton isolation settings).
 process.pfPileUpPFlow.Vertices = cms.InputTag('goodOfflinePrimaryVertices')
 process.pfPileUpPFlow.checkClosestZVertex = False
 
@@ -230,6 +238,8 @@ process.pfPileUpPFlow.checkClosestZVertex = False
 
 # ------------------------------------------------------------------------------
 # Electron ID
+#   https://twiki.cern.ch/twiki/bin/view/CMS/EgammaIDRecipes
+#   https://twiki.cern.ch/twiki/bin/view/CMS/MultivariateElectronIdentification
 # ------------------------------------------------------------------------------
 # Cut-based Spring10
 import VHbbAnalysis.HbbAnalyzer.simpleCutBasedElectronIDSpring10_cfi as vbtfid
@@ -252,16 +262,13 @@ process.eidSequence = cms.Sequence(
     process.eidVBTFCom70
     )
 
-# MVA
+# MVA 2012
 process.load('EGamma.EGammaAnalysisTools.electronIdMVAProducer_cfi')
 process.mvaID = cms.Sequence(  process.mvaTrigV0 + process.mvaNonTrigV0 )
 
 # ID Sources
 process.patElectrons.electronIDSources = cms.PSet(
-    #MVA
-    mvaTrigV0 = cms.InputTag("mvaTrigV0"),
-    mvaNonTrigV0 = cms.InputTag("mvaNonTrigV0"),
-    #old ones
+    # Cut-based Spring10
     eidVBTFRel95 = cms.InputTag("eidVBTFRel95"),
     eidVBTFRel85 = cms.InputTag("eidVBTFRel85"),
     eidVBTFRel80 = cms.InputTag("eidVBTFRel80"),
@@ -269,7 +276,10 @@ process.patElectrons.electronIDSources = cms.PSet(
     eidVBTFCom95 = cms.InputTag("eidVBTFCom95"),
     eidVBTFCom85 = cms.InputTag("eidVBTFCom85"),
     eidVBTFCom80 = cms.InputTag("eidVBTFCom80"),
-    eidVBTFCom70 = cms.InputTag("eidVBTFCom70")
+    eidVBTFCom70 = cms.InputTag("eidVBTFCom70"),
+    # MVA 2012
+    mvaTrigV0 = cms.InputTag("mvaTrigV0"),
+    mvaNonTrigV0 = cms.InputTag("mvaNonTrigV0"),
     )
 
 # ------------------------------------------------------------------------------
@@ -279,6 +289,8 @@ process.patElectrons.electronIDSources = cms.PSet(
 
 # ------------------------------------------------------------------------------
 # Tau ID
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePFTauID
+#   https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
@@ -286,8 +298,9 @@ process.patElectrons.electronIDSources = cms.PSet(
 #   https://twiki.cern.ch/twiki/bin/view/CMS/EgammaEARhoCorrection
 #   https://twiki.cern.ch/twiki/bin/view/CMS/EgammaPFBasedIsolation
 # ------------------------------------------------------------------------------
-
-# AN-2012/349 says cone size of 0.3?
+# NB: Electron isolation cone size of 0.4 (default) is used. POG supports both 
+#     0.3 and 0.4. The WPxx definitions were based on the cone of 0.4. 
+#     Effective area numbers were changed to be consistent.
 process.patElectrons.isolationValues = cms.PSet(
     pfNeutralHadrons = cms.InputTag("elPFIsoValueNeutral04PFIdPFIso"),
     pfChargedAll = cms.InputTag("elPFIsoValueChargedAll04PFIdPFIso"),
@@ -307,6 +320,7 @@ process.patElectrons.isolationValuesNoPFId = cms.PSet(
 # ------------------------------------------------------------------------------
 # Muon Isolation
 # ------------------------------------------------------------------------------
+# NB: Muon isolation cone size of 0.4 (default) is used. This agrees with POG recommendation.
 process.patMuonsPFlow.isolationValues.user = cms.VInputTag(
     cms.InputTag("muPFIsoValueChargedAll03"+postfix),
     cms.InputTag("muPFIsoValueCharged03"+postfix),
@@ -333,11 +347,22 @@ process.selectedPatMuons.cut = cms.string("")
 ################################################################################
 # TODO: Check rho25
 # TODO: Remove kt6PFJetsForIsolation, kt6PFJetsCentralNeutral
-# TODO: Reduce btagdiscriminators
-# TODO: Check/Review jet cleaning. What about selectedPatJetsAK7PF?
+# TODO: Review jet cleaning. What about selectedPatJetsAK7PF cleaning?
 # TODO: Update pileup jet ID to the stable version
+# TODO: Update JEC to final 53X set
 
 from PhysicsTools.PatAlgos.tools.jetTools import *
+
+# ------------------------------------------------------------------------------
+# Info
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections
+#   https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution
+#   https://twiki.cern.ch/twiki/bin/view/CMS/JECDataMC
+#   https://twiki.cern.ch/twiki/bin/view/CMS/JECUncertaintySources
+#   https://twiki.cern.ch/twiki/bin/view/CMS/JetID
+#   https://twiki.cern.ch/twiki/bin/view/CMS/PileupJetID
+#   http://pandolf.web.cern.ch/pandolf/instr/QGLikelihood.txt Quark/Gluon discriminator
+# ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
 # Energy density
@@ -361,6 +386,7 @@ process.kt6PFJetsForIsolation = kt4PFJets.clone(
     #doAreaFastjet    = True,  # default is False
     #Ghost_EtaMax     = 2.5,  # default is 5.0
     Rho_EtaMax       = 2.5,
+    #voronoiRfact     = 0.9,  # default is -0.9
     )
 
 # For CMSSW_5XY, this should be taken from RECO or AOD: double_kt6PFJetsCentralNeutral_rho_RECO
@@ -402,9 +428,9 @@ addJetCollection(process, cms.InputTag("ak7PFJets"),
 
 # ------------------------------------------------------------------------------
 # Jet Substructure
-#   link?
+#   https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetMETAlgorithmsReconstruction
+#   https://indico.cern.ch/getFile.py/access?contribId=3&resId=0&materialId=slides&confId=208789
 # ------------------------------------------------------------------------------
-
 #process.load("RecoJets.Configuration.GenJetParticles_cff")
 
 #from RecoJets.JetProducers.ca4GenJets_cfi import ca4GenJets
@@ -413,16 +439,21 @@ addJetCollection(process, cms.InputTag("ak7PFJets"),
 
 #process.load('RecoJets.JetProducers.caSubjetFilterPFJets_cfi')
 from RecoJets.JetProducers.caSubjetFilterPFJets_cfi import caSubjetFilterPFJets
-process.caVHPFJets = caSubjetFilterPFJets.clone(src=cms.InputTag("pfNoElectron"+postfix), useAdjacency=cms.int32(0))
+process.caVHPFJets = caSubjetFilterPFJets.clone(
+    src = cms.InputTag("pfNoElectron"+postfix),
+    useAdjacency = cms.int32(0)
+    )
 
 #process.load('RecoJets.JetProducers.caSubjetFilterGenJets_cfi')
 from RecoJets.JetProducers.caSubjetFilterGenJets_cfi import caSubjetFilterGenJets
 process.caVHGenJets = caSubjetFilterGenJets.clone()
 
-# Note: caVHCaloJets can be removed safely
+# NB: caVHCaloJets can be removed safely
 #process.load('RecoJets.JetProducers.caSubjetFilterCaloJets_cfi')
 from RecoJets.JetProducers.caSubjetFilterCaloJets_cfi import caSubjetFilterCaloJets
-process.caVHCaloJets = caSubjetFilterCaloJets.clone(useAdjacency=cms.int32(0))
+process.caVHCaloJets = caSubjetFilterCaloJets.clone(
+    useAdjacency = cms.int32(0)
+    )
 
 addJetCollection(process, cms.InputTag("caVHPFJets:fat"),
     "CAVHFat", "PF",
@@ -444,7 +475,7 @@ addJetCollection(process, cms.InputTag("caVHPFJets:sub"),
     doType1MET       = False,
     doL1Cleaning     = False,
     doL1Counters     = False,
-    genJetCollection = (cms.InputTag("caVHGenJets","sub") if RUN_ON_MC else None),
+    genJetCollection = (cms.InputTag("caVHGenJets:sub") if RUN_ON_MC else None),
     doJetID          = False,
     jetIdLabel       = "ak5",
     )
@@ -457,7 +488,7 @@ addJetCollection(process, cms.InputTag("caVHPFJets:filter"),
     doType1MET       = False,
     doL1Cleaning     = False,
     doL1Counters     = False,
-    genJetCollection = (cms.InputTag("caVHGenJets","filter") if RUN_ON_MC else None),
+    genJetCollection = (cms.InputTag("caVHGenJets:filter") if RUN_ON_MC else None),
     doJetID          = False,
     jetIdLabel       = "ak5",
     )
@@ -465,6 +496,7 @@ addJetCollection(process, cms.InputTag("caVHPFJets:filter"),
 # ------------------------------------------------------------------------------
 # Cleaning
 # ------------------------------------------------------------------------------
+# NB: A further lepton cleaning is done at Step 2
 process.cleanPatJets.checkOverlaps.electrons.requireNoOverlaps = cms.bool(True)
 process.cleanPatJets.checkOverlaps.electrons.preselection = (
     "pt > 15.0 && abs(eta) < 2.5 &&"
@@ -511,8 +543,8 @@ process.cleanPatJets.checkOverlaps.muons.preselection = (
 
 # ------------------------------------------------------------------------------
 # Pileup Jet ID
-#   https://twiki.cern.ch/twiki/bin/view/CMS/PileupJetID
 # ------------------------------------------------------------------------------
+# TODO: this is a preliminary version that doesn't know about CHS
 process.load("CMGTools.External.pujetidsequence_cff")
 process.puJetId.jets = cms.InputTag("cleanPatJets")
 process.puJetMva.jets = cms.InputTag("cleanPatJets")
@@ -520,7 +552,7 @@ process.puJetMva.jets = cms.InputTag("cleanPatJets")
 # ------------------------------------------------------------------------------
 # Cut
 # ------------------------------------------------------------------------------
-# Place appropriate jet cuts (NB: no cut on number of constituents)
+# NB: no cut on number of constituents
 defaultJetCut = cms.string('pt > 15. & abs(eta) < 5.0')
 defaultFatJetCut = cms.string('pt > 100. & abs(eta) < 5.0')
 process.selectedPatJets.cut = defaultJetCut
@@ -535,7 +567,12 @@ process.selectedPatJetsCAVHFilterPF.cut = cms.string('pt > 5. & abs(eta) < 5.0')
 ################################################################################
 # TODO: Update to PoolBTagPerformanceDB062012, BTagPerformanceDB062012?
 #         https://hypernews.cern.ch/HyperNews/CMS/get/btag/879.html
+# TODO: Update to 2012 b-tag and mistag SFs
 
+# ------------------------------------------------------------------------------
+# Info
+#   https://twiki.cern.ch/twiki/bin/view/CMS/BtagPOG
+# ------------------------------------------------------------------------------
 # Load b-tag payloads
 process.load ("RecoBTag.PerformanceDB.PoolBTagPerformanceDB1107")
 process.load ("RecoBTag.PerformanceDB.BTagPerformanceDB1107")
@@ -564,8 +601,7 @@ process.bhadrons = cms.EDProducer('MCBHadronProducer',
 ################################################################################
 # MET                                                                          #
 ################################################################################
-# TODO: Type-0 correction is currently disabled, but could be helpful?
-# TODO: MET x/y Shift Correction is currently not applied, but could be useful?
+# TODO: MET systematic x/y shift correction is currently not applied, but is recommended
 # TODO: MET smearing should be applied to MC only. If it's dropped for data, then 
 #       process.producePatPFMETCorrections has to be added into process.common sequence.
 # TODO: Update MET filters to HCP recommendation, in particularly:
@@ -573,24 +609,27 @@ process.bhadrons = cms.EDProducer('MCBHadronProducer',
 #         https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1892.html
 #       to include HCAL laser event filter in 2012 Data
 #         https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/1905.html
+# TODO: No pileup MET https://twiki.cern.ch/twiki/bin/view/CMS/NoPileUpMet
+# TODO: MVA MET https://twiki.cern.ch/twiki/bin/view/CMS/MVAMet
+
+# ------------------------------------------------------------------------------
+# Info
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis
+#   https://twiki.cern.ch/twiki/bin/view/CMS/MissingET
+# ------------------------------------------------------------------------------
 
 from PhysicsTools.PatAlgos.tools.metTools import *
 #addTcMET(process, 'TC')
 #addPfMET(process, 'PF')
 
-# ------------------------------------------------------------------------------
-# MET Corrections
-#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis
-# ------------------------------------------------------------------------------
-
 # load modules for producing Type 1 / Type 1 + 2 corrections for pat::PFMET objects
 process.load("PhysicsTools.PatUtils.patPFMETCorrections_cff")
 
 if not RUN_ON_MC:
-    # Note: use "ak5PFL1FastL2L3" for MC / "ak5PFL1FastL2L3Residual" for Data
+    # NOTE: use "ak5PFL1FastL2L3" for MC / "ak5PFL1FastL2L3Residual" for Data
     process.pfJetMETcorr.jetCorrLabel = cms.string("ak5PFL1FastL2L3Residual")  # not used
     process.pfJetMETcorrPFlow.jetCorrLabel = cms.string("ak5PFL1FastL2L3Residual")  # not used
-    # Note: use "L3Absolute" for MC / "L2L3Residual" for Data
+    # NOTE: use "L3Absolute" for MC / "L2L3Residual" for Data
     process.patPFJetMETtype1p2Corr.jetCorrLabel = cms.string("L2L3Residual")
 
 # Track-MET with charged hadron subtraction
@@ -620,9 +659,14 @@ process.patMETsHT = cms.EDProducer("MHTProducer",
 # MET Smearing Correction
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATTools#MET_Systematics_Tools
 # ------------------------------------------------------------------------------
-# Note: Type-0 MET correction is applied by default
+# NB: The photonCollection parameter is set to None per default, in order to 
+#     avoid overlap with the electron collection. 
+# NB: The energies of pat::Jets are smeared by the Data/MC difference in PFJet 
+#     resolution per default. The smearing factors are taken from JME-10-014. 
+# NB: Type-0 MET correction are applied (default).
+# NB: MET systematic x/y shift correction is not applied (default).
 from PhysicsTools.PatUtils.tools.metUncertaintyTools import runMEtUncertainties
-runMEtUncertainties(process, 'selectedPatElectrons', None, 'selectedPatMuons', 'selectedPatTaus', 'selectedPatJets', jetCorrLabel=("L3Absolute" if RUN_ON_MC else "L2L3Residual"), doApplyType0corr=True)  # photonCollection is set to empty
+runMEtUncertainties(process, 'selectedPatElectrons', None, 'selectedPatMuons', 'selectedPatTaus', 'selectedPatJets', jetCorrLabel=("L3Absolute" if RUN_ON_MC else "L2L3Residual"), doSmearJets=True, doApplyType0corr=True, doApplySysShiftCorr=False)  # change doSmearJets=True to doSmearJets=RUN_ON_MC ?
 
 
 ################################################################################
@@ -644,6 +688,7 @@ switchOnTrigger( process )
 # ------------------------------------------------------------------------------
 # MET Filters
 #   https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFilters
+#   TWiki revision: ?
 # The following is taken from RecoMET/METFilters/test/exampleICHEPrecommendation_cfg.py V00-00-08
 # ------------------------------------------------------------------------------
 
@@ -717,7 +762,12 @@ process.savedGenParticles = cms.EDProducer(
         )
     )
 
-process.gen = cms.Sequence(process.genParticlesForJets * process.caVHGenJets * process.bhadrons * process.savedGenParticles)
+process.gen = cms.Sequence(
+    process.genParticlesForJets * 
+    process.caVHGenJets * 
+    process.bhadrons * 
+    process.savedGenParticles
+    )
 
 process.HbbAnalyzerNew = cms.EDProducer("HbbAnalyzerNew",
     runOnMC             = cms.bool(RUN_ON_MC),
@@ -740,13 +790,14 @@ process.HbbAnalyzerNew = cms.EDProducer("HbbAnalyzerNew",
     hltResultsTag       = cms.InputTag("TriggerResults::HLT"),
     lep_ptCutForBjets   = cms.double(5),
     verbose             = cms.untracked.bool(False),
-    #TODO: clean up the analyzer
     simplejet1Tag       = cms.InputTag("UNUSED_WAS_selectedPatJets"),
     )
 
-# ------------------------------------------------------------------------------
-# Path, Sequence
-# ------------------------------------------------------------------------------
+
+################################################################################
+# Path, Sequence                                                               #
+################################################################################
+
 process.common = cms.Sequence(
     process.goodOfflinePrimaryVertices *
     process.softElectronCands *
@@ -768,13 +819,13 @@ process.common = cms.Sequence(
     process.patMETsHT *
     process.selectedVertices *
     process.bcandidates *
-    process.puJetIdSqeuence *   # it is not a typo ;-)
+    process.puJetIdSqeuence *  # it is not a typo ;-)
     process.HbbAnalyzerNew
     )
 
 if RUN_ON_MC:
    process.p = cms.Path(process.gen * process.common)
-else :
+else:
    process.p = cms.Path(process.common)
 
 #process.noscrapingFilter = cms.Path(process.noscraping)
