@@ -11,6 +11,7 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TSystem.h"
+#include "TStopwatch.h"
 
 #include "DataFormats/FWLite/interface/Event.h"
 #include "DataFormats/FWLite/interface/Handle.h"
@@ -127,74 +128,6 @@ struct CompareJetPt {
 };
 
 typedef struct {
-    void set(const SimBHadron & sbhc, int i) {
-        mass[i] = sbhc.mass();
-        pt[i] = sbhc.pt();
-        eta[i] = sbhc.eta();
-        phi[i] = sbhc.phi();
-        vtx_x[i] = sbhc.decPosition.x();
-        vtx_y[i] = sbhc.decPosition.y();
-        vtx_z[i] = sbhc.decPosition.z();
-        pdgId[i] = sbhc.pdgId();
-        status[i] = sbhc.status();
-    };
-    void reset() {
-        for (int i = 0; i < MAXB; ++i) {
-            mass[i] = -99; pt[i] = -99; eta[i] = -99; phi[i] = -99; vtx_x[i] = -99; vtx_y[i] = -99; vtx_z[i] = -99; pdgId[i] = -99; status[i] = -99;
-        }
-    };
-    float mass[MAXB];
-    float pt[MAXB];
-    float eta[MAXB];
-    float phi[MAXB];
-    float vtx_x[MAXB];
-    float vtx_y[MAXB];
-    float vtx_z[MAXB];
-    int pdgId[MAXB];
-    int status[MAXB];
-    //int quarkStatus[MAXB];
-    //int brotherStatus[MAXB];
-    //int otherId[MAXB];
-    //bool etaOk[MAXB];
-    //bool simOk[MAXB];
-    //bool trackOk[MAXB];
-    //bool cutOk[MAXB];
-    //bool cutNewOk[MAXB];
-    //bool mcMatchOk[MAXB];
-    //bool matchOk[MAXB];
-} SimBHadronInfo;
-
-typedef struct {
-    void set(const reco::SecondaryVertex & recoSv, const TVector3 recoPv, int isv) {
-        pt[isv] = recoSv.p4().Pt();
-        eta[isv] = flightDirection(recoPv, recoSv).eta();
-        phi[isv] = flightDirection(recoPv, recoSv).phi();
-        massBcand[isv] = recoSv.p4().M();
-        massSv[isv] = recoSv.p4().M();
-        dist3D[isv] = recoSv.dist3d().value();
-        distSig3D[isv] = recoSv.dist3d().significance();
-        dist2D[isv] = recoSv.dist2d().value();
-        distSig2D[isv] = recoSv.dist2d().significance();
-        dist3D_norm[isv] = recoSv.dist3d().value() / recoSv.p4().Gamma();
-    };
-    void reset() {
-        for (int i = 0; i < MAXB; ++i) {
-            massBcand[i] = -99; massSv[i]= -99; pt[i] = -99; eta[i] = -99; phi[i] = -99; dist3D[i] = -99; distSig3D[i] = -99; dist2D[i] = -99; distSig2D[i] = -99; dist3D_norm[i] = -99;
-        }
-    };
-    float massBcand[MAXB];
-    float massSv[MAXB];
-    float pt[MAXB];
-    float eta[MAXB];
-    float phi[MAXB];
-    float dist3D[MAXB];
-    float distSig3D[MAXB];
-    float dist2D[MAXB];
-    float distSig2D[MAXB];
-    float dist3D_norm[MAXB];
-} IVFInfo;
-
-typedef struct {
     int HiggsFlag;
     float mass;
     float pt;
@@ -221,50 +154,46 @@ typedef struct {
 } FatHiggsInfo;
 
 typedef struct {
-    float mass;
-    float pt;
-    float eta;
-    float phi;
-    float status;
-    float charge;
-    float momid;
-} genParticleInfo;
-
-typedef struct {
-    float bmass;
-    float bpt;
-    float beta;
-    float bphi;
-    float bstatus;
-    float wdau1mass;
-    float wdau1pt;
-    float wdau1eta;
-    float wdau1phi;
-    float wdau1id;
-    float wdau2mass;
-    float wdau2pt;
-    float wdau2eta;
-    float wdau2phi;
-    float wdau2id;
-} genTopInfo;
-
-typedef struct {
-    bool HiggsCSVtkSharing;
-    bool HiggsIPtkSharing;
-    bool HiggsSVtkSharing;
-    bool FatHiggsCSVtkSharing;
-    bool FatHiggsIPtkSharing;
-    bool FatHiggsSVtkSharing;
-} TrackSharingInfo;
-
-typedef struct {
     float mass;  //MT in case of W
     float pt;
     float eta;
     float phi;
-} TrackInfo;
+} VInfo;
 
-struct LeptonInfo {
+typedef struct {
+    int run;
+    int lumi;
+    int event;
+    int json;
+} EventInfo;
+
+typedef struct {
+    float et;
+    float sumet;
+    float sig;
+    float phi;
+} METInfo;
+
+typedef struct {
+    float et[12];
+    float phi[12];
+    float sumet[12];
+    //< ElectronEnUp/Down, JetEn, JetRes, MuonEn, TauEn, UnclusteredEn [0-11]
+    template < class Input > void set(const Input & i, int j) {
+        et[j] = i.p4.Pt();
+        phi[j] = i.p4.Phi();
+        sumet[j] = i.sumEt;
+    }
+} METUncInfo;
+
+typedef struct {
+    float mht;
+    float ht;
+    float sig;
+    float phi;
+} MHTInfo;
+
+typedef struct {
     void reset() {
         for (int i = 0; i < MAXL; i++)
         {
@@ -335,7 +264,7 @@ struct LeptonInfo {
     float wpHWW[MAXL];
     float innerHits[MAXL];
     float photonIsoDoubleCount[MAXL];
-};
+} LeptonInfo;
 
 template <> void LeptonInfo::setSpecific < VHbbEvent::ElectronInfo >
     (const VHbbEvent::ElectronInfo & i, int j, const VHbbEventAuxInfo & aux) {
@@ -441,45 +370,6 @@ template <> void LeptonInfo::setSpecific < VHbbEvent::MuonInfo >
     pfCorrIso[j] = (i.pfChaIso+ std::max(i.pfPhoIso+i.pfNeuIso-rhoN*area,mincor))/i.p4.Pt();
     id2012tight[j] = i.isPF && i. globChi2<10 && i.nPixelHits>= 1 && i.globNHits != 0 && i.nValidLayers > 5 && (i.cat & 0x2) && i.nMatches >=2 && i.ipDb<.2;
 }
-
-typedef struct {
-    float et;
-    float sumet;
-    float sig;
-    float phi;
-} METInfo;
-
-typedef struct {
-    float et[12];
-    float phi[12];
-    float sumet[12];
-    //< ElectronEnUp/Down, JetEn, JetResmuEn, MuonEn, TauEn, UnclusteredEn [0-11]
-    template < class Input > void set(const Input & i, int j) {
-        et[j] = i.p4.Pt();
-        phi[j] = i.p4.Phi();
-        sumet[j] = i.sumEt;
-    }
-} METUncInfo;
-
-typedef struct {
-    float mht;
-    float ht;
-    float sig;
-    float phi;
-} MHTInfo;
-
-typedef struct {
-    float mass;
-    float pt;
-    float wMass;
-} TopInfo;
-
-typedef struct {
-    int run;
-    int lumi;
-    int event;
-    int json;
-} EventInfo;
 
 /// CSV Reshaping
 BTagShapeInterface *nominalShape = 0;
@@ -661,6 +551,117 @@ typedef struct {
     float jetArea[MAXJ];
 } JetInfo;
 
+typedef struct {
+    float mass;
+    float pt;
+    float eta;
+    float phi;
+    float status;
+    float charge;
+    float momid;
+} genParticleInfo;
+
+typedef struct {
+    float bmass;
+    float bpt;
+    float beta;
+    float bphi;
+    float bstatus;
+    float wdau1mass;
+    float wdau1pt;
+    float wdau1eta;
+    float wdau1phi;
+    float wdau1id;
+    float wdau2mass;
+    float wdau2pt;
+    float wdau2eta;
+    float wdau2phi;
+    float wdau2id;
+} genTopInfo;
+
+typedef struct {
+    float mass;
+    float pt;
+    float wMass;
+} TopInfo;
+
+typedef struct {
+    void set(const SimBHadron & sbhc, int i) {
+        mass[i] = sbhc.mass();
+        pt[i] = sbhc.pt();
+        eta[i] = sbhc.eta();
+        phi[i] = sbhc.phi();
+        vtx_x[i] = sbhc.decPosition.x();
+        vtx_y[i] = sbhc.decPosition.y();
+        vtx_z[i] = sbhc.decPosition.z();
+        pdgId[i] = sbhc.pdgId();
+        status[i] = sbhc.status();
+    };
+    void reset() {
+        for (int i = 0; i < MAXB; ++i) {
+            mass[i] = -99; pt[i] = -99; eta[i] = -99; phi[i] = -99; vtx_x[i] = -99; vtx_y[i] = -99; vtx_z[i] = -99; pdgId[i] = -99; status[i] = -99;
+        }
+    };
+    float mass[MAXB];
+    float pt[MAXB];
+    float eta[MAXB];
+    float phi[MAXB];
+    float vtx_x[MAXB];
+    float vtx_y[MAXB];
+    float vtx_z[MAXB];
+    int pdgId[MAXB];
+    int status[MAXB];
+    //int quarkStatus[MAXB];
+    //int brotherStatus[MAXB];
+    //int otherId[MAXB];
+    //bool etaOk[MAXB];
+    //bool simOk[MAXB];
+    //bool trackOk[MAXB];
+    //bool cutOk[MAXB];
+    //bool cutNewOk[MAXB];
+    //bool mcMatchOk[MAXB];
+    //bool matchOk[MAXB];
+} SimBHadronInfo;
+
+typedef struct {
+    void set(const reco::SecondaryVertex & recoSv, const TVector3 recoPv, int isv) {
+        pt[isv] = recoSv.p4().Pt();
+        eta[isv] = flightDirection(recoPv, recoSv).eta();
+        phi[isv] = flightDirection(recoPv, recoSv).phi();
+        massBcand[isv] = recoSv.p4().M();
+        massSv[isv] = recoSv.p4().M();
+        dist3D[isv] = recoSv.dist3d().value();
+        distSig3D[isv] = recoSv.dist3d().significance();
+        dist2D[isv] = recoSv.dist2d().value();
+        distSig2D[isv] = recoSv.dist2d().significance();
+        dist3D_norm[isv] = recoSv.dist3d().value() / recoSv.p4().Gamma();
+    };
+    void reset() {
+        for (int i = 0; i < MAXB; ++i) {
+            massBcand[i] = -99; massSv[i]= -99; pt[i] = -99; eta[i] = -99; phi[i] = -99; dist3D[i] = -99; distSig3D[i] = -99; dist2D[i] = -99; distSig2D[i] = -99; dist3D_norm[i] = -99;
+        }
+    };
+    float massBcand[MAXB];
+    float massSv[MAXB];
+    float pt[MAXB];
+    float eta[MAXB];
+    float phi[MAXB];
+    float dist3D[MAXB];
+    float distSig3D[MAXB];
+    float dist2D[MAXB];
+    float distSig2D[MAXB];
+    float dist3D_norm[MAXB];
+} IVFInfo;
+
+typedef struct {
+    bool HiggsCSVtkSharing;
+    bool HiggsIPtkSharing;
+    bool HiggsSVtkSharing;
+    bool FatHiggsCSVtkSharing;
+    bool FatHiggsIPtkSharing;
+    bool FatHiggsSVtkSharing;
+} TrackSharingInfo;
+
 
 // -----------------------------------------------------------------------------
 // Main
@@ -695,7 +696,7 @@ int main(int argc, char *argv[]) {
     FatHiggsInfo FatH;
     genParticleInfo genZ, genZstar, genWstar, genW, genH, genB, genBbar;  // add here the fatjet higgs
     genTopInfo genTop, genTbar;
-    TrackInfo V;
+    VInfo V;
     int nvlep = 0, nalep = 0;
     float lheV_pt = 0;          // for the Madgraph sample stitching
     float lheHT = 0;            // for the Madgraph sample stitching
@@ -778,7 +779,7 @@ int main(int argc, char *argv[]) {
     int skipEvents_(in.getParameter < int > ("skipEvents"));
     unsigned int outputEvery_(in.getParameter < unsigned int > ("outputEvery"));  // not implemented
     std::vector < edm::LuminosityBlockRange > jsonVector;
-    if (in.exists("lumisToProcess")) {
+    if (in.exists("lumisToProcess") && ana.getParameter < bool > ("isMC")) {
         std::vector < edm::LuminosityBlockRange > const &lumisTemp = in.getUntrackedParameter < std::vector < edm::LuminosityBlockRange > >("lumisToProcess");
         jsonVector.resize(lumisTemp.size());
         copy(lumisTemp.begin(), lumisTemp.end(), jsonVector.begin());
@@ -1249,14 +1250,20 @@ int main(int argc, char *argv[]) {
     // Analysis
     // -------------------------------------------------------------------------
     int ievt = 0;
-    int totalcount = 0;
+    int jevt = 0;
+    TStopwatch sw;
+    sw.Start();
 
     for (unsigned int iFile = 0; iFile < inputFiles_.size(); ++iFile) {
-        std::cout << "File " << iFile << std::endl;
+        std::cout << "Initiating request to open file " << iFile << std::endl;
+        std::cout << "Events: " << ievt << std::endl;
+        std::cout << "Saved : " << jevt << std::endl;
         TFile *inFile = TFile::Open(inputFiles_[iFile].c_str());
         if (inFile == 0) {
             std::cout << "Failed to open " << inputFiles_[iFile] << std::endl;
             continue;
+        } else {
+            std::cout << "Successfully opened file " << inputFiles_[iFile] << std::endl;
         }
         
         fwlite::Event ev(inFile);
@@ -1377,11 +1384,15 @@ int main(int argc, char *argv[]) {
             
             /// The VHbb Candidate
             /// Note that only the first one is used.
-            /// Should skip events skipped if neither HiggsFlag nor FatHiggsFlag is true?
             const VHbbCandidate & vhCand = cand->at(0);
             Vtype = vhCand.candidateType;
-
             if (vhCand.H.HiggsFlag) H.HiggsFlag = 1;  else H.HiggsFlag = 0;
+            if (vhCand.FatH.FatHiggsFlag) FatH.FatHiggsFlag = 1;  else FatH.FatHiggsFlag = 0;
+                        
+            /// FIXME: Skip events if neither HiggsFlag nor FatHiggsFlag is true?
+            //if (H.HiggsFlag != 1 && FatH.FatHiggsFlag != 1)  continue;
+
+            /// Dijet H
             hJets.reset();
             aJets.reset();
             if (vhCand.H.HiggsFlag) {
@@ -1420,7 +1431,7 @@ int main(int argc, char *argv[]) {
                 hJets.cosTheta[1] = vhCand.H.helicities[1];
             }  // end if HiggsFlag
             
-            if (vhCand.FatH.FatHiggsFlag) FatH.FatHiggsFlag = 1;  else FatH.FatHiggsFlag = 0;
+            /// Fatjet H
             fathFilterJets.reset();
             aJetsFat.reset();
             if (vhCand.FatH.FatHiggsFlag) {
@@ -1457,6 +1468,7 @@ int main(int argc, char *argv[]) {
                 }
             }  // end if FatHiggsFlag
 
+            /// Associated V
             V.mass = vhCand.V.p4.M();
             if (isW)  V.mass = vhCand.Mt();
             V.pt = vhCand.V.p4.Pt();
@@ -2143,7 +2155,9 @@ int main(int argc, char *argv[]) {
                 }
 
                 if (aux.mcZ[i].dauid.size() > 1 &&
-                    (abs(aux.mcZ[i].dauid[0]) == 13 || abs(aux.mcZ[i].dauid[0]) == 11)) {  // add neutrino daughters as well?
+                    (abs(aux.mcZ[i].dauid[0]) == 11 || abs(aux.mcZ[i].dauid[0]) == 12 ||
+                     abs(aux.mcZ[i].dauid[0]) == 13 || abs(aux.mcZ[i].dauid[0]) == 14 ||
+                     abs(aux.mcZ[i].dauid[0]) == 15 || abs(aux.mcZ[i].dauid[0]) == 16 ) ) {
                     genZ.mass = aux.mcZ[i].p4.M();
                     genZ.pt = aux.mcZ[i].p4.Pt();
                     if (genZ.pt > 0.1) genZ.eta = aux.mcZ[i].p4.Eta();  else genZ.eta = -99;
@@ -2210,7 +2224,7 @@ int main(int argc, char *argv[]) {
             
             // b coming from Higgs
             for (unsigned int i = 0; i < aux.mcB.size(); i++) {
-                if (abs(aux.mcB[i].momid) != 5) {
+                if (abs(aux.mcB[i].momid) == 25) {
                     genB.mass = aux.mcB[i].p4.M();
                     genB.pt = aux.mcB[i].p4.Pt();
                     if (genB.pt > 0.1) genB.eta = aux.mcB[i].p4.Eta();  else genB.eta = -99;
@@ -2231,7 +2245,7 @@ int main(int argc, char *argv[]) {
             }
 
             for (unsigned int i = 0; i < aux.mcBbar.size(); i++) {
-                if (abs(aux.mcBbar[i].momid) != 5) {
+                if (abs(aux.mcBbar[i].momid) == 25) {
                     genBbar.mass = aux.mcBbar[i].p4.M();
                     genBbar.pt = aux.mcBbar[i].p4.Pt();
                     if (genBbar.pt > 0.1) genBbar.eta = aux.mcBbar[i].p4.Eta();  else genBbar.eta = -99;
@@ -2325,15 +2339,19 @@ int main(int argc, char *argv[]) {
             }  // end if HiggsFlag
 
             _outTree->Fill();
+            ++jevt;
         }  // end loop over events
 
-        std::cout << "closing the file: " << inputFiles_[iFile] << std::endl;
+        std::cout << "Closing file " << inputFiles_[iFile] << std::endl;
         inFile->Close();  // close input file
     }  // end loop over files
-
-
+    
+    std::cout << "------------------------------- " << std::endl;
     std::cout << "Events: " << ievt << std::endl;
-    std::cout << "TotalCount: " << totalcount << std::endl;
+    std::cout << "Saved : " << jevt << std::endl;
+    // Get elapsed time
+    sw.Stop();
+    sw.Print();
 
     _outFile->cd();
     //_outTree->Write();

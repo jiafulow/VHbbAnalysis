@@ -29,11 +29,11 @@ bool HbbCandidateFinderAlgo::jetID(const VHbbEvent::SimpleJet & j) {
         return false;
     if (j.nConstituents <= 1)
         return false;
+    if (fabs(j.p4.Eta()) < 2.4 && j.chargedHadronEFraction <= 0.)
+        return false;
+    if (fabs(j.p4.Eta()) < 2.4 && j.ntracks <= 0)
+        return false;
     if (fabs(j.p4.Eta()) < 2.4 && j.chargedEmEFraction > 0.99)
-        return false;
-    if (fabs(j.p4.Eta()) < 2.4 && j.chargedHadronEFraction == 0)
-        return false;
-    if (fabs(j.p4.Eta()) < 2.4 && j.ntracks == 0)
         return false;
     return true;
 }
@@ -414,10 +414,10 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
 // debug
     double minBtag1 = -9999.;
     for (unsigned int i = 0; i < hardjets.size(); i++) {
-        int subJetIn[300];
+        int subJetIn[300];  // indices of filterjets
         for (int k = 0; k < 300; k++)
             subJetIn[k] = -99;
-        int subJetIn1st[2];
+        int subJetIn1st[2];  // indices of subjets
         for (int k = 0; k < 2; k++)
             subJetIn1st[k] = -99;
         //TMatrixDRow* roweta=new TMatrixDRow(*pointerEta,i);        
@@ -427,10 +427,10 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
         //std::cout << "HardJet pt: " << hardjets[i].p4.Pt() << " # daughters " << hardjets[i].constituents << std::endl;
 
 // debug
-        if (hardjets[i].constituents < 4)  continue;
+        if (hardjets[i].constituents < 4)  continue;  // must have 2 subjets and at least 2 filter jets
 
 // first get ja and jb  from first decomposition
-        int In1st = 0;
+        int In1st = 0;  // In1st is the same as j??
         for (int j = 0; j < 2; j++) {
 // debug
             //std::cout << "hardJet constituent pt: " << hardjets[i].subFourMomentum[j].Pt() << " eta,phi " << hardjets[i].subFourMomentum[j].Eta()  << " , " << hardjets[i].subFourMomentum[j].Phi()  << std::endl;
@@ -442,8 +442,8 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
                 //    subJetIn1st[In1st]=kk;
                 //if(subjets[kk].p4.Eta()==hardjets[i].subFourMomentum[j].Eta() && subjets[kk].p4.Phi()==hardjets[i].subFourMomentum[j].Phi())
                 //    subJetIn1st[In1st]=kk;
-                double deltaR_1 = deltaR(subjets[kk].p4.Eta(), subjets[kk].p4.Phi(), hardjets[i].subFourMomentum[j].Eta(), hardjets[i].subFourMomentum[j].Phi());
-                if (deltaR_1 < 0.01)
+                double deltaR_1 = reco::deltaR(subjets[kk].p4.Eta(), subjets[kk].p4.Phi(), hardjets[i].subFourMomentum[j].Eta(), hardjets[i].subFourMomentum[j].Phi());
+                if (deltaR_1 < 0.01)  // how safe is this?
                     subJetIn1st[In1st] = kk;
             }
             In1st++;
@@ -462,8 +462,8 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
                 //    subJetIn[j]=kk;
                 //if(subjets[kk].p4.Eta()==hardjets[i].subFourMomentum[j].Eta() && subjets[kk].p4.Phi()==hardjets[i].subFourMomentum[j].Phi())
                 //    subJetIn[j]=kk;
-                double deltaR_1 = deltaR(filterjets[kk].p4.Eta(), filterjets[kk].p4.Phi(), hardjets[i].subFourMomentum[j].Eta(), hardjets[i].subFourMomentum[j].Phi());
-                if (deltaR_1 < 0.01)
+                double deltaR_1 = reco::deltaR(filterjets[kk].p4.Eta(), filterjets[kk].p4.Phi(), hardjets[i].subFourMomentum[j].Eta(), hardjets[i].subFourMomentum[j].Phi());
+                if (deltaR_1 < 0.01)  // how safe is this?
                     subJetIn[j - 2] = kk;
             }
         }
@@ -551,13 +551,16 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
             fatj1 = hardjets[i];
             subJetsout.clear();
             if (subJetIn[0] != -99)
-                subJetsout.push_back(filterjets[subJetIn[0]]);
+                subJetsout.push_back(filterjets[subJetIn[0]]);  // are the subjets sorted?
             if (subJetIn[1] != -99)
                 subJetsout.push_back(filterjets[subJetIn[1]]);
             if (subJetIn[2] != -99)
                 subJetsout.push_back(filterjets[subJetIn[2]]);
         }
     }  // loop hard jet
+
+    //if (minBtag1 < 0)
+    //    return false;
 
     // Additional jets
     std::vector < VHbbEvent::SimpleJet > ak5jets = ak5jetsin;

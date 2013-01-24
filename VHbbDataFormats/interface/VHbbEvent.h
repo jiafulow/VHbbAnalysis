@@ -35,7 +35,7 @@ class VHbbEvent {
         float vtxMass, vtx3dL, vtx3deL, vtxNTracks, vtxProb;
         TVector3 vtxPosition;
         TLorentzVector vtxP4;
-        std::vector < unsigned int >vtxTrackIds, btagTrackIds, csvTrackIds;
+        std::vector < unsigned int > vtxTrackIds, btagTrackIds, csvTrackIds;
         int csvNTracks, btagNTracks;
         int ntracks;
         float charge;
