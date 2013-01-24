@@ -1141,6 +1141,8 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         ef.id80r = elec->electronID("eidVBTFRel80");
         ef.id70 = elec->electronID("eidVBTFCom70");
         ef.id70r = elec->electronID("eidVBTFRel70");
+        
+        // 2012 MVA EleID
         ef.mvaOut = elec->electronID("mvaNonTrigV0");
         ef.mvaOutTrig = elec->electronID("mvaTrigV0");
 
@@ -1315,7 +1317,7 @@ TVector2 HbbAnalyzerNew::getTvect(const pat::Jet * patJet) {
     /// Re-reconstruct the jet direction with the charged tracks
     std::vector < reco::PFCandidatePtr > patJetpfc = patJet->getPFConstituents();
     for (size_t idx = 0; idx < patJetpfc.size(); idx++) {
-        if (patJetpfc.at(idx)->charge() != 0) {
+        if (patJetpfc.at(idx)->charge() != 0) { // should require some quality cuts?
             pi.SetPtEtaPhiE(patJetpfc.at(idx)->pt(), patJetpfc.at(idx)->eta(),
                             patJetpfc.at(idx)->phi(), patJetpfc.at(idx)->energy());
             J += pi;
@@ -1327,7 +1329,6 @@ TVector2 HbbAnalyzerNew::getTvect(const pat::Jet * patJet) {
     if (nOfconst < 2)
         return null;
 
-    //TVector2 v_J(J.Rapidity(), J.Phi());
     /// Calculate TVector2 using only charged tracks
     for (size_t idx = 0; idx < patJetpfc.size(); idx++) {
         if (patJetpfc.at(idx)->charge() != 0) {
@@ -1505,6 +1506,7 @@ void HbbAnalyzerNew::fillSimpleJet(VHbbEvent::SimpleJet & sj,
     sj.constituentPtDistribution = jet_iter->constituentPtDistribution();
     sj.constituentEtaPhiSpread = jet_iter->constituentEtaPhiSpread();
 
+    // FIXME: add nConstituents with pT > 1? and ntracks with good quality and dz cuts
     if (jet_iter->isPFJet()) {
         sj.chargedHadronEFraction = jet_iter->chargedHadronEnergyFraction();
         sj.neutralHadronEFraction = jet_iter->neutralHadronEnergyFraction();
