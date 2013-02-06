@@ -512,8 +512,8 @@ typedef struct {
     float cef[MAXJ];
     float nef[MAXJ];
     float nch[MAXJ];
-    float nconstituents[MAXJ];
-    float flavour[MAXJ];
+    float nconstituents[MAXJ];  // should be int?
+    float flavour[MAXJ];  // should be int?
     int isSemiLept[MAXJ];
     int isSemiLeptMCtruth[MAXJ];
     int SoftLeptpdgId[MAXJ];
@@ -855,22 +855,22 @@ int main(int argc, char *argv[]) {
     TH1F *pu = new TH1F("pileup", "", 51, -0.5, 50.5);
 
     TTree *_outTree = new TTree("tree", "myTree");
-    _outTree->Branch("H", &H, "HiggsFlag/I:mass/F:pt/F:eta:phi/F:dR/F:dPhi/F:dEta/F");
-    _outTree->Branch("V", &V, "mass/F:pt/F:eta:phi/F");
-    _outTree->Branch("FatH", &FatH, "FatHiggsFlag/I:mass/F:pt/F:eta:phi/F:filteredmass/F:filteredpt/F:filteredeta/F:filteredphi/F");
+    _outTree->Branch("H", &H, "HiggsFlag/I:mass/F:pt/F:eta/F:phi/F:dR/F:dPhi/F:dEta/F");
+    _outTree->Branch("V", &V, "mass/F:pt/F:eta/F:phi/F");
+    _outTree->Branch("FatH", &FatH, "FatHiggsFlag/I:mass/F:pt/F:eta/F:phi/F:filteredmass/F:filteredpt/F:filteredeta/F:filteredphi/F");
     _outTree->Branch("lheV_pt", &lheV_pt, "lheV_pt/F");
     _outTree->Branch("lheHT", &lheHT, "lheHT/F");
     _outTree->Branch("lheNj", &lheNj, "lheNj/I");
-    _outTree->Branch("genZ", &genZ, "mass/F:pt/F:eta:phi/F:status/F:charge:momid/F");
-    _outTree->Branch("genZstar", &genZstar, "mass/F:pt/F:eta:phi/F:status/F:charge:momid/F");
-    _outTree->Branch("genW", &genW, "mass/F:pt/F:eta:phi/F:status/F:charge:momid/F");
-    _outTree->Branch("genWstar", &genWstar, "mass/F:pt/F:eta:phi/F:status/F:charge:momid/F");
-    _outTree->Branch("genH", &genH, "mass/F:pt/F:eta:phi/F:status/F:charge:momid/F");
-    _outTree->Branch("genB", &genB, "mass/F:pt/F:eta:phi/F:status/F:charge:momid/F");
-    _outTree->Branch("genBbar", &genBbar, "mass/F:pt/F:eta:phi/F:status/F:charge:momid/F");
-    _outTree->Branch("genTop", &genTop, "bmass/F:bpt/F:beta:bphi/F:bstatus/F:wdau1mass/F:wdau1pt/F:wdau1eta:wdau1phi/F:wdau1id/F:wdau2mass/F:wdau2pt/F:wdau2eta:wdau2phi/F:wdau2id/F");
-    _outTree->Branch("genTbar", &genTbar, "bmass/F:bpt/F:beta:bphi/F:bstatus/F:wdau1mass/F:wdau1pt/F:wdau1eta:wdau1phi/F:wdau1id/F:wdau2mass/F:wdau2pt/F:wdau2eta:wdau2phi/F:wdau2id/F");
-    _outTree->Branch("TkSharing", &TkSharing, "HiggsCSVtkSharing/b:HiggsIPtkSharing:HiggsSVtkSharing:FatHiggsCSVtkSharing:FatHiggsIPtkSharing:FatHiggsSVtkSharing");
+    _outTree->Branch("genZ", &genZ, "mass/F:pt/F:eta/F:phi/F:status/F:charge/F:momid/F");
+    _outTree->Branch("genZstar", &genZstar, "mass/F:pt/F:eta/F:phi/F:status/F:charge/F:momid/F");
+    _outTree->Branch("genW", &genW, "mass/F:pt/F:eta/F:phi/F:status/F:charge/F:momid/F");
+    _outTree->Branch("genWstar", &genWstar, "mass/F:pt/F:eta/F:phi/F:status/F:charge/F:momid/F");
+    _outTree->Branch("genH", &genH, "mass/F:pt/F:eta/F:phi/F:status/F:charge/F:momid/F");
+    _outTree->Branch("genB", &genB, "mass/F:pt/F:eta/F:phi/F:status/F:charge/F:momid/F");
+    _outTree->Branch("genBbar", &genBbar, "mass/F:pt/F:eta/F:phi/F:status/F:charge/F:momid/F");
+    _outTree->Branch("genTop", &genTop, "bmass/F:bpt/F:beta/F:bphi/F:bstatus/F:wdau1mass/F:wdau1pt/F:wdau1eta/F:wdau1phi/F:wdau1id/F:wdau2mass/F:wdau2pt/F:wdau2eta/F:wdau2phi/F:wdau2id/F");
+    _outTree->Branch("genTbar", &genTbar, "bmass/F:bpt/F:beta/F:bphi/F:bstatus/F:wdau1mass/F:wdau1pt/F:wdau1eta/F:wdau1phi/F:wdau1id/F:wdau2mass/F:wdau2pt/F:wdau2eta/F:wdau2phi/F:wdau2id/F");
+    _outTree->Branch("TkSharing", &TkSharing, "HiggsCSVtkSharing/b:HiggsIPtkSharing/b:HiggsSVtkSharing/b:FatHiggsCSVtkSharing/b:FatHiggsIPtkSharing/b:FatHiggsSVtkSharing/b");
     _outTree->Branch("nhJets", &nhJets, "nhJets/I");
     _outTree->Branch("nfathFilterJets", &nfathFilterJets, "nfathFilterJets/I");
     _outTree->Branch("naJets", &naJets, "naJets/I");
@@ -898,7 +898,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("hJet_cef", hJets.cef, "cef[nhJets]/F");
     _outTree->Branch("hJet_nef", hJets.nef, "nef[nhJets]/F");
     _outTree->Branch("hJet_nch", hJets.nch, "nch[nhJets]/F");
-    _outTree->Branch("hJet_nconstituents", hJets.nconstituents, "nconstituents[nhJets]");
+    _outTree->Branch("hJet_nconstituents", hJets.nconstituents, "nconstituents[nhJets]/F");
     _outTree->Branch("hJet_flavour", hJets.flavour, "flavour[nhJets]/F");
     _outTree->Branch("hJet_isSemiLept", hJets.isSemiLept, "isSemiLept[nhJets]/I");
     _outTree->Branch("hJet_isSemiLeptMCtruth", hJets.isSemiLeptMCtruth, "isSemiLeptMCtruth[nhJets]/I");
@@ -985,7 +985,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("aJet_cef", aJets.cef, "cef[naJets]/F");
     _outTree->Branch("aJet_nef", aJets.nef, "nef[naJets]/F");
     _outTree->Branch("aJet_nch", aJets.nch, "nch[naJets]/F");
-    _outTree->Branch("aJet_nconstituents", aJets.nconstituents, "nconstituents[naJets]");
+    _outTree->Branch("aJet_nconstituents", aJets.nconstituents, "nconstituents[naJets]/F");
     _outTree->Branch("aJet_flavour", aJets.flavour, "flavour[naJets]/F");
     _outTree->Branch("aJet_isSemiLept", aJets.isSemiLept, "isSemiLept[naJets]/I");
     _outTree->Branch("aJet_isSemiLeptMCtruth", aJets.isSemiLeptMCtruth, "isSemiLeptMCtruth[naJets]/I");
@@ -1103,7 +1103,7 @@ int main(int argc, char *argv[]) {
 
     _outTree->Branch("vLepton_mass", vLeptons.mass, "mass[nvlep]/F");
     _outTree->Branch("vLepton_pt", vLeptons.pt, "pt[nvlep]/F");
-    _outTree->Branch("vLepton_eta", vLeptons.eta, "eta[nvlep]");
+    _outTree->Branch("vLepton_eta", vLeptons.eta, "eta[nvlep]/F");
     _outTree->Branch("vLepton_phi", vLeptons.phi, "phi[nvlep]/F");
     _outTree->Branch("vLepton_aodCombRelIso", vLeptons.aodCombRelIso, "aodCombRelIso[nvlep]/F");
     _outTree->Branch("vLepton_pfCombRelIso", vLeptons.pfCombRelIso, "pfCombRelIso[nvlep]/F");
@@ -1120,7 +1120,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("vLepton_vbtf", vLeptons.vbtf, "vbtf[nvlep]/F");
     _outTree->Branch("vLepton_id80NoIso", vLeptons.id80NoIso, "id80NoIso[nvlep]/F");
     _outTree->Branch("vLepton_genPt", vLeptons.genPt, "genPt[nvlep]/F");
-    _outTree->Branch("vLepton_genEta", vLeptons.genEta, "genEta[nvlep]");
+    _outTree->Branch("vLepton_genEta", vLeptons.genEta, "genEta[nvlep]/F");
     _outTree->Branch("vLepton_genPhi", vLeptons.genPhi, "genPhi[nvlep]/F");
     _outTree->Branch("vLepton_charge", vLeptons.charge, "charge[nvlep]/F");
     _outTree->Branch("vLepton_pfCorrIso", vLeptons.pfCorrIso, "pfCorrIso[nvlep]/F");
@@ -1139,7 +1139,7 @@ int main(int argc, char *argv[]) {
 
     _outTree->Branch("aLepton_mass", aLeptons.mass, "mass[nalep]/F");
     _outTree->Branch("aLepton_pt", aLeptons.pt, "pt[nalep]/F");
-    _outTree->Branch("aLepton_eta", aLeptons.eta, "eta[nalep]");
+    _outTree->Branch("aLepton_eta", aLeptons.eta, "eta[nalep]/F");
     _outTree->Branch("aLepton_phi", aLeptons.phi, "phi[nalep]/F");
     _outTree->Branch("aLepton_aodCombRelIso", aLeptons.aodCombRelIso, "aodCombRelIso[nalep]/F");
     _outTree->Branch("aLepton_pfCombRelIso", aLeptons.pfCombRelIso, "pfCombRelIso[nalep]/F");
@@ -1156,7 +1156,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("aLepton_vbtf", aLeptons.vbtf, "vbtf[nalep]/F");
     _outTree->Branch("aLepton_id80NoIso", aLeptons.id80NoIso, "id80NoIso[nalep]/F");
     _outTree->Branch("aLepton_genPt", aLeptons.genPt, "genPt[nalep]/F");
-    _outTree->Branch("aLepton_genEta", aLeptons.genEta, "genEta[nalep]");
+    _outTree->Branch("aLepton_genEta", aLeptons.genEta, "genEta[nalep]/F");
     _outTree->Branch("aLepton_genPhi", aLeptons.genPhi, "genPhi[nalep]/F");
     _outTree->Branch("aLepton_charge", aLeptons.charge, "charge[nalep]/F");
     _outTree->Branch("aLepton_pfCorrIso", aLeptons.pfCorrIso, "pfCorrIso[nalep]/F");
@@ -1190,7 +1190,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("Sv_distSig3D", &IVF.distSig3D, "distSig3D[nSvs]/F");
     _outTree->Branch("Sv_dist3D_norm", &IVF.dist3D_norm, "dist3D_norm[nSvs]/F");
     // IVF Higgs candidate
-    _outTree->Branch("SVH", &SVH, "mass/F:pt/F:eta:phi/F:dR/F:dPhi/F:dEta/F");
+    _outTree->Branch("SVH", &SVH, "mass/F:pt/F:eta/F:phi/F:dR/F:dPhi/F:dEta/F");
 
     // SimBHadron
     _outTree->Branch("nSimBs", &nSimBs, "nSimBs/I");
@@ -1204,21 +1204,21 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("SimBs_pdgId", &SimBs.pdgId, "pdgId[nSimBs]/F");
     _outTree->Branch("SimBs_status", &SimBs.status, "status[nSimBs]/F");
     // SimBHadron Higgs Candidate
-    _outTree->Branch("SimBsH", &SimBsH, "mass/F:pt/F:eta:phi/F:dR/F:dPhi/F:dEta/F");
+    _outTree->Branch("SimBsH", &SimBsH, "mass/F:pt/F:eta/F:phi/F:dR/F:dPhi/F:dEta/F");
 
     _outTree->Branch("rho", &rho, "rho/F");
     _outTree->Branch("rho25", &rho25, "rho25/F");
     _outTree->Branch("rhoN", &rhoN, "rhoN/F");
     _outTree->Branch("nPVs", &nPVs, "nPVs/I");
     _outTree->Branch("nGoodPVs", &nGoodPVs, "nGoodPVs/I");
-    _outTree->Branch("MET", &MET, "et/F:sumet:sig/F:phi/F");
-    _outTree->Branch("fakeMET", &fakeMET, "et/F:sumet:sig/F:phi/F");
-    _outTree->Branch("METtype1corr", &METtype1corr, "et/F:sumet:sig/F:phi/F");
-    _outTree->Branch("METtype1p2corr", &METtype1p2corr, "et/F:sumet:sig/F:phi/F");
-    _outTree->Branch("METnoPU", &METnoPU, "et/F:sumet:sig/F:phi/F");
-    _outTree->Branch("METnoPUCh", &METnoPUCh, "et/F:sumet:sig/F:phi/F");
-    _outTree->Branch("caloMET", &caloMET, "et/F:sumet:sig/F:phi/F");
-    _outTree->Branch("MHT", &MHT, "mht/F:ht:sig/F:phi/F");
+    _outTree->Branch("MET", &MET, "et/F:sumet/F:sig/F:phi/F");
+    _outTree->Branch("fakeMET", &fakeMET, "et/F:sumet/F:sig/F:phi/F");
+    _outTree->Branch("METtype1corr", &METtype1corr, "et/F:sumet/F:sig/F:phi/F");
+    _outTree->Branch("METtype1p2corr", &METtype1p2corr, "et/F:sumet/F:sig/F:phi/F");
+    _outTree->Branch("METnoPU", &METnoPU, "et/F:sumet/F:sig/F:phi/F");
+    _outTree->Branch("METnoPUCh", &METnoPUCh, "et/F:sumet/F:sig/F:phi/F");
+    _outTree->Branch("caloMET", &caloMET, "et/F:sumet/F:sig/F:phi/F");
+    _outTree->Branch("MHT", &MHT, "mht/F:ht/F:sig/F:phi/F");
     _outTree->Branch("metUnc_et", &metUnc.et, "et[12]/F");
     _outTree->Branch("metUnc_phi", &metUnc.phi, "phi[12]/F");
     _outTree->Branch("metUnc_sumet", &metUnc.sumet, "sumet[12]/F");
