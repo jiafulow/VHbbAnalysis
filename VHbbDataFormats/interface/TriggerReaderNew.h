@@ -1,5 +1,5 @@
-#ifndef TriggerReeaderNew__H
-#define TriggerReeaderNew__H
+#ifndef TriggerReaderNew__H
+#define TriggerReaderNew__H
 
 #include "DataFormats/FWLite/interface/Event.h"
 #include "DataFormats/FWLite/interface/Handle.h"
@@ -14,7 +14,7 @@
 
 class TriggerReader {
   public:
-    TriggerReader(bool passAllEvents=false, bool verb=true)
+    TriggerReader(bool passAllEvents=false, bool verb=false)
       : passAll(passAllEvents), verbose(verb), run(1), cacheRun(-1) {}
 
     void setEvent(fwlite::Event * e, const char *process, const std::vector < std::string > triggers) {
@@ -90,5 +90,5 @@ class TriggerReader {
     
     std::map < std::string, unsigned int > nameMap;
 };
-#endif  // TriggerReeaderNew__H
+#endif  // TriggerReaderNew__H
 

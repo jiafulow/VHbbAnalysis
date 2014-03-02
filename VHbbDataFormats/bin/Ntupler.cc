@@ -2224,7 +2224,7 @@ int main(int argc, char *argv[]) {
             
             // b coming from Higgs
             for (unsigned int i = 0; i < aux.mcB.size(); i++) {
-                if (abs(aux.mcB[i].momid) == 25) {
+                if (abs(aux.mcB[i].momid) != 5) {
                     genB.mass = aux.mcB[i].p4.M();
                     genB.pt = aux.mcB[i].p4.Pt();
                     if (genB.pt > 0.1) genB.eta = aux.mcB[i].p4.Eta();  else genB.eta = -99;
@@ -2245,7 +2245,7 @@ int main(int argc, char *argv[]) {
             }
 
             for (unsigned int i = 0; i < aux.mcBbar.size(); i++) {
-                if (abs(aux.mcBbar[i].momid) == 25) {
+                if (abs(aux.mcBbar[i].momid) != 5) {
                     genBbar.mass = aux.mcBbar[i].p4.M();
                     genBbar.pt = aux.mcBbar[i].p4.Pt();
                     if (genBbar.pt > 0.1) genBbar.eta = aux.mcBbar[i].p4.Eta();  else genBbar.eta = -99;
