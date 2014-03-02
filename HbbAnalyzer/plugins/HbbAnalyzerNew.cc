@@ -234,6 +234,8 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     iEvent.getByLabel("patMETsHT", mHTHandle);
     edm::View < reco::MET > metsHT = *mHTHandle;
 
+    /// Can we store unclustered energy?
+
     /// Get the computer for the CSV
     edm::ESHandle < JetTagComputer > csvCompHandle;
     iSetup.get < JetTagComputerRecord > ().get("combinedSecondaryVertex", csvCompHandle);
@@ -733,7 +735,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         hj.constituents = constituents.size();
         hj.p4 = GENPTOLORP(jet_iter);
 
-        for (unsigned int iJC(0); iJC < constituents.size(); ++iJC) {
+        for (unsigned int iJC=0; iJC < constituents.size(); ++iJC) {
             const reco::Jet::Constituent & icandJet = constituents[iJC];
             if (printJet)
                 std::cout << "subJet Pt: " << icandJet->pt() << " subJet E,M,eta,phi: " << icandJet->p4().E() << "," << icandJet->p4().M() << "," << icandJet->eta() << "," << icandJet->phi() << std::endl;
