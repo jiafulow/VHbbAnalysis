@@ -60,7 +60,7 @@ process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
         #"/store/mc/Summer12_DR53X/ZH_ZToNuNu_HToBB_M-125_8TeV-powheg-herwigpp/AODSIM/PU_S10_START53_V7A-v1/0000/046ED31B-82FC-E111-BA0E-00215E220F78.root",
-        "store/user/lpchbb/degrutto/ZH_ZToNuNu_HToBB_M-125_8TeV-powheg-herwigppSummer12_DR53X-PU_S10_START53_V7A-v1/degrutto/ZH_ZToNuNu_HToBB_M-125_8TeV-powheg-herwigpp/HBB_EDMNtupleV42/9803889241b1fc304f795d3b3875632d/PAT.edm_11_1_lbp.root",
+        "/store/user/lpchbb/degrutto/ZH_ZToNuNu_HToBB_M-125_8TeV-powheg-herwigppSummer12_DR53X-PU_S10_START53_V7A-v1/degrutto/ZH_ZToNuNu_HToBB_M-125_8TeV-powheg-herwigpp/HBB_EDMNtupleV42/9803889241b1fc304f795d3b3875632d/PAT.edm_11_1_lbp.root",
         )
     )
 

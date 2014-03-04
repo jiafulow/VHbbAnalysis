@@ -86,6 +86,7 @@ class JECFWLite {
                 corr->setJetA(j.jetArea);
                 corr->setRho(rho);
                 std::cout << "ERROR CORRECTIONS ARE NOT CLOSING: " << c.p4.Pt() << " vs " <<  j.p4.Pt() << " raw "  << j.ptRaw << " new corr " << corr->getCorrection() << " old " << j.p4.Pt()/j.ptRaw << std::endl;
+            }
             //} else {
             //    std::cout << "Check ok: " << c.p4.Pt() << " vs " << j.p4.Pt() << " raw "  << j.ptRaw << " new corr " << corr->getCorrection() << " old " << j.p4.Pt()/j.ptRaw << std::endl;
             //}
@@ -139,22 +140,20 @@ class JECFWLite {
     }
 
 
-   std::vector<JetCorrectorParameters> parMC;
-   std::vector<JetCorrectorParameters> parMCRef;
-   std::vector<JetCorrectorParameters> parMCRefW;
-   std::vector<JetCorrectorParameters> parData;
-   std::vector<JetCorrectorParameters> parDataRef;
-   FactorizedJetCorrector * jetCorrectorMC;
-   FactorizedJetCorrector * jetCorrectorMCRefWrong;
-   FactorizedJetCorrector * jetCorrectorMCRef;
-   FactorizedJetCorrector * jetCorrectorData;
-   FactorizedJetCorrector * jetCorrectorDataRef;
-   JetCorrectionUncertainty *jecUncMC;
-   JetCorrectionUncertainty *jecUncMCRef;
-   JetCorrectionUncertainty *jecUncData;
-   JetCorrectionUncertainty *jecUncDataRef;
-
-
+    std::vector<JetCorrectorParameters> parMC;
+    std::vector<JetCorrectorParameters> parMCRef;
+    std::vector<JetCorrectorParameters> parMCRefW;
+    std::vector<JetCorrectorParameters> parData;
+    std::vector<JetCorrectorParameters> parDataRef;
+    FactorizedJetCorrector * jetCorrectorMC;
+    FactorizedJetCorrector * jetCorrectorMCRefWrong;
+    FactorizedJetCorrector * jetCorrectorMCRef;
+    FactorizedJetCorrector * jetCorrectorData;
+    FactorizedJetCorrector * jetCorrectorDataRef;
+    JetCorrectionUncertainty *jecUncMC;
+    JetCorrectionUncertainty *jecUncMCRef;
+    JetCorrectionUncertainty *jecUncData;
+    JetCorrectionUncertainty *jecUncDataRef;
 };
 
 #endif  // JECFWLITE_H
