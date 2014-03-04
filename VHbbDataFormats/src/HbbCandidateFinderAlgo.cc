@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <map>
 //#include <cstdlib>
 
 #include "VHbbAnalysis/VHbbDataFormats/interface/HbbCandidateFinderAlgo.h"
@@ -17,6 +18,7 @@ struct CompareJetPt {
 struct CompareBTag {
     bool operator() (const VHbbEvent::SimpleJet & j1,
                      const VHbbEvent::SimpleJet & j2) const {
+        if (j1.csv == j2.csv)  return j1.p4.Pt() > j2.p4.Pt();
         return j1.csv > j2.csv;
     }
 };
@@ -55,11 +57,10 @@ VHbbCandidate HbbCandidateFinderAlgo::changeHiggs(bool useHighestPtHiggs,
         jets.push_back(old.additionalJets[i]);
 
     bool foundJets;
-
     if (!useHighestPtHiggs) {
-        foundJets = findDiJets(jets, j1, j2, addJets);
+        foundJets = findDiJets(jets, j1, j2, addJets, temp.H.indices);
     } else {
-        foundJets = findDiJetsHighestPt(jets, j1, j2, addJets);
+        foundJets = findDiJetsHighestPt(jets, j1, j2, addJets, temp.H.indices);
     }
     // foundJets is set but not used?
 
@@ -122,10 +123,11 @@ void HbbCandidateFinderAlgo::run(const VHbbEvent * event,
     VHbbEvent::SimpleJet j1, j2;
     std::vector < VHbbEvent::SimpleJet > addJets;
     bool foundJets = false;
+    VHbbCandidate temp;
     if (!useHighestPtHiggs_) {
-        foundJets = findDiJets(noOverlap, j1, j2, addJets);
+        foundJets = findDiJets(noOverlap, j1, j2, addJets, temp.H.indices);
     } else {
-        foundJets = findDiJetsHighestPt(noOverlap, j1, j2, addJets);
+        foundJets = findDiJetsHighestPt(noOverlap, j1, j2, addJets, temp.H.indices);
     }
 
     if (verbose_) {
@@ -153,7 +155,6 @@ void HbbCandidateFinderAlgo::run(const VHbbEvent * event,
         return;
 
     /// Set Candidates
-    VHbbCandidate temp;
     temp.H.HiggsFlag = foundJets;
     if (foundJets) {
         //temp.H.jets.clear();
@@ -180,8 +181,8 @@ void HbbCandidateFinderAlgo::run(const VHbbEvent * event,
             temp.FatH.helicities.push_back(selector.getHelicity(subJetsout[0], fathiggsBoost));
             temp.FatH.helicities.push_back(selector.getHelicity(subJetsout[1], fathiggsBoost));
             temp.FatH.deltaTheta = selector.getDeltaTheta(subJetsout[0], subJetsout[1]);
-        
-        } else if (subJetsout.size() == 3) {
+
+        } else if (subJetsout.size() == 3) {  // cannot be >3?
             temp.FatH.jets.push_back(subJetsout[0]);
             temp.FatH.jets.push_back(subJetsout[1]);
             temp.FatH.jets.push_back(subJetsout[2]);
@@ -233,13 +234,23 @@ void HbbCandidateFinderAlgo::run(const VHbbEvent * event,
         result.setCandidateType(VHbbCandidate::Wen);
         candidates.push_back(result);
     }
-    if (candidates.size() != 0)  // found at least one candidate
+    // Wtaunu, only flag mode right now
+    bool tauOk = false;
+    VHbbCandidate tauResult = selector.getHWtaunCandidate(temp, tauOk, tauPosNoCandidateJetOverlap);
+
+    if (candidates.size() != 0) {  // found at least one candidate
+        candidates[0].candidateTypeWithTau = candidates[0].candidateType;
         return;
+    }
 
     // Znn: only if no candidate is found up to now
     result = selector.getHZnnCandidate(temp, ok);
-    if (ok == true) {
-        result.setCandidateType(VHbbCandidate::Znn);
+    if (ok == true || tauOk == true) {
+        //result.setCandidateType(VHbbCandidate::Znn);
+        result.setCandidateType(ok ? VHbbCandidate::Znn : VHbbCandidate::Wtaun);
+        result.candidateTypeWithTau = tauOk ? VHbbCandidate::Wtaun : VHbbCandidate::Znn;
+        if (tauOk)
+            result.VTau = tauResult.V;
         candidates.push_back(result);
     }
     return;
@@ -249,7 +260,8 @@ void HbbCandidateFinderAlgo::run(const VHbbEvent * event,
 /// Find best-CSV dijet pair
 bool HbbCandidateFinderAlgo::findDiJets(const std::vector < VHbbEvent::SimpleJet > & jetsin,
                                         VHbbEvent::SimpleJet & j1, VHbbEvent::SimpleJet & j2,
-                                        std::vector < VHbbEvent::SimpleJet > & addJets) {
+                                        std::vector < VHbbEvent::SimpleJet > & addJets,
+                                        size_t * indices) {
     if (verbose_) {
         std::cout << " CandidateFinder: Input Jets = " << jetsin.size() << std::endl;
     }
@@ -258,12 +270,24 @@ bool HbbCandidateFinderAlgo::findDiJets(const std::vector < VHbbEvent::SimpleJet
         return false;
 
     std::vector < VHbbEvent::SimpleJet > jets = jetsin;
+    std::vector < size_t > mapidx;
     CompareBTag bTagComparator;
     CompareJetPt ptComparator;
     double etaThr = 2.5;
-    
+
     // Sort the jets so that if i<j, csv(i)>csv(j)
     std::sort(jets.begin(), jets.end(), bTagComparator);
+
+    std::multimap < VHbbEvent::SimpleJet, size_t, CompareBTag > jmap;
+    for (size_t i = 0; i < jetsin.size(); i++)
+        jmap.insert(std::pair < VHbbEvent::SimpleJet, size_t > (jetsin[i], i));
+
+    std::multimap < VHbbEvent::SimpleJet, size_t, CompareBTag >::iterator it = jmap.begin();
+    for (size_t i = 0; it != jmap.end(); it++, i++) {
+        if (jets[i].p4 != it->first.p4)
+            std::cout << "DIFFERENT SORT OUTPUT: " << jets[i].p4.Pt() << " vs " << it->first.p4.Pt() << std::endl;
+        mapidx.push_back(it->second);
+    }
 
     // Find at least 2 jets with pt > threshold, |eta| < threshold
     // No jetID
@@ -286,6 +310,10 @@ bool HbbCandidateFinderAlgo::findDiJets(const std::vector < VHbbEvent::SimpleJet
     }
     j1 = jets[index1];
     j2 = jets[index2];
+    if(indices) {
+        indices[0] = mapidx[index1];
+        indices[1] = mapidx[index2];
+    }
 
     // Additional jets
     //addJets.clear();
@@ -296,7 +324,7 @@ bool HbbCandidateFinderAlgo::findDiJets(const std::vector < VHbbEvent::SimpleJet
         }
     }
     std::sort(addJets.begin(), addJets.end(), ptComparator);
-    
+
     if (verbose_) {
         std::cout << " CandidateFinder: Output Jets = " << 2 << " Additional = " << addJets.size() << std::endl;
     }
@@ -307,20 +335,33 @@ bool HbbCandidateFinderAlgo::findDiJets(const std::vector < VHbbEvent::SimpleJet
 /// Find highest-pt dijet pair
 bool HbbCandidateFinderAlgo::findDiJetsHighestPt(const std::vector < VHbbEvent::SimpleJet > & jetsin,
                                                  VHbbEvent::SimpleJet & j1, VHbbEvent::SimpleJet & j2,
-                                                 std::vector < VHbbEvent::SimpleJet > & addJets) {
+                                                 std::vector < VHbbEvent::SimpleJet > & addJets,
+                                                 size_t * indices) {
     if (verbose_) {
         std::cout << " CandidateFinder: Input Jets = " << jetsin.size() << std::endl;
     }
-    
+
     if (jetsin.size() < 2)
         return false;
 
     std::vector < VHbbEvent::SimpleJet > jets = jetsin;
+    std::vector < size_t > mapidx;
     CompareJetPt ptComparator;
     double etaThr = 2.5;
 
     // Sort the jets so that if i<j, pt(i)>pt(j)
     std::sort(jets.begin(), jets.end(), ptComparator);
+
+    std::multimap < VHbbEvent::SimpleJet, size_t, CompareJetPt > jmap;
+    for (size_t i = 0; i < jetsin.size(); i++)
+        jmap.insert(std::pair < VHbbEvent::SimpleJet, size_t > (jetsin[i], i));
+
+    std::multimap < VHbbEvent::SimpleJet, size_t, CompareJetPt >::iterator it = jmap.begin();
+    for (size_t i = 0; it != jmap.end(); it++, i++) {
+        if (jets[i].p4 != it->first.p4)
+            std::cout << "DIFFERENT SORT OUTPUT: " << jets[i].p4.Pt() << " vs " << it->first.p4.Pt() << std::endl;
+        mapidx.push_back(it->second);
+    }
 
     // jetID and pileup jetID are applied
     double highestPt = -9999.;
@@ -328,10 +369,10 @@ bool HbbCandidateFinderAlgo::findDiJetsHighestPt(const std::vector < VHbbEvent::
     for (unsigned int i = 0; i < jets.size() - 1; ++i) {
         for (unsigned int j = i + 1; j < jets.size(); ++j) {
             double pt = (jets[i].p4 + jets[j].p4).Pt();
-            if (pt > highestPt && 
+            if (pt > highestPt &&
                 jets[i].p4.Pt() > jetPtThreshold_ && jets[j].p4.Pt() > jetPtThreshold_ &&
-                fabs(jets[i].p4.Eta()) < etaThr && fabs(jets[j].p4.Eta()) < etaThr && 
-                jetID(jets[i]) && jetID(jets[j]) && 
+                fabs(jets[i].p4.Eta()) < etaThr && fabs(jets[j].p4.Eta()) < etaThr &&
+                jetID(jets[i]) && jetID(jets[j]) &&
                 jets[i].puJetIdL > 0 && jets[j].puJetIdL > 0) {
                 highestPt = pt;
                 highesti = i;
@@ -341,9 +382,13 @@ bool HbbCandidateFinderAlgo::findDiJetsHighestPt(const std::vector < VHbbEvent::
     }
     if (highesti == 9999 || highestj == 9999)
         return false;
-    
+
     j1 = jets[highesti];
     j2 = jets[highestj];
+    if(indices) {
+        indices[0] = mapidx[highesti];
+        indices[1] = mapidx[highestj];
+    }
 
     // Additional jets
     //addJets.clear();
@@ -354,7 +399,7 @@ bool HbbCandidateFinderAlgo::findDiJetsHighestPt(const std::vector < VHbbEvent::
         }
     }
     std::sort(addJets.begin(), addJets.end(), ptComparator);
-    
+
     if (verbose_) {
         std::cout << " CandidateFinder: Output Jets = " << 2 << " Additional = " << addJets.size() << std::endl;
     }
@@ -374,7 +419,7 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
     if (verbose_) {
         std::cout << " CandidateFinder: Input Jets = " << jetsin.size() << std::endl;
     }
-    
+
     if (jetsin.size() < 1)
         return false;
 
@@ -385,7 +430,7 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
 
     fatj1 = hardjets[0];  // to avoid warning if subjet below fail selection
 
-/*  
+/*
     TMatrixD *pointerEta = new TMatrixD(90,80);
     TMatrixD* pointerPhi = new TMatrixD(90,80);
     for (unsigned int i =0; i< hardjets.size(); i++){
@@ -397,7 +442,7 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
 */
 
 // debug
-/*  
+/*
     std::cout << "hardjet size: " << hardjets.size() << std::endl;
     std::cout << "subjet size: " << subjets.size() << std::endl;
     std::cout << "filterjet size: " << filterjets.size() << std::endl;
@@ -420,8 +465,8 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
         int subJetIn1st[2];  // indices of subjets
         for (int k = 0; k < 2; k++)
             subJetIn1st[k] = -99;
-        //TMatrixDRow* roweta=new TMatrixDRow(*pointerEta,i);        
-        //TMatrixDRow* rowphi=new TMatrixDRow(*pointerPhi,i);        
+        //TMatrixDRow* roweta=new TMatrixDRow(*pointerEta,i);
+        //TMatrixDRow* rowphi=new TMatrixDRow(*pointerPhi,i);
 
 // debug
         //std::cout << "HardJet pt: " << hardjets[i].p4.Pt() << " # daughters " << hardjets[i].constituents << std::endl;
@@ -468,7 +513,7 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
             }
         }
 
-//debug
+// debug
         //std::cout << "index in subjetTag: " << subJetIn1st[0] << "," << subJetIn1st[1] << std::endl;
         //std::cout << "index in subfilterTag: " << subJetIn[0] << "," << subJetIn[1] << "," << subJetIn[2] << std::endl;
 
@@ -492,10 +537,12 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
         //if(nBtag<2 || nPt<2) continue;
         if (nPt < 2)  continue;
 
-// lepton overlap
+        // lepton overlap 
+        // There must be a way to do this better?
+        // The lepton isolation definition has changed (and will change again)
         int muOverlap = 0;
         for (unsigned int it = 0; it < muons.size(); ++it) {
-            if (muons[it]. globChi2<10 &&
+            if (muons[it].globChi2<10 &&
                 muons[it].nPixelHits>= 1 &&
                 muons[it].globNHits != 0 &&
                 muons[it].nHits > 10 &&
@@ -536,14 +583,14 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
         if (elecOverlap > 0)  continue;
 
         //if(subjets[subJetIn1st[0]].csv+subjets[subJetIn1st[1]].csv>minBtag1){
-        //    minBtag1=subjets[subJetIn1st[0]].csv+subjets[subJetIn1st[1]].csv;       
+        //    minBtag1=subjets[subJetIn1st[0]].csv+subjets[subJetIn1st[1]].csv;
         if ((subjets[subJetIn1st[0]].p4 + subjets[subJetIn1st[1]].p4).Pt() > minBtag1) {
             minBtag1 = (subjets[subJetIn1st[0]].p4 + subjets[subJetIn1st[1]].p4).Pt();
         //if(hardjets[i].p4.Pt()>minBtag1){
-        //    minBtag1=hardjets[i].p4.Pt(); 
-/*      
+        //    minBtag1=hardjets[i].p4.Pt();
+/*
         double filtpt=0;
-        if(subJetIn[0]!=-99 && subJetIn[1]!=-99) filtpt=(filterjets[subJetIn[0]].p4+filterjets[subJetIn[1]].p4).Pt(); 
+        if(subJetIn[0]!=-99 && subJetIn[1]!=-99) filtpt=(filterjets[subJetIn[0]].p4+filterjets[subJetIn[1]].p4).Pt();
         if(subJetIn[0]!=-99 && subJetIn[1]!=-99 && subJetIn[2]!=-99) filtpt=(filterjets[subJetIn[0]].p4+filterjets[subJetIn[1]].p4+filterjets[subJetIn[2]].p4).Pt();
         if(filtpt>minBtag1){
             minBtag1=filtpt;
@@ -570,6 +617,7 @@ bool HbbCandidateFinderAlgo::findFatJet(const std::vector < VHbbEvent::HardJet >
         int overlap = 0;
         for (unsigned int j = 0; j < subJetsout.size(); ++j) {
             if (subJetsout[j].p4.Pt() < 20.)  continue;
+            // Why 0.3, not 0.5?
             if (deltaR(ak5jets[i].p4.Eta(), ak5jets[i].p4.Phi(), subJetsout[j].p4.Eta(), subJetsout[j].p4.Phi()) < 0.3)
                 overlap++;
         }
@@ -595,10 +643,10 @@ For both W -> mu nu and Z -> mu mu, we adopt the standard VBTF muon selection de
         >= 1 valid hit in the muon chambers
         >= 2 muon stations
         |dxy| < 0.2
-        |eta| < 2.4 
+        |eta| < 2.4
     PF Relative combined isolation (R) is required to be < 0.15
-        R = [pfChaIso + pfNeuIso + pfPhoIso] / pT(mu) computed in a cone of radius 0.3 in eta-phi 
-    pT(mu) > 20 GeV 
+        R = [pfChaIso + pfNeuIso + pfPhoIso] / pT(mu) computed in a cone of radius 0.3 in eta-phi
+    pT(mu) > 20 GeV
 */
 
 /* New iso:
@@ -623,6 +671,7 @@ Effective area, last column matters for us:
     for (unsigned int it = 0; it < muons.size(); ++it) {
         float mincor = 0.0;
         float minrho = 0.0;
+        float NoverCh = 0.5;
         float rhoN = std::max(aux.puInfo.rhoNeutral, minrho);
         float eta = muons[it].p4.Eta();
         float area = 0.5;
@@ -632,7 +681,10 @@ Effective area, last column matters for us:
         if(fabs(eta)>2.0 && fabs(eta) <= 2.2) {area=0.515;}
         if(fabs(eta)>2.2 && fabs(eta) <= 2.3) {area=0.821;}
         if(fabs(eta)>2.3 && fabs(eta) <= 2.4) {area=0.660;}
-        float pfCorrIso = (muons[it].pfChaIso+ std::max(muons[it].pfPhoIso+muons[it].pfNeuIso-rhoN*area,mincor))/muons[it].p4.Pt();
+        // EA corrections
+        //float pfCorrIso = (muons[it].pfChaIso + std::max(muons[it].pfPhoIso + muons[it].pfNeuIso - rhoN * area, mincor)) / muons[it].p4.Pt();
+        // For Moriond13: use dbeta corrections
+        float pfCorrIso = (muons[it].pfChaIso + std::max(muons[it].pfPhoIso + muons[it].pfNeuIso - NoverCh * muons[it].pfChaPUIso, mincor)) / muons[it].p4.Pt();
         if (muons[it].isPF &&
             muons[it].globChi2<10 &&
             muons[it].nPixelHits>= 1 &&
@@ -640,9 +692,9 @@ Effective area, last column matters for us:
             muons[it].nValidLayers > 5 &&
             //muons[it].nHits > 10 &&
             // tracker
-            //(muons[it].cat & 0x2) && 
+            //(muons[it].cat & 0x2) &&
             // global
-            (muons[it].cat & 0x1) && 
+            (muons[it].cat & 0x1) &&
             muons[it].nMatches >=2 &&
             muons[it].ipDb<.2 &&
             muons[it].zPVPt<0.5 &&
@@ -671,17 +723,17 @@ We adopt the standard cut-based selection from VBTF described in detail here.
         gsf (pf?) electrons
         VBTF WP95
         |eta|<2.5, excluding the gap 1.44 < |eta| < 1.57
-        pT(e) > 20 
+        pT(e) > 20
 
     W -> e nu
         gsf (pf?) electrons
         VBTF WP80
         |eta|<2.5, excluding the gap 1.44 < |eta| < 1.57
-        pT(e) > 30 
+        pT(e) > 30
 */
 
 /*
-      isocorr = chargediso + max(PFIso(&gamma;) - rho * Aeff(&gamma), 0.) +  max(PFIso(NH) - rho * Aeff(NH), 0.) 
+      isocorr = chargediso + max(PFIso(&gamma;) - rho * Aeff(&gamma), 0.) +  max(PFIso(NH) - rho * Aeff(NH), 0.)
 0<abs(eta)<1.0   Aeff(NH) = 0.024 +/- 0.001      Aeff(γ) = 0.081 +/- 0.001       Aeff(γ+NH) = 0.10 +/- 0.002
 1.0<abs(eta)<1.479       Aeff(NH) = 0.037 +/- 0.001      Aeff(γ) = 0.084 +/- 0.003       Aeff(γ+NH) = 0.12 +/- 0.003
 1.479<abs(eta)<2.0       Aeff(NH) = 0.037 +/- 0.001      Aeff(γ) = 0.048 +/- 0.001       Aeff(γ+NH) = 0.085 +/- 0.002
@@ -699,8 +751,15 @@ We adopt the standard cut-based selection from VBTF described in detail here.
         float areagamma = 0.5;
         float areaNH = 0.5;
         float areaComb = 0.5;
-
-        // They don't match with the values in comment?
+        // new EA for electrons to use for Moriond 13
+        if(fabs(eta) <= 1.0 ) {areaComb=0.21;}
+        if(fabs(eta) > 1.0 &&  fabs(eta) <= 1.479 ) {areaComb=0.21;}
+        if(fabs(eta) > 1.479 &&  fabs(eta) <= 2.0 ) {areaComb=0.11;}
+        if(fabs(eta) > 2.0 &&  fabs(eta) <= 2.2 ) {areaComb=0.14;}
+        if(fabs(eta) > 2.2 &&  fabs(eta) <= 2.3 ) {areaComb=0.18;}
+        if(fabs(eta) > 2.3 &&  fabs(eta) <= 2.4 ) {areaComb=0.19;}
+        if(fabs(eta) > 2.4  ) {areaComb=0.26;}
+/*
         if(fabs(eta) <= 1.0 ) {areagamma=0.14; areaNH=0.044; areaComb=0.18;}
         if(fabs(eta) > 1.0 &&  fabs(eta) <= 1.479 ) {areagamma=0.13; areaNH=0.065; areaComb=0.20;}
         if(fabs(eta) > 1.479 &&  fabs(eta) <= 2.0 ) {areagamma=0.079; areaNH=0.068; areaComb=0.15;}
@@ -708,6 +767,7 @@ We adopt the standard cut-based selection from VBTF described in detail here.
         if(fabs(eta) > 2.2 &&  fabs(eta) <= 2.3 ) {areagamma=0.15; areaNH=0.058; areaComb=0.21;}
         if(fabs(eta) > 2.3 &&  fabs(eta) <= 2.4 ) {areagamma=0.16; areaNH=0.061; areaComb=0.22;}
         if(fabs(eta) > 2.4  ) {areagamma=0.18; areaNH=0.11; areaComb=0.29;}
+*/
 /*
         if(fabs(eta) <= 1.0 ) {areagamma=0.081; areaNH=0.024; areaComb=0.10;}
         if(fabs(eta) > 1.0 &&  fabs(eta) <= 1.479 ) {areagamma=0.084; areaNH=0.037; areaComb=0.12;}
@@ -724,7 +784,11 @@ We adopt the standard cut-based selection from VBTF described in detail here.
             pho -= electrons[it].pfPhoIsoDoubleCounted;
         }
 
-        float pfCorrIso = (electrons[it].pfChaIso+ std::max(pho-rho*areagamma,mincor )+std::max(electrons[it].pfNeuIso-rho*areaNH,mincor))/electrons[it].p4.Pt();
+        // Definition for HCP12
+        //float pfCorrIso = (electrons[it].pfChaIso + std::max(pho - rho * areagamma, mincor) +
+        //                  std::max(electrons[it].pfNeuIso - rho * areaNH, mincor)) / electrons[it].p4.Pt();
+        // New definition for Moriond13
+        float pfCorrIso = (electrons[it].pfChaIso + std::max(pho + electrons[it].pfNeuIso - rho * areaComb, mincor)) / electrons[it].p4.Pt();
         float iso = pfCorrIso;
         float id = electrons[it].mvaOutTrig;
         bool wp70=((fabs(eta) < 0.8 && id>0.977 && iso < 0.093) ||  (fabs(eta) >= 0.8 && fabs(eta) < 1.479 && id>0.956 && iso < 0.095) || (fabs(eta) >= 1.479 && fabs(eta) < 2.5 && id>0.966 && iso < 0.171));
@@ -735,19 +799,19 @@ We adopt the standard cut-based selection from VBTF described in detail here.
         bool wpHWW=((fabs(eta) < 0.8 && id>0.94 && iso < 0.15) ||  (fabs(eta) >= 0.8 && fabs(eta) < 1.479 && id>0.85 && iso < 0.15) || (fabs(eta) >= 1.479 && fabs(eta) < 2.5 && id>0.92 && iso < 0.15));
 
         if (
-/* 
+/*
            "(isEE || isEB) && !isEBEEGap &&"
            " (chargedHadronIso + neutralHadronIso + photonIso)/pt <0.10 &&"
-           "dB < 0.02 && "  #dB is computed wrt PV but is transverse only, no info about dZ(vertex) 
+           "dB < 0.02 && "  #dB is computed wrt PV but is transverse only, no info about dZ(vertex)
            "( "
            "(isEE && ("
            "abs(deltaEtaSuperClusterTrackAtVtx) < 0.005 &&  abs(deltaPhiSuperClusterTrackAtVtx) < 0.02 && sigmaIetaIeta < 0.03 && hadronicOverEm < 0.10 &&  abs(1./ecalEnergy*(1.-eSuperClusterOverP)) < 0.05 "
-           ")) || " 
+           ")) || "
             "(isEB && (  "
             "abs(deltaEtaSuperClusterTrackAtVtx) < 0.004 &&  abs(deltaPhiSuperClusterTrackAtVtx) < 0.03 && sigmaIetaIeta < 0.01 && hadronicOverEm < 0.12 && abs(1./ecalEnergy*(1.-eSuperClusterOverP)) < 0.05"
             "))"
             #or use mvaNonTrigV0 and mvaTrigV0
-            ")" 
+            ")"
 */
             // fake
             //(fabs(electrons[it].id95 - 7)) < 0.1  &&
@@ -759,23 +823,23 @@ We adopt the standard cut-based selection from VBTF described in detail here.
             electrons[it].sihih < 0.03  &&
             electrons[it].HoE < 0.10  &&
             electrons[it].innerHits == 0  &&
-            (electrons[it].tIso/electrons[it].p4.Pt()) < 0.2 && 
+            (electrons[it].tIso/electrons[it].p4.Pt()) < 0.2 &&
             (electrons[it].eIso/electrons[it].p4.Pt()) < 0.2 &&
-            (electrons[it].hIso/electrons[it].p4.Pt()) < 0.2) 
-                || 
+            (electrons[it].hIso/electrons[it].p4.Pt()) < 0.2)
+                ||
             (electrons[it].isEB &&
             //fabs(electrons[it].Deta) < 0.007 &&
             //fabs(electrons[it].Dphi) < 0.015 &&
             electrons[it].sihih < 0.01  &&
             electrons[it].HoE < 0.12  &&
             electrons[it].innerHits == 0  &&
-            (electrons[it].tIso/electrons[it].p4.Pt()) < 0.2 && 
+            (electrons[it].tIso/electrons[it].p4.Pt()) < 0.2 &&
             (electrons[it].eIso/electrons[it].p4.Pt()) < 0.2 &&
-            (electrons[it].hIso/electrons[it].p4.Pt()) < 0.2) 
-            ) && 
+            (electrons[it].hIso/electrons[it].p4.Pt()) < 0.2)
+            ) &&
 
             //2012 cut based ELE ID
-/*      
+/*
             fabs(electrons[it].dxy) < 0.02  &&
             fabs(electrons[it].dz) < 0.1  &&
             ((electrons[it].isEE  &&
@@ -783,14 +847,14 @@ We adopt the standard cut-based selection from VBTF described in detail here.
             fabs(electrons[it].Dphi) < 0.02 &&
             electrons[it].sihih < 0.03  &&
             electrons[it].HoE < 0.10  &&
-            fabs(electrons[it].fMVAVar_IoEmIoP) < 0.05  
-            ) || 
+            fabs(electrons[it].fMVAVar_IoEmIoP) < 0.05
+            ) ||
             (electrons[it].isEB &&
             fabs(electrons[it].Deta) < 0.004 &&
             fabs(electrons[it].Dphi) < 0.03 &&
             electrons[it].sihih < 0.01  &&
             electrons[it].HoE < 0.12  &&
-            fabs(electrons[it].fMVAVar_IoEmIoP) < 0.05 
+            fabs(electrons[it].fMVAVar_IoEmIoP) < 0.05
              )
             ) &&
             pfCorrIso < 0.1 &&
@@ -799,9 +863,9 @@ We adopt the standard cut-based selection from VBTF described in detail here.
 //Remove this workaround as now we have the proper flags
 //      !( fabs(electrons[it].p4.Eta()) < 1.57 && fabs(electrons[it].p4.Eta()) > 1.44) &&
             electrons[it].p4.Pt() > 20) { //  I use the minimum ok for both Z and W
-/*      
+/*
             std::cout << "dxy .dz .isEE  .Deta  .Dphi  .sihih  .HoE  .fMVAVar_IoEmIoP  .isEB " <<std::endl;
-            std::cout << fabs(electrons[it].dxy)  << " " <<  fabs(electrons[it].dz) << " " << electrons[it].isEE << " " << fabs(electrons[it].Deta) << " " << fabs(electrons[it].Dphi) 
+            std::cout << fabs(electrons[it].dxy)  << " " <<  fabs(electrons[it].dz) << " " << electrons[it].isEE << " " << fabs(electrons[it].Deta) << " " << fabs(electrons[it].Dphi)
                 << " " <<electrons[it].sihih << " " <<electrons[it].HoE << " " <<fabs(electrons[it].fMVAVar_IoEmIoP) << " " <<electrons[it].isEB << std::endl;
 */
             out.push_back(electrons[it]);
@@ -830,8 +894,7 @@ void HbbCandidateFinderAlgo::findTaus(const std::vector < VHbbEvent::TauInfo > &
     for (unsigned int it = 0; it < taus.size(); ++it) {
 /*
         myPatTau.tauID("decayModeFinding"); // cuts on tau invariant mass, etc
-        myPatTau.tauID("byLooseCombinedIsolationDeltaBetaCorr") // isolated
-        taus, corrected for PU use DB technique
+        myPatTau.tauID("byLooseCombinedIsolationDeltaBetaCorr") // isolated taus, corrected for PU use DB technique
         myPatTau.tauID("againstMuonTight");  // remove muons faking hadronic taus
         myPatTau.tauID("againstElectronLoose/againstElectronMedium/againstElectronMVA");
         // remove electrons faking hadronic taus, choose based on your fake - e background.
@@ -839,16 +902,15 @@ void HbbCandidateFinderAlgo::findTaus(const std::vector < VHbbEvent::TauInfo > &
 
         if (verbose_) {
             std::cout << "(pt,decayModeFinding,byLooseCombinedIsolationDeltaBetaCorr,againstMuonTight,againstElectronLoose,againstElectronMedium,againstElectronMVA)=("
-                << taus[it].p4.Pt() << ","
-                << (taus[it].decayModeFinding>0.5) << ","
-                << (taus[it].byLooseCombinedIsolationDeltaBetaCorr>0.5) << ","
-                << (taus[it].againstMuonTight>0.5) << ","
-                << (taus[it].againstElectronLoose>0.5) <<","
-                << (taus[it].againstElectronMedium>0.5) <<","
-                << (taus[it].againstElectronMVA>0.5) << ")" << std::endl;
+                << taus[it].p4.Pt() << "," << (taus[it].decayModeFinding > 0.5) << ","
+                << (taus[it].byLooseCombinedIsolationDeltaBetaCorr > 0.5) << ","
+                << (taus[it].againstMuonTight > 0.5) << ","
+                << (taus[it].againstElectronLoose > 0.5) << ","
+                << (taus[it].againstElectronMedium > 0.5) << ","
+                << (taus[it].againstElectronMVA > 0.5) << ")" << std::endl;
         }
 
-        if (taus[it].decayModeFinding > 0.5 && taus[it].byLooseCombinedIsolationDeltaBetaCorr > 0.5 && 
+        if (taus[it].decayModeFinding > 0.5 && taus[it].byLooseCombinedIsolationDeltaBetaCorr > 0.5 &&
             taus[it].againstMuonTight > 0.5 && taus[it].againstElectronLoose > 0.5 && taus[it].p4.Pt() > 20.) {
             out.push_back(taus[it]);
             positions.push_back(it);
@@ -860,20 +922,20 @@ void HbbCandidateFinderAlgo::findTaus(const std::vector < VHbbEvent::TauInfo > &
 }
 
 
-void HbbCandidateFinderAlgo::removeTauOverlapWithJets(const std::vector < VHbbEvent::TauInfo > &taus,
+void HbbCandidateFinderAlgo::removeTauOverlapWithJets(const std::vector < VHbbEvent::TauInfo > & taus,
                                                       const std::vector < VHbbEvent::SimpleJet > & jets,
-                                                      std::vector <VHbbEvent::TauInfo > & out,
+                                                      std::vector < VHbbEvent::TauInfo > & out,
                                                       const std::vector < unsigned int > & oldPositions,
                                                       std::vector < unsigned int > & positions) {
+    //positions.clear();
     for (unsigned int it = 0; it < taus.size(); ++it) {
         bool overlap = false;
         for (unsigned int jit = 0; jit < jets.size(); ++jit) {
             if (taus[it].p4.DeltaR(jets[jit].p4) < 0.2) {
                 overlap = true;
                 if (verbose_) {
-                    std::cout << "Found overlap of tau (pt,eta,phi)=(" << taus[it].p4.Pt() <<","<< taus[it].p4.Eta() <<","<< taus[it].p4.Phi() << ")"
-                              << "with candidate jet (pt,eta,phi)=(" << jets[jit].p4.Pt() <<","<< jets[jit].p4.Eta() <<","<< jets[jit].p4.Phi() << ")" 
-                              << std::endl;
+                    std::cout << "Found overlap of tau (pt,eta,phi)=(" << taus[it].p4.Pt() << "," << taus[it].p4.Eta() << "," << taus[it].p4.Phi() << ")"
+                              << "with candidate jet (pt,eta,phi)=(" << jets[jit].p4.Pt() << "," << jets[jit].p4.Eta() << "," << jets[jit].p4.Phi() << ")" << std::endl;
                 }
             }
         }

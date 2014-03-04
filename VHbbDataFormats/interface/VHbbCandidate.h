@@ -11,12 +11,21 @@
 
 class VHbbCandidate {
   public:
-    enum CandidateType { Zmumu, Zee, Wmun, Wen, Znn, UNKNOWN };
-    // Zmumu = 0 
-    // Zee   = 1 
-    // Wmun  = 2
-    // Wen   = 3
-    // Znn   = 4
+    // Zmumu   = 0
+    // Zee     = 1
+    // Wmun    = 2
+    // Wen     = 3
+    // Znn     = 4
+    // Zemu    = 5
+    // Ztaumu  = 6
+    // Ztaue   = 7
+    // Wtaun   = 8
+    // Ztautau = 9
+    // Zbb     = 10
+    enum CandidateType { Zmumu, Zee, Wmun, Wen, Znn, 
+                         Zemu, Ztaumu, Ztaue, Wtaun, Ztautau, 
+                         Zbb, 
+                         UNKNOWN };
 
     VHbbCandidate() {
         candidateType = UNKNOWN;
@@ -24,7 +33,8 @@ class VHbbCandidate {
 
     class VectorCandidate {
       public:
-        VectorCandidate(): firstLepton(9999), secondLepton(9999) {}
+        VectorCandidate(): firstLepton(0), secondLepton(1), 
+            firstLeptonOrig(99), secondLeptonOrig(99) {}
         double Mt(CandidateType candidateType) const {
             if (candidateType == Wen) {
                 float ptl = electrons[0].p4.Pt();
@@ -40,12 +50,24 @@ class VHbbCandidate {
             }
             return 0;
         }
+
+        double MtTau(CandidateType candidateTypeWithTau) const {
+            if (candidateTypeWithTau == Wtaun) {
+                float ptl = taus[0].p4.Pt();
+                float met = mets[0].p4.Pt();
+                float et = ptl + met;
+                return sqrt(et * et - p4.Pt() * p4.Pt());
+            }
+            return 0;
+        }
+
         TLorentzVector p4;
         std::vector < VHbbEvent::MuonInfo > muons;
         std::vector < VHbbEvent::ElectronInfo > electrons;
         std::vector < VHbbEvent::TauInfo > taus;
         std::vector < VHbbEvent::METInfo > mets;
-        unsigned int firstLepton, secondLepton;
+        unsigned int firstLepton, secondLepton; // position in the above lepton collections
+        unsigned int firstLeptonOrig, secondLeptonOrig; // position in the original VHEvent collections
     };
 
     class HiggsCandidate {
@@ -53,9 +75,12 @@ class VHbbCandidate {
         HiggsCandidate(): HiggsFlag(false) {}
         VHbbEvent::SimpleJet & firstJet() { return jets[0]; }
         VHbbEvent::SimpleJet & secondJet() { return jets[1]; }
-        
+        size_t firstJetIndex() { return indices[0]; }
+        size_t secondJetIndex() { return indices[1]; }
+
         TLorentzVector p4;
         std::vector < VHbbEvent::SimpleJet > jets;
+        size_t indices[2];
         bool HiggsFlag;
         float deltaTheta;
         std::vector < float > helicities;
@@ -66,12 +91,13 @@ class VHbbCandidate {
         FatHiggsCandidate(): FatHiggsFlag(false) {}
         VHbbEvent::SimpleJet & firstJet() { return jets[0]; }
         VHbbEvent::SimpleJet & secondJet() { return jets[1]; }
+
         TLorentzVector p4;
         std::vector < VHbbEvent::SimpleJet > jets;
         bool FatHiggsFlag;
         float deltaTheta;
         std::vector < float > helicities;
-        int subjetsSize;  // should be unsigned int?
+        int subjetsSize;
     };
 
     void setCandidateType(CandidateType c) {
@@ -82,11 +108,15 @@ class VHbbCandidate {
         return V.p4.DeltaPhi(H.p4);
     }
 
-    double Mt() const {  // should be MT(V,H) instead of MT(V)?
+    double Mt() const {
         return V.Mt(candidateType);
     }
 
-    int additionalLeptons() const {  // should be unsigned int?
+    double MtTau() const {
+        return V.MtTau(candidateTypeWithTau);
+    }
+
+    int additionalLeptons() const {
         int expectedLeptons = 0;
         if (candidateType == Wmun || candidateType == Wen)
             expectedLeptons = 1;
@@ -98,11 +128,13 @@ class VHbbCandidate {
     TLorentzVector p4() const {
         return V.p4 + H.p4;
     }
-    
+
     CandidateType candidateType;
+    CandidateType candidateTypeWithTau;
     HiggsCandidate H;
     FatHiggsCandidate FatH;
     VectorCandidate V;
+    VectorCandidate VTau;
     std::vector < VHbbEvent::SimpleJet > additionalJets;
     std::vector < VHbbEvent::SimpleJet > additionalJetsFat;
 };

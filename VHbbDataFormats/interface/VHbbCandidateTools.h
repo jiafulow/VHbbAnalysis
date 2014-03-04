@@ -10,18 +10,25 @@ class VHbbCandidateTools {
 
     VHbbCandidate getHZmumuCandidate(const VHbbCandidate & in, bool & ok,
                                      const std::vector < unsigned int > & pos);
-    
+
     VHbbCandidate getHZeeCandidate(const VHbbCandidate & in, bool & ok,
                                    const std::vector < unsigned int > & pos);
-    
+
     VHbbCandidate getHWmunCandidate(const VHbbCandidate & in, bool & ok,
                                     const std::vector < unsigned int > & pos);
 
     VHbbCandidate getHWenCandidate(const VHbbCandidate & in, bool & ok,
                                    const std::vector < unsigned int > & pos);
-    
+
     VHbbCandidate getHZnnCandidate(const VHbbCandidate & in, bool & ok);
-    
+
+    VHbbCandidate getHZtaumuCandidate(const VHbbCandidate & in, bool & ok,
+                                      const std::vector < unsigned int > & muPos,
+                                      const std::vector < unsigned int > & tauPos);
+
+    VHbbCandidate getHWtaunCandidate(const VHbbCandidate & in, bool & ok,
+                                     const std::vector < unsigned int > & pos);
+
     /// Can be called without a class instance
     static float getDeltaTheta(const VHbbEvent::SimpleJet & j1,
                                const VHbbEvent::SimpleJet & j2) {
@@ -57,9 +64,9 @@ class VHbbCandidateTools {
         hel = TMath::Cos(jet.Vect().Angle(boost));
         return hel;
     }
-    
-  private:  
+
+  private:
     bool verbose_;
 };
-#endif  // VHbbCandidateTools__H
 
+#endif  // VHbbCandidateTools__H

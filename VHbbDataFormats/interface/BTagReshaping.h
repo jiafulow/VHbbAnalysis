@@ -140,7 +140,7 @@ class BTagShapeInterface {
   public:
     BTagShapeInterface() {}
     BTagShapeInterface(const char *file, float scaleBC, float scaleL, 
-                       bool use4points=false, float boundX=1.001, float boundY=1.001)
+                       bool use4points=false, float boundX=1.001, float boundY=1.001, unsigned int maxbins=9999)
       : m_file(new TFile(file)), m_b(0), m_c(0), m_l(0)
     {
         bool verbose = false;
@@ -150,7 +150,8 @@ class BTagShapeInterface {
         std::vector < std::vector < std::pair < float, float > > > cutsAndSFB;
         std::vector < std::vector < std::pair < float, float > > > cutsAndSFC;
         float charmFactor = 2. - 1.0;  // additional uncertainty for charm
-        for (unsigned int i = 0; i < beff::bins; i++) {
+        if (maxbins > beff::bins)  maxbins = beff::bins;
+        for (unsigned int i = 0; i < maxbins; i++) {
             std::vector < std::pair < float, float > > cutsAndSFbinB;
             std::vector < std::pair < float, float > > cutsAndSFbinC;
             EtaPtBin bin(-2.5, 2.5, beff::ptmin[i], beff::ptmax[i]);
@@ -219,24 +220,24 @@ class BTagShapeInterface {
         {
             std::vector < std::pair < float, float > > cutsAndSFbinB;
             std::vector < std::pair < float, float > > cutsAndSFbinC;
-            EtaPtBin bin(-2.5, 2.5, beff::ptmax[beff::bins - 1], 9999.);
+            EtaPtBin bin(-2.5, 2.5, beff::ptmax[maxbins - 1], 9999.);
 
-            float sft = beff::CSVT_SFb(beff::ptmax[beff::bins - 1]);
-            sft += scaleBC * beff::CSVT_SFb_error[beff::bins - 1] * 2;  // add error
+            float sft = beff::CSVT_SFb(beff::ptmax[maxbins - 1]);
+            sft += scaleBC * beff::CSVT_SFb_error[maxbins - 1] * 2;  // add error
             cutsAndSFbinB.push_back(std::pair < float, float >(CSVT, sft));
-            sft += scaleBC * beff::CSVT_SFb_error[beff::bins - 1] * charmFactor;  // charm additional error
+            sft += scaleBC * beff::CSVT_SFb_error[maxbins - 1] * charmFactor;  // charm additional error
             cutsAndSFbinC.push_back(std::pair < float, float >(CSVT, sft));
 
-            float sfm = beff::CSVM_SFb(beff::ptmax[beff::bins - 1]);
-            sfm += scaleBC * beff::CSVM_SFb_error[beff::bins - 1] * 2;  // add error
+            float sfm = beff::CSVM_SFb(beff::ptmax[maxbins - 1]);
+            sfm += scaleBC * beff::CSVM_SFb_error[maxbins - 1] * 2;  // add error
             cutsAndSFbinB.push_back(std::pair < float, float >(CSVM, sfm));
-            sfm += scaleBC * beff::CSVM_SFb_error[beff::bins - 1] * charmFactor;  // charm additional error
+            sfm += scaleBC * beff::CSVM_SFb_error[maxbins - 1] * charmFactor;  // charm additional error
             cutsAndSFbinC.push_back(std::pair < float, float >(CSVM, sfm));
 
-            float sfl = beff::CSVL_SFb(beff::ptmax[beff::bins - 1]);
-            sfl += scaleBC * beff::CSVL_SFb_error[beff::bins - 1] * 2;  // add error
+            float sfl = beff::CSVL_SFb(beff::ptmax[maxbins - 1]);
+            sfl += scaleBC * beff::CSVL_SFb_error[maxbins - 1] * 2;  // add error
             cutsAndSFbinB.push_back(std::pair < float, float >(CSVL, sfl));
-            sfl += scaleBC * beff::CSVL_SFb_error[beff::bins - 1] * charmFactor;  // charm additional error
+            sfl += scaleBC * beff::CSVL_SFb_error[maxbins - 1] * charmFactor;  // charm additional error
             cutsAndSFbinC.push_back(std::pair < float, float >(CSVL, sfl));
 
             if (verbose)  std::cout << "Lastbin SFs " << sfl << " " << sfm << " " << sft << std::endl;
@@ -253,18 +254,25 @@ class BTagShapeInterface {
         std::vector < std::vector < std::pair < float, float > > > cutsAndSFL;
         
         /// 20-30 is also covered for mistag
-        float ptmin[] = { 20, 30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500 };
-        float ptmax[] = { 30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 670 };
-        float etamin[] = { 0.0, 0.5, 1.0, 1.5 };
-        float etamax[] = { 0.5, 1.0, 1.5, 2.5 };
-        unsigned int bins = 15;
+        //float ptmin[] = { 20, 30, 40, 50, 60, 70,  80, 100, 120, 160, 210, 260, 320, 400, 500 };
+        //float ptmax[] = { 30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 670 };
+        //float etamin[] = { 0.0, 0.5, 1.0, 1.5 };
+        //float etamax[] = { 0.5, 1.0, 1.5, 2.5 };
+        //unsigned int bins = 15;
 
-        for (unsigned int j = 0; j < 4; j++) {  // loop over eta bins
+        float ptmin[] = { 20, 30, 40, 50, 60, 70,  80, 100, 120, 160, 210, 260, 320, 400, 500, 600 };
+        float ptmax[] = { 30, 40, 50, 60, 70, 80, 100, 120, 160, 210, 260, 320, 400, 500, 600, 800 };
+        float etamin[] = { 0.0, 0.5, 0.8, 1.0, 1.5 };
+        float etamax[] = { 0.5, 0.8, 1.0, 1.5, 2.5 };
+        unsigned int bins = 16;
+
+
+        for (unsigned int j = 0; j < 5; j++) {  // loop over eta bins
             for (unsigned int i = 0; i < bins; i++) {  // loop over pt bins
                 std::vector < std::pair < float, float > > cutsAndSFbinL;
                 EtaPtBin bin(etamin[j], etamax[j], ptmin[i], ptmax[i]);
 
-                float sft = mistag_CSVT(bin.centerEta(), bin.centerPt(), scaleL * 1.5);
+                float sft = mistag_CSVT(bin.centerEta(), bin.centerPt(), scaleL);
                 cutsAndSFbinL.push_back(std::pair < float, float >(CSVT, sft));
 
                 float sfm = mistag_CSVM(bin.centerEta(), bin.centerPt(), scaleL);

@@ -1,5 +1,9 @@
 #include <sstream>
 #include <string>
+#include <fstream>
+#include <iostream>
+#include <algorithm>
+#include <vector>
 
 #include "TH1F.h"
 #include "TH2F.h"
@@ -46,6 +50,7 @@
 
 // LHE Info
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
 // IVF
 #include "RecoBTag/SecondaryVertex/interface/SecondaryVertex.h"
@@ -62,6 +67,7 @@
 //#include "VHbbAnalysis/VHbbDataFormats/interface/Ntupler.h"
 
 
+#define MAXPDF 100
 #define MAXJ 130
 #define MAXL 110
 #define MAXB 110
@@ -73,12 +79,73 @@
 // -----------------------------------------------------------------------------
 const GlobalVector flightDirection(const TVector3 pv, const reco::Vertex & sv) {
     GlobalVector fdir(sv.position().X() - pv.X(),
-                      sv.position().Y() - pv.Y(), 
+                      sv.position().Y() - pv.Y(),
                       sv.position().Z() - pv.Z());
     return fdir;
 }
 
-bool jsonContainsEvent(const std::vector < edm::LuminosityBlockRange > &jsonVec, 
+float weightNLOEWKsignal(float pt) {
+    if (pt < 50)  return 1;
+    return 0.94 - (0.2 - 0.068) / 400. * (pt - 50.);
+}
+
+float weightNNLOQCDsignal(float pt, int njets) {
+    // SF for jet veto
+    //p0 =      0.99532   +/-   0.0705809
+    //p1 = -0.000262157   +/-   0.000254908
+    if(njets <=2)
+        return 0.99532 + (pt * -0.000262157);
+
+    // Otherwise
+    //p0 =       1.0064   +/-   0.353707
+    //p1 =  0.000288831   +/-   0.00210877
+    return 1.0064 + (pt * 0.0002888);
+}
+
+struct RLE {
+    RLE() {}
+    RLE(unsigned long run_, unsigned long lumi_, unsigned long event_)
+      : run(run_), lumi(lumi_), event(event_) {}
+    unsigned long run;
+    unsigned long lumi;
+    unsigned long event;
+};
+
+bool evcomp(RLE i,RLE j) {
+    if (i.run != j.run)
+        return (i.run < j.run);
+    if (i.lumi != j.lumi)
+        return (i.lumi < j.lumi);
+    return (i.event < j.event);
+}
+
+void readBadEvents(const char *filename, vector < RLE > &badEvents) {
+    string str;
+    RLE temp;
+    ifstream myfile(filename);
+    if (myfile.is_open()) {
+        while (myfile.good()) {
+            getline(myfile, str);
+            replace(str.begin(), str.end(), ':', ' ');
+            istringstream stm(str);
+            int a, b, c;
+            stm >> a >> b >> c;
+            temp.run=a; temp.lumi=b; temp.event=c;
+            badEvents.push_back(temp);
+            //cout << a << '\t' << b << '\t' << c << endl;
+        }
+    }
+    //std::cout << "Presort" << std::endl;
+    //std::cout << std::binary_search(badEvents.begin(), badEvents.end(), RLE(1,1,1), evcomp) << std::endl;
+    //std::cout << std::binary_search(badEvents.begin(), badEvents.end(), RLE(190456,59,3971011), evcomp) << std::endl;
+    std::sort(badEvents.begin(), badEvents.end(), evcomp);
+    //std::cout << "Sorted" << std::endl;
+    //std::cout << std::binary_search(badEvents.begin(), badEvents.end(), RLE(1,1,1), evcomp) << std::endl;
+    //std::cout << std::binary_search(badEvents.begin(), badEvents.end(), RLE(190456,59,3971011), evcomp) << std::endl;
+    myfile.close();
+}
+
+bool jsonContainsEvent(const std::vector < edm::LuminosityBlockRange > &jsonVec,
                        const edm::EventBase & event) {
     // if the jsonVec is empty, then no JSON file was provided so all
     // events should pass
@@ -93,18 +160,34 @@ bool jsonContainsEvent(const std::vector < edm::LuminosityBlockRange > &jsonVec,
     return jsonVec.end() != iter;
 }
 
-// Note: This should be updated to match 
-//    https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution
 float resolutionBias(float eta) {
     if (eta < 0)  // for protection
         return resolutionBias(-eta);
-    if (eta < 1.1)
-        return 0.05;
-    if (eta < 2.5)
-        return 0.10;
-    if (eta < 5)
-        return 0.30;
-    return 0;  // Nominal
+    //if (eta < 1.1) return 0.05;
+    //if (eta < 2.5) return 0.10;
+    //if (eta < 5.0) return 0.30;
+    //return 0.30;
+
+    // New numbers from https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution
+    if (eta < 0.5) return 0.052;
+    if (eta < 1.1) return 0.057;
+    if (eta < 1.7) return 0.096;
+    if (eta < 2.3) return 0.134;
+    if (eta < 5.0) return 0.28;
+    return 0.28;
+}
+
+namespace LHAPDF {
+    void initPDFSet(int nset, int setid, int member = 0);
+    void initPDFSet(int nset, const std::string & filename, int member = 0);
+    int numberPDF(int nset);
+    void usePDFMember(int nset, int member);
+    double xfx(int nset, double x, double Q, int fl);
+    double getXmin(int nset, int member);
+    double getXmax(int nset, int member);
+    double getQ2min(int nset, int member);
+    double getQ2max(int nset, int member);
+    void extrapolate(bool extrapolate = true);
 }
 
 
@@ -197,10 +280,43 @@ typedef struct {
     void reset() {
         for (int i = 0; i < MAXL; i++)
         {
-            mass[i]=-99; pt[i]=-99; eta[i]=-99; phi[i]=-99; aodCombRelIso[i]=-99; pfCombRelIso[i]=-99; photonIso[i]=-99; neutralHadIso[i]=-99; chargedHadIso[i]=-99; chargedPUIso[i]=-99; particleIso[i]=-99; dxy[i]=-99; dz[i]=-99; type[i]=-99;  genPt[i]=-99; genEta[i]=-99; genPhi[i]=-99;  
+            mass[i]=-99; pt[i]=-99; eta[i]=-99; phi[i]=-99; aodCombRelIso[i]=-99; pfCombRelIso[i]=-99; photonIso[i]=-99; neutralHadIso[i]=-99; chargedHadIso[i]=-99; chargedPUIso[i]=-99; particleIso[i]=-99; dxy[i]=-99; dz[i]=-99; type[i]=-99;  genPt[i]=-99; genEta[i]=-99; genPhi[i]=-99;
             id80[i]=-99; id95[i]=-99; vbtf[i]=-99; id80NoIso[i]=-99;
             charge[i]=-99;wp70[i]=-99; wp80[i]=-99;wp85[i]=-99;wp90[i]=-99;wp95[i]=-99;wpHWW[i]=-99;
-            pfCorrIso[i]=-99.; id2012tight[i]=-99; idMVAnotrig[i]=-99; idMVAtrig[i]=-99;innerHits[i]=-99;
+            pfCorrIso[i]=-99.; pfCorrIsoHCP[i]=-99.; id2012tight[i]=-99; idMVAnotrig[i]=-99; idMVAtrig[i]=-99;innerHits[i]=-99;
+
+            // The following are tau variables
+            decayModeFinding[i] = -99.;
+            byLooseCombinedIsolationDeltaBetaCorr[i] = -99.;
+            againstMuonTight[i] = -99.;
+            againstElectronLoose[i] = -99.;
+            againstElectronMedium[i] = -99.;
+            againstElectronMVA[i] = -99.;
+            NsignalPFChargedHadrCands[i] = -99;
+            NsignalPFGammaCands[i] = -99;
+            leadPFChargedHadrCandPt[i] = -99.;
+            byLooseIsolation[i] = -99.;
+            byMediumIsolation[i] = -99.;
+            byTightIsolation[i] = -99.;
+            byLooseCombinedIsolationDeltaBetaCorr3Hits[i] = -99.;
+            byMediumCombinedIsolationDeltaBetaCorr3Hits[i] = -99.;
+            byTightCombinedIsolationDeltaBetaCorr3Hits[i] = -99.;
+            againstElectronMVA3raw[i] = -99.;
+            againstElectronMVA3category[i] = -99.;
+            againstElectronLooseMVA3[i] = -99.;
+            againstElectronMediumMVA3[i] = -99.;
+            againstElectronTightMVA3[i] = -99.;
+            againstElectronVTightMVA3[i] = -99.;
+            againstElectronDeadECAL[i] = -99.;
+            byLooseIsolationMVA[i] = -99.;
+            byMediumIsolationMVA[i] = -99.;
+            byTightIsolationMVA[i] = -99.;
+            byLooseIsolationMVA2[i] = -99.;
+            byMediumIsolationMVA2[i] = -99.;
+            byTightIsolationMVA2[i] = -99.;
+            againstMuonLoose2[i] = -99.;
+            againstMuonMedium2[i] = -99.;
+            againstMuonTight2[i] = -99.;
         }
     }
 
@@ -225,11 +341,12 @@ typedef struct {
         }
         setSpecific(i, j, aux);
     }
+
     template < class Input > void setSpecific(const Input & i, int j,
                                               const VHbbEventAuxInfo & aux);
 
 
-    float mass[MAXL];  //MT in case of W
+    float mass[MAXL];  // transverse mass in case of W
     float pt[MAXL];
     float eta[MAXL];
     float phi[MAXL];
@@ -252,6 +369,7 @@ typedef struct {
     float id80NoIso[MAXL];
     float charge[MAXL];
     float pfCorrIso[MAXL];
+    float pfCorrIsoHCP[MAXL];
     float id2012tight[MAXL];
     float idMVAnotrig[MAXL];
     float idMVAtrig[MAXL];
@@ -264,6 +382,39 @@ typedef struct {
     float wpHWW[MAXL];
     float innerHits[MAXL];
     float photonIsoDoubleCount[MAXL];
+
+    // The following are tau variables
+    float decayModeFinding[MAXL];
+    float byLooseCombinedIsolationDeltaBetaCorr[MAXL];
+    float againstMuonTight[MAXL];
+    float againstElectronLoose[MAXL];
+    float againstElectronMedium[MAXL];
+    float againstElectronMVA[MAXL];
+    int NsignalPFChargedHadrCands[MAXL];
+    int NsignalPFGammaCands[MAXL];
+    float leadPFChargedHadrCandPt[MAXL];
+    float byLooseIsolation[MAXL];
+    float byMediumIsolation[MAXL];
+    float byTightIsolation[MAXL];
+    float byLooseCombinedIsolationDeltaBetaCorr3Hits[MAXL];
+    float byMediumCombinedIsolationDeltaBetaCorr3Hits[MAXL];
+    float byTightCombinedIsolationDeltaBetaCorr3Hits[MAXL];
+    float againstElectronMVA3raw[MAXL];
+    float againstElectronMVA3category[MAXL];
+    float againstElectronLooseMVA3[MAXL];
+    float againstElectronMediumMVA3[MAXL];
+    float againstElectronTightMVA3[MAXL];
+    float againstElectronVTightMVA3[MAXL];
+    float againstElectronDeadECAL[MAXL];
+    float byLooseIsolationMVA[MAXL];
+    float byMediumIsolationMVA[MAXL];
+    float byTightIsolationMVA[MAXL];
+    float byLooseIsolationMVA2[MAXL];
+    float byMediumIsolationMVA2[MAXL];
+    float byTightIsolationMVA2[MAXL];
+    float againstMuonLoose2[MAXL];
+    float againstMuonMedium2[MAXL];
+    float againstMuonTight2[MAXL];
 } LeptonInfo;
 
 template <> void LeptonInfo::setSpecific < VHbbEvent::ElectronInfo >
@@ -282,6 +433,15 @@ template <> void LeptonInfo::setSpecific < VHbbEvent::ElectronInfo >
     float areaNH = 0.5;
     float areaComb = 0.5;
 
+    // new EA for electrons to use for Moriond 13
+    if(fabs(eta) <= 1.0 ) {areaComb=0.21;}
+    if(fabs(eta) > 1.0 &&  fabs(eta) <= 1.479 ) {areaComb=0.21;}
+    if(fabs(eta) > 1.479 &&  fabs(eta) <= 2.0 ) {areaComb=0.11;}
+    if(fabs(eta) > 2.0 &&  fabs(eta) <= 2.2 ) {areaComb=0.14;}
+    if(fabs(eta) > 2.2 &&  fabs(eta) <= 2.3 ) {areaComb=0.18;}
+    if(fabs(eta) > 2.3 &&  fabs(eta) <= 2.4 ) {areaComb=0.19;}
+    if(fabs(eta) > 2.4  ) {areaComb=0.26;}
+/*
     if(fabs(eta) <= 1.0 ) {areagamma=0.14; areaNH=0.044; areaComb=0.18;}
  	if(fabs(eta) > 1.0 &&  fabs(eta) <= 1.479 ) {areagamma=0.13; areaNH=0.065; areaComb=0.20;}
     if(fabs(eta) > 1.479 &&  fabs(eta) <= 2.0 ) {areagamma=0.079; areaNH=0.068; areaComb=0.15;}
@@ -289,6 +449,7 @@ template <> void LeptonInfo::setSpecific < VHbbEvent::ElectronInfo >
     if(fabs(eta) > 2.2 &&  fabs(eta) <= 2.3 ) {areagamma=0.15; areaNH=0.058; areaComb=0.21;}
     if(fabs(eta) > 2.3 &&  fabs(eta) <= 2.4 ) {areagamma=0.16; areaNH=0.061; areaComb=0.22;}
     if(fabs(eta) > 2.4  ) {areagamma=0.18; areaNH=0.11; areaComb=0.29;}
+*/
 /*
     if(fabs(eta) <= 1.0 ) {areagamma=0.081; areaNH=0.024; areaComb=0.10;}
     if(fabs(eta) > 1.0 &&  fabs(eta) <= 1.479 ) {areagamma=0.084; areaNH=0.037; areaComb=0.12;}
@@ -304,7 +465,10 @@ template <> void LeptonInfo::setSpecific < VHbbEvent::ElectronInfo >
         pho -= i.pfPhoIsoDoubleCounted;
     }
 
-    pfCorrIso[j] = (i.pfChaIso+ std::max(pho-rho*areagamma,mincor )+std::max(i.pfNeuIso-rho*areaNH,mincor))/i.p4.Pt();
+    pfCorrIsoHCP[j] = (i.pfChaIso + std::max(pho - rho * areagamma, mincor) +
+         std::max(i.pfNeuIso - rho * areaNH, mincor)) / i.p4.Pt();
+    // New definition for Moriond13
+    pfCorrIso[j] = (i.pfChaIso + std::max(pho + i.pfNeuIso - rho * areaComb, mincor))/i.p4.Pt();
 
     id2012tight[j] = fabs(i.dxy) < 0.02  &&fabs(i.dz) < 0.1  &&(
         (i.isEE  &&fabs(i.Deta) < 0.005 &&fabs(i.Dphi) < 0.02 &&i.sihih < 0.03  &&i.HoE < 0.10  &&fabs(i.fMVAVar_IoEmIoP) < 0.05
@@ -319,19 +483,19 @@ template <> void LeptonInfo::setSpecific < VHbbEvent::ElectronInfo >
         i.sihih < 0.03  &&
         i.HoE < 0.10  &&
         i.innerHits == 0  &&
-        i.tIso/i.p4.Pt() < 0.2 && 
+        i.tIso/i.p4.Pt() < 0.2 &&
         i.eIso/i.p4.Pt() < 0.2 &&
-        i.hIso/i.p4.Pt() < 0.2) 
-          || 
+        i.hIso/i.p4.Pt() < 0.2)
+          ||
         (i.isEB &&
         //fabs(electrons[it].Deta) < 0.007 &&
         //fabs(electrons[it].Dphi) < 0.015 &&
         i.sihih < 0.01  &&
         i.HoE < 0.12  &&
         i.innerHits == 0  &&
-        i.tIso/i.p4.Pt() < 0.2 && 
+        i.tIso/i.p4.Pt() < 0.2 &&
         i.eIso/i.p4.Pt() < 0.2 &&
-        i.hIso/i.p4.Pt() < 0.2) 
+        i.hIso/i.p4.Pt() < 0.2)
          );
 
     float id = i.mvaOutTrig;
@@ -354,10 +518,11 @@ template <> void LeptonInfo::setSpecific < VHbbEvent::MuonInfo >
     (const VHbbEvent::MuonInfo & i, int j, const VHbbEventAuxInfo & aux) {
     dxy[j] = i.ipDb;
     dz[j] = i.zPVPt;
-    vbtf[j] = ( i.globChi2<10 && i.nPixelHits>= 1 && i.globNHits != 0 && i.nHits > 10 && i.cat & 0x1 && i.cat & 0x2 && i.nMatches >=2 && i.ipDb<.2 &&
+    vbtf[j] = (i.globChi2<10 && i.nPixelHits>= 1 && i.globNHits != 0 && i.nHits > 10 && i.cat & 0x1 && i.cat & 0x2 && i.nMatches >=2 && i.ipDb<.2 &&
         (i.pfChaIso+i.pfPhoIso+i.pfNeuIso)/i.p4.Pt()<.15  && fabs(i.p4.Eta())<2.4 && i.p4.Pt()>20 ) ;
     float mincor = 0.0;
     float minrho = 0.0;
+    float NoverCh = 0.5;
     float rhoN = std::max(aux.puInfo.rhoNeutral, minrho);
     float eta = i.p4.Eta();
     float area = 0.5;
@@ -367,8 +532,58 @@ template <> void LeptonInfo::setSpecific < VHbbEvent::MuonInfo >
     if(fabs(eta)>2.0 && fabs(eta) <= 2.2) {area=0.515;}
     if(fabs(eta)>2.2 && fabs(eta) <= 2.3) {area=0.821;}
     if(fabs(eta)>2.3 && fabs(eta) <= 2.4) {area=0.660;}
-    pfCorrIso[j] = (i.pfChaIso+ std::max(i.pfPhoIso+i.pfNeuIso-rhoN*area,mincor))/i.p4.Pt();
+    pfCorrIsoHCP[j] = (i.pfChaIso + std::max(i.pfPhoIso + i.pfNeuIso - rhoN * area, mincor)) / i.p4.Pt();
+    // For Moriond13: use dbeta corrections
+    pfCorrIso[j] = (i.pfChaIso + std::max(i.pfPhoIso + i.pfNeuIso - NoverCh * i.pfChaPUIso, mincor))/i.p4.Pt();
     id2012tight[j] = i.isPF && i. globChi2<10 && i.nPixelHits>= 1 && i.globNHits != 0 && i.nValidLayers > 5 && (i.cat & 0x2) && i.nMatches >=2 && i.ipDb<.2;
+}
+
+template <> void LeptonInfo::setSpecific < VHbbEvent::TauInfo >
+    (const VHbbEvent::TauInfo & i, int j, const VHbbEventAuxInfo & aux) {
+    pt[j] = i.p4.Pt();
+    mass[j] = i.p4.M();
+    eta[j] = i.p4.Eta();
+    phi[j] = i.p4.Phi();
+    pfCombRelIso[j] = (i.pfChaIso + i.pfPhoIso + i.pfNeuIso) / i.p4.Pt();
+    charge[j] = i.charge;
+    if (i.mcFourMomentum.Pt() > 0) {
+        genPt[j] = i.mcFourMomentum.Pt();
+        genEta[j] = i.mcFourMomentum.Eta();
+        genPhi[j] = i.mcFourMomentum.Phi();
+    }
+
+    decayModeFinding[j] = i.decayModeFinding;
+    byLooseCombinedIsolationDeltaBetaCorr[j] = i.byLooseCombinedIsolationDeltaBetaCorr;
+    againstMuonTight[j] = i.againstMuonTight;
+    againstElectronLoose[j] = i.againstElectronLoose;
+    againstElectronMedium[j] = i.againstElectronMedium;
+    againstElectronMVA[j] = i.againstElectronMVA;
+    NsignalPFChargedHadrCands[j] = i.NsignalPFChargedHadrCands;
+    NsignalPFGammaCands[j] = i.NsignalPFGammaCands;
+    leadPFChargedHadrCandPt[j] = i.leadPFChargedHadrCandPt;
+    byLooseIsolation[j] = i.byLooseIsolation;
+    byMediumIsolation[j] = i.byMediumIsolation;
+    byTightIsolation[j] = i.byTightIsolation;
+
+    byLooseCombinedIsolationDeltaBetaCorr3Hits[j] = i.byLooseCombinedIsolationDeltaBetaCorr3Hits;
+    byMediumCombinedIsolationDeltaBetaCorr3Hits[j] = i.byMediumCombinedIsolationDeltaBetaCorr3Hits;
+    byTightCombinedIsolationDeltaBetaCorr3Hits[j] = i.byTightCombinedIsolationDeltaBetaCorr3Hits;
+    againstElectronMVA3raw[j] = i.againstElectronMVA3raw;
+    againstElectronMVA3category[j] = i.againstElectronMVA3category;
+    againstElectronLooseMVA3[j] = i.againstElectronLooseMVA3;
+    againstElectronMediumMVA3[j] = i.againstElectronMediumMVA3;
+    againstElectronTightMVA3[j] = i.againstElectronTightMVA3;
+    againstElectronVTightMVA3[j] = i.againstElectronVTightMVA3;
+    againstElectronDeadECAL[j] = i.againstElectronDeadECAL;
+    byLooseIsolationMVA[j] = i.byLooseIsolationMVA;
+    byMediumIsolationMVA[j] = i.byMediumIsolationMVA;
+    byTightIsolationMVA[j] = i.byTightIsolationMVA;
+    byLooseIsolationMVA2[j] = i.byLooseIsolationMVA2;
+    byMediumIsolationMVA2[j] = i.byMediumIsolationMVA2;
+    byTightIsolationMVA2[j] = i.byTightIsolationMVA2;
+    againstMuonLoose2[j] = i.againstMuonLoose2;
+    againstMuonMedium2[j] = i.againstMuonMedium2;
+    againstMuonTight2[j] = i.againstMuonTight2;
 }
 
 /// CSV Reshaping
@@ -381,6 +596,7 @@ BTagShapeInterface *upLShape = 0;
 BTagShapeInterface *nominalShape4p = 0;
 BTagShapeInterface *downBCShape4p = 0;
 BTagShapeInterface *upBCShape4p = 0;
+BTagShapeInterface *nominalShape1Bin = 0;
 
 typedef struct {
     void set(const VHbbEvent::SimpleJet & j, int i) {
@@ -391,25 +607,27 @@ typedef struct {
         csv[i] = j.csv;
         if (nominalShape)
         {
-            csv_nominal[i]=nominalShape->reshape(eta[i],pt[i],j.csv,j.flavour);
-            csv_upBC[i]=upBCShape->reshape(eta[i],pt[i],j.csv,j.flavour);
-            csv_downBC[i]=downBCShape->reshape(eta[i],pt[i],j.csv,j.flavour);
-            csv_upL[i]=upLShape->reshape(eta[i],pt[i],j.csv,j.flavour);
-            csv_downL[i]=downLShape->reshape(eta[i],pt[i],j.csv,j.flavour);
-            
-            csv_nominal4p[i]=nominalShape4p->reshape(eta[i],pt[i],j.csv,j.flavour);
-            csv_upBC4p[i]=upBCShape4p->reshape(eta[i],pt[i],j.csv,j.flavour);
-            csv_downBC4p[i]=downBCShape4p->reshape(eta[i],pt[i],j.csv,j.flavour);
+            csv_nominal[i] = nominalShape->reshape(eta[i],pt[i],j.csv,j.flavour);
+            csv_upBC[i] = upBCShape->reshape(eta[i],pt[i],j.csv,j.flavour);
+            csv_downBC[i] = downBCShape->reshape(eta[i],pt[i],j.csv,j.flavour);
+            csv_upL[i] = upLShape->reshape(eta[i],pt[i],j.csv,j.flavour);
+            csv_downL[i] = downLShape->reshape(eta[i],pt[i],j.csv,j.flavour);
+
+            csv_nominal4p[i] = nominalShape4p->reshape(eta[i],pt[i],j.csv,j.flavour);
+            csv_upBC4p[i] = upBCShape4p->reshape(eta[i],pt[i],j.csv,j.flavour);
+            csv_downBC4p[i] = downBCShape4p->reshape(eta[i],pt[i],j.csv,j.flavour);
+            csv_nominal1Bin[i] = nominalShape1Bin->reshape(eta[i], pt[i], j.csv, j.flavour);
         } else {
             csv_nominal[i] = csv[i];
             csv_downBC[i] = csv[i];
             csv_upBC[i] = csv[i];
             csv_downL[i] = csv[i];
             csv_upL[i] = csv[i];
-            
+
             csv_nominal4p[i] = csv[i];
             csv_downBC4p[i] = csv[i];
             csv_upBC4p[i] = csv[i];
+            csv_nominal1Bin[i] = csv[i];
         }
         csvivf[i] = j.csvivf;
         cmva[i] = j.cmva;
@@ -478,16 +696,20 @@ typedef struct {
         }
         return true;
     }
-    
+
     void reset() {
         for (int i = 0; i < MAXJ; i++) {
-            pt[i]=-99; eta[i]=-99; phi[i]=-99;e[i]=-99;csv[i]=-99;csv_nominal[i]=-99.;csv_upBC[i]=-99.;csv_downBC[i]=-99.;csv_upL[i]=-99.;csv_downL[i]=-99.;csv_nominal4p[i]=-99.;csv_upBC4p[i]=-99.;csv_downBC4p[i]=-99.;
+            pt[i]=-99; eta[i]=-99; phi[i]=-99; e[i]=-99;
+            csv[i]=-99; csv_nominal[i]=-99.; csv_upBC[i]=-99.; csv_downBC[i]=-99.; csv_upL[i]=-99.;csv_downL[i]=-99.;
+            csv_nominal4p[i]=-99.; csv_upBC4p[i]=-99.; csv_downBC4p[i]=-99.; csv_nominal1Bin[i]=-99.;
             csvivf[i]=-99; cmva[i]=-99;
-            cosTheta[i]=-99; numTracksSV[i]=-99; chf[i]=-99; nhf[i]=-99; cef[i]=-99; nef[i]=-99; nch[i]=-99; nconstituents[i]=-99; flavour[i]=-99; 
-            isSemiLeptMCtruth[i]=-99; isSemiLept[i]=-99; SoftLeptpdgId[i] = -99; SoftLeptIdlooseMu[i] = -99; SoftLeptId95[i] = -99; SoftLeptPt[i] = -99; SoftLeptdR[i] = -99; SoftLeptptRel[i] = -99; SoftLeptRelCombIso[i] = -99;  
-            genPt[i]=-99; genEta[i]=-99; genPhi[i]=-99; JECUnc[i]=-99; 
-            vtxMass[i] = -99.; vtxPt[i] = -99.; vtxEta[i] = -99.; vtxPhi[i] = -99.; vtxE[i] = -99.; vtx3dL[i] = -99.; vtx3deL[i] = -99.; id[i] = -99.;
+            cosTheta[i]=-99; numTracksSV[i]=-99; chf[i]=-99; nhf[i]=-99; cef[i]=-99; nef[i]=-99; nch[i]=-99; nconstituents[i]=-99; flavour[i]=-99;
+            isSemiLeptMCtruth[i]=-99; isSemiLept[i]=-99;
+            SoftLeptpdgId[i]=-99; SoftLeptIdlooseMu[i]=-99; SoftLeptId95[i]=-99; SoftLeptPt[i]=-99; SoftLeptdR[i]=-99; SoftLeptptRel[i]=-99; SoftLeptRelCombIso[i]=-99;
+            genPt[i]=-99; genEta[i]=-99; genPhi[i]=-99; JECUnc[i]=-99;
+            vtxMass[i]=-99.; vtxPt[i]=-99.; vtxEta[i]=-99.; vtxPhi[i]=-99.; vtxE[i]=-99.; vtx3dL[i]=-99.; vtx3deL[i]=-99.; id[i]=-99.;
             ptRaw[i]=-99.; ptLeadTrack[i]=-99.; puJetIdL[i]=-99; puJetIdM[i]=-99; puJetIdT[i]=-99; puJetIdMva[i]=-99; charge[i]=-99; jetArea[i]=-99;
+            selectedTauDR[i]=-99.;
         }
     }
     float pt[MAXJ];
@@ -503,6 +725,7 @@ typedef struct {
     float csv_nominal4p[MAXJ];
     float csv_upBC4p[MAXJ];
     float csv_downBC4p[MAXJ];
+    float csv_nominal1Bin[MAXJ];
     float csvivf[MAXJ];
     float cmva[MAXJ];
     float cosTheta[MAXJ];
@@ -549,6 +772,7 @@ typedef struct {
     float puJetIdMva[MAXJ];
     float charge[MAXJ];
     float jetArea[MAXJ];
+    float selectedTauDR[MAXJ];
 } JetInfo;
 
 typedef struct {
@@ -682,34 +906,36 @@ int main(int argc, char *argv[]) {
     METInfo METnoPUCh;
     METInfo METtype1corr;
     METInfo METtype1p2corr;
+    METInfo METtype1diff;
     METInfo caloMET;
     MHTInfo MHT;
     METUncInfo metUnc;
-    
+
     JetInfo hJets, aJets, fathFilterJets, aJetsFat;
-    LeptonInfo vLeptons, aLeptons;
+    LeptonInfo vLeptons, aLeptons, vLeptonsTaus;
     int naJets = 0, nhJets = 0, nfathFilterJets = 0, naJetsFat = 0;
 
     TopInfo top;
-    EventInfo EVENT;    
+    EventInfo EVENT;
     HiggsInfo H, SVH, SimBsH;
     FatHiggsInfo FatH;
     genParticleInfo genZ, genZstar, genWstar, genW, genH, genB, genBbar;  // add here the fatjet higgs
     genTopInfo genTop, genTbar;
-    VInfo V;
-    int nvlep = 0, nalep = 0;
+    VInfo V, VTau;
+    int nvlep = 0, nvlepTau = 0, nalep = 0;
     float lheV_pt = 0;          // for the Madgraph sample stitching
     float lheHT = 0;            // for the Madgraph sample stitching
     int lheNj = 0;              // for the Madgraph sample stitching
+    unsigned int nPdf = 0;      // number of pdf sets stored
+    float PDFweight[MAXPDF];    // for pdf reweighting (only madgraph)
     TrackSharingInfo TkSharing; // track sharing info;
 
     float HVdPhi, HVMass, HMETdPhi, VMt, deltaPullAngle, deltaPullAngleAK7,
         deltaPullAngle2, deltaPullAngle2AK7, gendrcc, gendrbb, genZpt, genWpt,
-        genHpt; 
+        genHpt;
     float weightTrig, weightTrigMay, weightTrigV4, weightTrigMET,
         weightTrigOrMu30, minDeltaPhijetMET, jetPt_minDeltaPhijetMET;
-    float PUweight, PUweightP, PUweightM, PUweightAB, PUweight2011B,
-        PUweight1DObs;
+    float PUweight, PUweightP, PUweightM, PUweightAB, PUweight2011B, PUweight1DObs;
     float PU0, PUp1, PUm1;
 
     float weightEleRecoAndId, weightEleTrigJetMETPart, weightEleTrigElePart,
@@ -733,14 +959,19 @@ int main(int argc, char *argv[]) {
     float weightTrig2012APFMET150orDiJetMET,
         weightTrig2012BPFMET150orDiJetMET, weightTrig2012CPFMET150orDiJetMET;
 
+    float weightSignalEWK, weightSignalQCD;  // signal pt reweighting
+    float weightMCProd;  // ?
+
     int WplusMode, WminusMode;
-    int Vtype, nSvs = 0;
+    int tauPlusMode, tauMinusMode;
+    int Vtype, VtypeWithTau, nSvs = 0;
     int nSimBs = 0;
     int numJets, numBJets, eventFlav;
     bool triggerFlags[500], hbhe, ecalFlag, cschaloFlag,
         hcallaserFlag, trackingfailureFlag, eebadscFlag;
+    bool isBadHcalEvent = false;
 
-    float btag1T2CSF = 1., btag2TSF = 1., btag1TSF = 1., btagA0CSF = 1., 
+    float btag1T2CSF = 1., btag2TSF = 1., btag1TSF = 1., btagA0CSF = 1.,
         btagA0TSF = 1., btag2CSF = 1., btag1TA1C = 1.;
 
 
@@ -762,9 +993,9 @@ int main(int argc, char *argv[]) {
     const edm::ParameterSet & out   = builder.processDesc()->getProcessPSet()->getParameter < edm::ParameterSet > ("fwliteOutput");
     const edm::ParameterSet & ana   = builder.processDesc()->getProcessPSet()->getParameter < edm::ParameterSet > ("Analyzer");
     const edm::ParameterSet & anaAB = builder.processDesc()->getProcessPSet()->getParameter < edm::ParameterSet > ("Analyzer2012ABOnly");
-    
+
     /// Parameters from "in"
-    const std::vector < std::string > inputFiles_(in.getParameter < std::vector < std::string > >("fileNames"));
+    const std::vector < std::string > inputFiles_(in.getParameter < std::vector < std::string > > ("fileNames"));
     std::string PUmcfileName2011B_ = in.getParameter < std::string > ("PUmcfileName2011B");
     std::string PUdatafileName2011B_ = in.getParameter < std::string > ("PUdatafileName2011B");
     std::string PUmcfileName_ = in.getParameter < std::string > ("PUmcfileName");
@@ -780,26 +1011,26 @@ int main(int argc, char *argv[]) {
     unsigned int outputEvery_(in.getParameter < unsigned int > ("outputEvery"));  // not implemented
     std::vector < edm::LuminosityBlockRange > jsonVector;
     if (in.exists("lumisToProcess") && ana.getParameter < bool > ("isMC")) {
-        std::vector < edm::LuminosityBlockRange > const &lumisTemp = in.getUntrackedParameter < std::vector < edm::LuminosityBlockRange > >("lumisToProcess");
+        std::vector < edm::LuminosityBlockRange > const & lumisTemp = in.getUntrackedParameter < std::vector < edm::LuminosityBlockRange > > ("lumisToProcess");
         jsonVector.resize(lumisTemp.size());
         copy(lumisTemp.begin(), lumisTemp.end(), jsonVector.begin());
     }
-    
+
     /// Parameters from "out"
     std::string outputFile_(out.getParameter < std::string > ("fileName"));
-    
+
     /// Parameters from "ana"
-    const std::vector < std::string > triggers(ana.getParameter < std::vector < std::string > >("triggers"));
+    const std::vector < std::string > triggers(ana.getParameter < std::vector < std::string > > ("triggers"));
     bool isMC_(ana.getParameter < bool > ("isMC"));
     bool verbose = ana.getParameter < bool > ("verbose");
     bool fromCandidate = ana.getParameter < bool > ("readFromCandidates");
-    double btagThr = ana.getParameter < double >("bJetCountThreshold");
+    double btagThr = ana.getParameter < double > ("bJetCountThreshold");
     bool useHighestPtHiggsZ = ana.getParameter < bool > ("useHighestPtHiggsZ");
     bool useHighestPtHiggsW = ana.getParameter < bool > ("useHighestPtHiggsW");
     HbbCandidateFinderAlgo *algoZ =
-        new HbbCandidateFinderAlgo(verbose, ana.getParameter < double >("jetPtThresholdZ"), useHighestPtHiggsZ);
+        new HbbCandidateFinderAlgo(verbose, ana.getParameter < double > ("jetPtThresholdZ"), useHighestPtHiggsZ);
     HbbCandidateFinderAlgo *algoW =
-        new HbbCandidateFinderAlgo(verbose, ana.getParameter < double >("jetPtThresholdW"), useHighestPtHiggsW);
+        new HbbCandidateFinderAlgo(verbose, ana.getParameter < double > ("jetPtThresholdW"), useHighestPtHiggsW);
     HbbCandidateFinderAlgo *algoRecoverLowPt =
         new HbbCandidateFinderAlgo(verbose, 15, true);
 
@@ -813,19 +1044,25 @@ int main(int argc, char *argv[]) {
     JECFWLite jec(ana.getParameter < std::string > ("jecFolder"));
 
     BTagWeight btag(2);  // 2 operating points "Custom" = 0.5 and "Tight = 0.898"
-    BTagSampleEfficiency btagEff(ana.getParameter < std::string >("btagEffFileName").c_str());
+    BTagSampleEfficiency btagEff(ana.getParameter < std::string > ("btagEffFileName").c_str());
+
+    vector < RLE > badEvents;
+    if (!isMC_) {
+        readBadEvents(in.getParameter < std::string > ("badEventsFileName").c_str(), badEvents);
+    }
 
     if (isMC_) {
-        nominalShape = new BTagShapeInterface(ana.getParameter < std::string >("csvDiscr").c_str(), 0.0, 0.0);
-        upBCShape = new BTagShapeInterface(ana.getParameter < std::string >("csvDiscr").c_str(), 1.5, 0.0);
-        downBCShape = new BTagShapeInterface(ana.getParameter < std::string >("csvDiscr").c_str(), -1.5, 0.0);
-        upLShape = new BTagShapeInterface(ana.getParameter < std::string >("csvDiscr").c_str(), 0.0, 1.0);
-        downLShape = new BTagShapeInterface(ana.getParameter < std::string >("csvDiscr").c_str(), 0.0, -1.0);
-        nominalShape4p = new BTagShapeInterface(ana.getParameter < std::string >("csvDiscr").c_str(), 0.0, 0.0, true, 1.003, 1.003);
-        upBCShape4p = new BTagShapeInterface(ana.getParameter < std::string >("csvDiscr").c_str(), 0.0, 0.0, true, 1.001, 1.001);
-        downBCShape4p = new BTagShapeInterface(ana.getParameter < std::string >("csvDiscr").c_str(), 0.0, 0.0, true, 1.005, 1.005);
+        nominalShape     = new BTagShapeInterface(ana.getParameter < std::string > ("csvDiscr").c_str(),  0.0,  0.0);
+        upBCShape        = new BTagShapeInterface(ana.getParameter < std::string > ("csvDiscr").c_str(),  1.0,  0.0);
+        downBCShape      = new BTagShapeInterface(ana.getParameter < std::string > ("csvDiscr").c_str(), -1.0,  0.0);
+        upLShape         = new BTagShapeInterface(ana.getParameter < std::string > ("csvDiscr").c_str(),  0.0,  1.0);
+        downLShape       = new BTagShapeInterface(ana.getParameter < std::string > ("csvDiscr").c_str(),  0.0, -1.0);
+        nominalShape4p   = new BTagShapeInterface(ana.getParameter < std::string > ("csvDiscr").c_str(),  0.0,  0.0, true, 1.003, 1.003);
+        upBCShape4p      = new BTagShapeInterface(ana.getParameter < std::string > ("csvDiscr").c_str(),  0.0,  0.0, true, 1.001, 1.001);
+        downBCShape4p    = new BTagShapeInterface(ana.getParameter < std::string > ("csvDiscr").c_str(),  0.0,  0.0, true, 1.005, 1.005);
+        nominalShape1Bin = new BTagShapeInterface(ana.getParameter < std::string > ("csvDiscr").c_str(),  0.0,  0.0, true, 1.001, 1.001, 1);
     }
-    
+
     edm::LumiReWeighting lumiWeights, lumiWeightsPl, lumiWeightsMi, lumiWeightsAB;
     edm::LumiReWeighting lumiWeights1DObs;
     //edm::Lumi3DReWeighting lumiWeights2011B;
@@ -839,8 +1076,50 @@ int main(int argc, char *argv[]) {
         //if(Weight3DfileName_ != "") { lumiWeights2011B.weight3D_init(Weight3DfileName_.c_str()); }
         //else { lumiWeights2011B.weight3D_init(1.0); }  // generate the weights the fisrt time;
     }
-    
-    
+
+    // Init the PDF set. Need to check for each sample beacuse pdfset and pdfmember info missing in AODSIM.
+
+    //here the list of supported set http://lhapdf.hepforge.org/manual
+    //you can aslo call it by name
+    //initPDFSet(int nset,const std::string &filename, int member=0) // If you want to use more than one (but not more than 3) at the same time, initialize them giving nset.
+    //Initialise member in PDF set file filename. If filename contains a "/" character, it will be used as a path, otherwise it will be assumed to be a PDF file in the LHAPDF PDFsets directory.
+    //LHAPDF::initPDFSet(1,_pdfset, _pdfmember);
+    // (for Madgraph always (1,10042,0) :  mctqe6l) // CTEQ6l (LO fit/NLO alphas)
+    LHAPDF::initPDFSet(1, 10042, 0);  // this should always be the first
+
+    std::vector < std::string > pdfNames;
+    //from pdf prescription from LHC PDF group http://arxiv.org/pdf/1101.0538v1.pdf
+    //  pdfNames.push_back("NNPDF20_100.LHgrid"); //NNPDF20 (Neutral Network 100/1000 sets)
+    //  pdfNames.push_back("cteq6mE.LHgrid"); //
+    pdfNames.push_back("cteq66.LHgrid"); // CTEQ66
+    //  pdfNames.push_back("MSTW2008lo68cl.LHgrid"); // MSTW2008 (LO central)
+    pdfNames.push_back("MSTW2008nlo68cl.LHgrid"); // MSTW2008 (NLO central)
+    //Other possible examples:
+    //  pdfNames.push_back("cteq6lg.LHgrid"); // CTEQ61 (central value)
+    //  pdfNames.push_back("cteq61.LHgrid"); // CTEQ61 (central value)
+    //  pdfNames.push_back("CT10.LHgrid"); // CT10 (central value)
+    //  pdfNames.push_back("CT10nlo.LHgrid"); // CT10nlo (new fit - central value)
+    //  pdfNames.push_back("CT10nnlo.LHgrid"); // CT10nnlo (new fit - central value)
+    //  pdfNames.push_back("cteq5m1.LHgrid"); //CTEQ5m1 (updated CTEQ5m)
+    //  pdfNames.push_back("MRST2001lo.LHgrid.gz");// MRST2001lo (LO fit)
+    //  pdfNames.push_back("MRST2001nlo.LHgrid.gz"); // MRST2001nlo (Standard MSbar)
+    //  pdfNames.push_back("MRST2001nnlo.LHgrid.gz"); // MRST2001nnlo (NNLO fit)
+    //  pdfNames.push_back("NNPDF21_nnlo_as_0114.LHgrid"); // NNPDF23_nnlo_as_ (Neutral Network NNLO 0+100 replicas)
+    //  pdfNames.push_back("NNPDF21_100.LHgrid"); //NNPDF23_nlo_as_ (Neutral Network NLO 0+100 replicas)
+    //  pdfNames.push_back("MSTW2008lo68cl.LHgrid"); // MSTW2008 (LO central)
+    //  pdfNames.push_back("MSTW2008nnlo68cl.LHgrid"); // MSTW2008 (NNLO central)
+
+    //initializing all the pdf sets
+    nPdf = 1;  // one count the nominal PDF
+    for (unsigned int setpdf = 2; setpdf < pdfNames.size() + 2; setpdf++) {
+        //  std::cout << "pdf set " << setpdf << std::endl;
+        //  LHAPDF::initPDFSet(setpdf, pdfNames[setpdf-2], 0); // the member should always be zero (if you do not know what you are doing)
+        LHAPDF::initPDFSet(setpdf, pdfNames[setpdf - 2]); // the member should always be zero (if you do not know what you are doing)
+        nPdf += LHAPDF::numberPDF(setpdf); // count all the members of all the pdfsets
+    }
+    //std::cout << "pdf members " << nPdf << std::endl;
+
+
     // -------------------------------------------------------------------------
     // Create TTree
     // -------------------------------------------------------------------------
@@ -854,13 +1133,21 @@ int main(int argc, char *argv[]) {
     TH3F *input3DPU = new TH3F("Input3DPU", "Input3DPU", 36, -0.5, 35.5, 36, -0.5, 35.5, 36, -0.5, 35.5);
     TH1F *pu = new TH1F("pileup", "", 51, -0.5, 50.5);
 
+    TH1F *countWithMCProd = new TH1F("CountWithMCProd", "CountWithMCProd", 1, 0, 2);
+    TH1F *countWithPUMCProd = new TH1F("CountWithPUMCProd", "CountWithPUMCProd", 1, 0, 2);
+    TH1F *countWithSignalQCDcorrections = new TH1F("CountWithSignalQCDcorrections", "CountWithSignalQCDcorrections", 1, 0, 2);
+
     TTree *_outTree = new TTree("tree", "myTree");
     _outTree->Branch("H", &H, "HiggsFlag/I:mass/F:pt/F:eta/F:phi/F:dR/F:dPhi/F:dEta/F");
     _outTree->Branch("V", &V, "mass/F:pt/F:eta/F:phi/F");
+    _outTree->Branch("VTau", &VTau, "mass/F:pt/F:eta/F:phi/F");
     _outTree->Branch("FatH", &FatH, "FatHiggsFlag/I:mass/F:pt/F:eta/F:phi/F:filteredmass/F:filteredpt/F:filteredeta/F:filteredphi/F");
     _outTree->Branch("lheV_pt", &lheV_pt, "lheV_pt/F");
     _outTree->Branch("lheHT", &lheHT, "lheHT/F");
     _outTree->Branch("lheNj", &lheNj, "lheNj/I");
+    _outTree->Branch("nPdf", &nPdf, "nPdf/I");
+    _outTree->Branch("PDFweight", PDFweight, "PDFweight[nPdf]/F");
+
     _outTree->Branch("genZ", &genZ, "mass/F:pt/F:eta/F:phi/F:status/F:charge/F:momid/F");
     _outTree->Branch("genZstar", &genZstar, "mass/F:pt/F:eta/F:phi/F:status/F:charge/F:momid/F");
     _outTree->Branch("genW", &genW, "mass/F:pt/F:eta/F:phi/F:status/F:charge/F:momid/F");
@@ -888,6 +1175,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("hJet_csv_nominal4p", hJets.csv_nominal4p, "csv_nominal4p[nhJets]/F");
     _outTree->Branch("hJet_csv_upBC4p", hJets.csv_upBC4p, "csv_upBC4p[nhJets]/F");
     _outTree->Branch("hJet_csv_downBC4p", hJets.csv_downBC4p, "csv_downBC4p[nhJets]/F");
+    _outTree->Branch("hJet_csv_nominal1Bin", hJets.csv_nominal1Bin, "csv_nominal1Bin[nhJets]/F");
 
     _outTree->Branch("hJet_csvivf", hJets.csvivf, "csvivf[nhJets]/F");
     _outTree->Branch("hJet_cmva", hJets.cmva, "cmva[nhJets]/F");
@@ -962,6 +1250,19 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("fathFilterJets_cosTheta", fathFilterJets.cosTheta, "cosTheta[nfathFilterJets]/F");
     _outTree->Branch("fathFilterJets_jetArea", fathFilterJets.jetArea, "jetArea[nfathFilterJets]/F");
 
+    //ccla 25Jan13
+    _outTree->Branch("fathFilterJets_nconstituents", fathFilterJets.nconstituents, "nconstituents[nfathFilterJets]/F");
+    _outTree->Branch("fathFilterJets_JECUnc", fathFilterJets.JECUnc, "JECUnc[nfathFilterJets]/F");
+    _outTree->Branch("fathFilterJets_SoftLeptPt", fathFilterJets.SoftLeptPt, "SoftLeptPt[nfathFilterJets]/F");
+    _outTree->Branch("fathFilterJets_SoftLeptdR", fathFilterJets.SoftLeptdR, "SoftLeptdR[nfathFilterJets]/F");
+    _outTree->Branch("fathFilterJets_SoftLeptptRel", fathFilterJets.SoftLeptptRel, "SoftLeptptRel[nfathFilterJets]/F");
+    _outTree->Branch("fathFilterJets_csv_nominal", fathFilterJets.csv_nominal, "csv_nominal[nfathFilterJets]/F");
+    _outTree->Branch("fathFilterJets_nhf", fathFilterJets.nhf, "nhf[nfathFilterJets]/F");
+    _outTree->Branch("fathFilterJets_cef", fathFilterJets.cef, "cef[nfathFilterJets]/F");
+    _outTree->Branch("fathFilterJets_nef", fathFilterJets.nef, "nef[nfathFilterJets]/F");
+    _outTree->Branch("fathFilterJets_nch", fathFilterJets.nch, "nch[nfathFilterJets]/F");
+    _outTree->Branch("fathFilterJets_id", fathFilterJets.id, "id[nfathFilterJets]/b");
+
     _outTree->Branch("aJet_pt", aJets.pt, "pt[naJets]/F");
     _outTree->Branch("aJet_eta", aJets.eta, "eta[naJets]/F");
     _outTree->Branch("aJet_phi", aJets.phi, "phi[naJets]/F");
@@ -975,6 +1276,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("aJet_csv_nominal4p", aJets.csv_nominal4p, "csv_nominal4p[naJets]/F");
     _outTree->Branch("aJet_csv_upBC4p", aJets.csv_upBC4p, "csv_upBC4p[naJets]/F");
     _outTree->Branch("aJet_csv_downBC4p", aJets.csv_downBC4p, "csv_downBC4p[naJets]/F");
+    _outTree->Branch("aJet_csv_nominal1Bin", aJets.csv_nominal1Bin, "csv_nominal1Bin[naJets]/F");
 
     _outTree->Branch("aJet_csvivf", aJets.csvivf, "csvivf[naJets]/F");
     _outTree->Branch("aJet_cmva", aJets.cmva, "cmva[naJets]/F");
@@ -1001,6 +1303,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("aJet_puJetIdT", aJets.puJetIdT, "puJetIdT[naJets]/F");
     _outTree->Branch("aJet_puJetIdMva", aJets.puJetIdMva, "puJetIdMva[naJets]/F");
     _outTree->Branch("aJet_charge", aJets.charge, "charge[naJets]/F");
+    _outTree->Branch("aJet_selectedTauDR", aJets.selectedTauDR, "selectedTauDR[naJets]/F");
 
     _outTree->Branch("aJet_genPt", aJets.genPt, "genPt[naJets]/F");
     _outTree->Branch("aJet_genEta", aJets.genEta, "genEta[naJets]/F");
@@ -1033,6 +1336,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("genZpt", &genZpt, "genZpt/F");
     _outTree->Branch("genWpt", &genWpt, "genWpt/F");
     _outTree->Branch("genHpt", &genHpt, "genHpt/F");
+
     _outTree->Branch("weightTrig", &weightTrig, "weightTrig/F");
     _outTree->Branch("weightTrigMay", &weightTrigMay, "weightTrigMay/F");
     _outTree->Branch("weightTrigV4", &weightTrigV4, "weightTrigV4/F");
@@ -1079,6 +1383,10 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("weightTrig2012BPFMET150orDiJetMET", &weightTrig2012BPFMET150orDiJetMET, "weightTrig2012BPFMET150orDiJetMET/F");
     _outTree->Branch("weightTrig2012CPFMET150orDiJetMET", &weightTrig2012CPFMET150orDiJetMET, "weightTrig2012CPFMET150orDiJetMET/F");
 
+    _outTree->Branch("weightSignalEWK", &weightSignalEWK, "weightSignalEWK/F");
+    _outTree->Branch("weightSignalQCD", &weightSignalQCD, "weightSignalQCD/F");
+    _outTree->Branch("weightMCProd", &weightMCProd, "weightMCProd/F");
+
     _outTree->Branch("deltaPullAngleAK7", &deltaPullAngleAK7, "deltaPullAngleAK7/F");
     _outTree->Branch("deltaPullAngle2AK7", &deltaPullAngle2AK7, "deltaPullAngle2AK7/F");
     _outTree->Branch("PU0", &PU0, "PU0/F");
@@ -1093,12 +1401,14 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("eventFlav", &eventFlav, "eventFlav/I");
 
     _outTree->Branch("Vtype", &Vtype, "Vtype/I");
+    _outTree->Branch("VtypeWithTau", &VtypeWithTau, "VtypeWithTau/I");
     _outTree->Branch("HVdPhi", &HVdPhi, "HVdPhi/F");
     _outTree->Branch("HVMass", &HVMass, "HVMass/F");
     _outTree->Branch("HMETdPhi", &HMETdPhi, "HMETdPhi/F");
     _outTree->Branch("VMt", &VMt, "VMt/F");
 
     _outTree->Branch("nvlep", &nvlep, "nvlep/I");
+    _outTree->Branch("nvlepTau", &nvlepTau, "nvlepTau/I");
     _outTree->Branch("nalep", &nalep, "nalep/I");
 
     _outTree->Branch("vLepton_mass", vLeptons.mass, "mass[nvlep]/F");
@@ -1124,6 +1434,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("vLepton_genPhi", vLeptons.genPhi, "genPhi[nvlep]/F");
     _outTree->Branch("vLepton_charge", vLeptons.charge, "charge[nvlep]/F");
     _outTree->Branch("vLepton_pfCorrIso", vLeptons.pfCorrIso, "pfCorrIso[nvlep]/F");
+    _outTree->Branch("vLepton_pfCorrIsoHCP", vLeptons.pfCorrIsoHCP, "pfCorrIsoHCP[nvlep]/F");
     _outTree->Branch("vLepton_id2012tight", vLeptons.id2012tight, "id2012tight[nvlep]/F");
     _outTree->Branch("vLepton_idMVAnotrig", vLeptons.idMVAnotrig, "idMVAnotrig[nvlep]/F");
     _outTree->Branch("vLepton_idMVAtrig", vLeptons.idMVAtrig, "idMVAtrig[nvlep]/F");
@@ -1136,6 +1447,48 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("vLepton_wp85", vLeptons.wp85, "wp85[nvlep]/F");
     _outTree->Branch("vLepton_wp80", vLeptons.wp80, "wp80[nvlep]/F");
     _outTree->Branch("vLepton_wp70", vLeptons.wp70, "wp70[nvlep]/F");
+
+    // Adding variables for tau leptons
+    _outTree->Branch("vLeptonTaus_mass", vLeptonsTaus.mass, "mass[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_pt", vLeptonsTaus.pt, "pt[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_eta", vLeptonsTaus.eta, "eta[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_phi", vLeptonsTaus.phi, "phi[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_pfCombRelIso", vLeptonsTaus.pfCombRelIso, "pfCombRelIso[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_genPt", vLeptonsTaus.genPt, "genPt[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_genEta", vLeptonsTaus.genEta, "genEta[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_genPhi", vLeptonsTaus.genPhi, "genPhi[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_charge", vLeptonsTaus.charge, "charge[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_decayModeFinding", vLeptonsTaus.decayModeFinding, "decayModeFinding[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byLooseCombinedIsolationDeltaBetaCorr", vLeptonsTaus.byLooseCombinedIsolationDeltaBetaCorr, "byLooseCombinedIsolationDeltaBetaCorr[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstMuonTight", vLeptonsTaus.againstMuonTight, "againstMuonTight[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstElectronLoose", vLeptonsTaus.againstElectronLoose, "againstElectronLoose[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstElectronMedium", vLeptonsTaus.againstElectronMedium, "againstElectronMedium[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstElectronMVA", vLeptonsTaus.againstElectronMVA, "againstElectronMVA[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_NsignalPFChargedHadrCands", vLeptonsTaus.NsignalPFChargedHadrCands, "NsignalPFChargedHadrCands[nvlepTau]/I");
+    _outTree->Branch("vLeptonTaus_NsignalPFGammaCands", vLeptonsTaus.NsignalPFGammaCands, "NsignalPFGammaCands[nvlepTau]/I");
+    _outTree->Branch("vLeptonTaus_leadPFChargedHadrCandPt", vLeptonsTaus.leadPFChargedHadrCandPt, "leadPFChargedHadrCandPt[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byLooseIsolation", vLeptonsTaus.byLooseIsolation, "byLooseIsolation[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byMediumIsolation", vLeptonsTaus.byMediumIsolation, "byMediumIsolation[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byTightIsolation", vLeptonsTaus.byTightIsolation, "byTightIsolation[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byLooseCombinedIsolationDeltaBetaCorr3Hits", vLeptonsTaus.byLooseCombinedIsolationDeltaBetaCorr3Hits, "byLooseCombinedIsolationDeltaBetaCorr3Hits[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byMediumCombinedIsolationDeltaBetaCorr3Hits",                vLeptonsTaus.byMediumCombinedIsolationDeltaBetaCorr3Hits,                "byMediumCombinedIsolationDeltaBetaCorr3Hits[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byTightCombinedIsolationDeltaBetaCorr3Hits", vLeptonsTaus.byTightCombinedIsolationDeltaBetaCorr3Hits, "byTightCombinedIsolationDeltaBetaCorr3Hits[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstElectronMVA3raw", vLeptonsTaus.againstElectronMVA3raw, "againstElectronMVA3raw[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstElectronMVA3category", vLeptonsTaus.againstElectronMVA3category, "againstElectronMVA3category[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstElectronLooseMVA3", vLeptonsTaus.againstElectronLooseMVA3, "againstElectronLooseMVA3[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstElectronMediumMVA3", vLeptonsTaus.againstElectronMediumMVA3, "againstElectronMediumMVA3[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstElectronTightMVA3", vLeptonsTaus.againstElectronTightMVA3, "againstElectronTightMVA3[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstElectronVTightMVA3", vLeptonsTaus.againstElectronVTightMVA3, "againstElectronVTightMVA3[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstElectronDeadECAL", vLeptonsTaus.againstElectronDeadECAL, "againstElectronDeadECAL[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byLooseIsolationMVA", vLeptonsTaus.byLooseIsolationMVA, "byLooseIsolationMVA[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byMediumIsolationMVA", vLeptonsTaus.byMediumIsolationMVA, "byMediumIsolationMVA[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byTightIsolationMVA", vLeptonsTaus.byTightIsolationMVA, "byTightIsolationMVA[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byLooseIsolationMVA2", vLeptonsTaus.byLooseIsolationMVA2, "byLooseIsolationMVA2[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byMediumIsolationMVA2", vLeptonsTaus.byMediumIsolationMVA2, "byMediumIsolationMVA2[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_byTightIsolationMVA2", vLeptonsTaus.byTightIsolationMVA2, "byTightIsolationMVA2[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstMuonLoose2", vLeptonsTaus.againstMuonLoose2, "againstMuonLoose2[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstMuonMedium2", vLeptonsTaus.againstMuonMedium2, "againstMuonMedium2[nvlepTau]/F");
+    _outTree->Branch("vLeptonTaus_againstMuonTight2", vLeptonsTaus.againstMuonTight2, "againstMuonTight2[nvlepTau]/F");
 
     _outTree->Branch("aLepton_mass", aLeptons.mass, "mass[nalep]/F");
     _outTree->Branch("aLepton_pt", aLeptons.pt, "pt[nalep]/F");
@@ -1160,6 +1513,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("aLepton_genPhi", aLeptons.genPhi, "genPhi[nalep]/F");
     _outTree->Branch("aLepton_charge", aLeptons.charge, "charge[nalep]/F");
     _outTree->Branch("aLepton_pfCorrIso", aLeptons.pfCorrIso, "pfCorrIso[nalep]/F");
+    _outTree->Branch("aLepton_pfCorrIsoHCP", aLeptons.pfCorrIsoHCP, "pfCorrIsoHCP[nalep]/F");
     _outTree->Branch("aLepton_id2012tight", aLeptons.id2012tight, "id2012tight[nalep]/F");
     _outTree->Branch("aLepton_idMVAnotrig", aLeptons.idMVAnotrig, "idMVAnotrig[nalep]/F");
     _outTree->Branch("aLepton_idMVAtrig", aLeptons.idMVAtrig, "idMVAtrig[nalep]/F");
@@ -1176,6 +1530,8 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("top", &top, "mass/F:pt/F:wMass/F");
     _outTree->Branch("WplusMode", &WplusMode, "WplusMode/I");
     _outTree->Branch("WminusMode", &WminusMode, "WminusMode/I");
+    _outTree->Branch("tauPlusMode", &tauPlusMode, "tauPlusMode/I");
+    _outTree->Branch("tauMinusMode", &tauMinusMode, "tauMinusMode/I");
 
     // IVF
     _outTree->Branch("nSvs", &nSvs, "nSvs/I");
@@ -1215,6 +1571,7 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("fakeMET", &fakeMET, "et/F:sumet/F:sig/F:phi/F");
     _outTree->Branch("METtype1corr", &METtype1corr, "et/F:sumet/F:sig/F:phi/F");
     _outTree->Branch("METtype1p2corr", &METtype1p2corr, "et/F:sumet/F:sig/F:phi/F");
+    _outTree->Branch("METtype1diff", &METtype1diff, "et/F:sumet/F:sig/F:phi/F");
     _outTree->Branch("METnoPU", &METnoPU, "et/F:sumet/F:sig/F:phi/F");
     _outTree->Branch("METnoPUCh", &METnoPUCh, "et/F:sumet/F:sig/F:phi/F");
     _outTree->Branch("caloMET", &caloMET, "et/F:sumet/F:sig/F:phi/F");
@@ -1237,6 +1594,8 @@ int main(int argc, char *argv[]) {
     _outTree->Branch("hcallaserFlag", &hcallaserFlag, "hcallaserFlag/b");
     _outTree->Branch("trackingfailureFlag", &trackingfailureFlag, "trackingfailureFlag/b");
     _outTree->Branch("eebadscFlag", &eebadscFlag, "eebadscFlag/b");
+    _outTree->Branch("isBadHcalEvent", &isBadHcalEvent, "isBadHcalEvent/b");
+
     _outTree->Branch("btag1TSF", &btag1TSF, "btag1TSF/F");
     _outTree->Branch("btag2TSF", &btag2TSF, "btag2TSF/F");
     _outTree->Branch("btag1T2CSF", &btag1T2CSF, "btag1T2CSF/F");
@@ -1265,10 +1624,10 @@ int main(int argc, char *argv[]) {
         } else {
             std::cout << "Successfully opened file " << inputFiles_[iFile] << std::endl;
         }
-        
+
         fwlite::Event ev(inFile);
         fwlite::Handle < VHbbEventAuxInfo > vhbbAuxHandle;
-        
+
         /// Loop over events
         for (ev.toBegin(); !ev.atEnd(); ++ev, ++ievt) {
             if (ievt <= skipEvents_)  continue;
@@ -1280,6 +1639,11 @@ int main(int argc, char *argv[]) {
             EVENT.lumi = ev.id().luminosityBlock();
             EVENT.event = ev.id().event();
             EVENT.json = jsonContainsEvent(jsonVector, ev);
+            isBadHcalEvent = std::binary_search(badEvents.begin(), badEvents.end(),
+                                                RLE(EVENT.run, EVENT.lumi, EVENT.event), evcomp);
+            weightMCProd = aux.weightMCProd;
+            weightSignalQCD = 1.;
+            weightSignalEWK = 1.;
             if (EVENT.run < runMin_ && runMin_ > 0)  continue;
             if (EVENT.run > runMax_ && runMax_ > 0)  continue;
             count->Fill(1.);
@@ -1289,14 +1653,19 @@ int main(int argc, char *argv[]) {
             const std::vector < VHbbCandidate > * candW;
             std::vector < VHbbCandidate > * candZlocal = new std::vector < VHbbCandidate >;
             std::vector < VHbbCandidate > * candWlocal = new std::vector < VHbbCandidate >;
-            
+
             VHbbEvent modifiedEvent;
             const VHbbEvent * iEvent = 0;
-            
+
+            // adapted from PhysicsTools/PatUtils/plugins/PATPFJetMETcorrInputProducer.cc
+            // To propagate the effect of JEC at Step 2 to METtype1corr
+            double METtype1diff_mex = 0.0, METtype1diff_mey = 0.0, METtype1diff_sumet = 0.0;
+            double METtype1diff_type1JetPtThreshold = 10.0, METtype1diff_skipEMfractionThreshold = 0.9;
+
             if (fromCandidate) {  // legacy, not in use
                 //candZlocal->clear();
                 //candWlocal->clear();
-            
+
                 fwlite::Handle < std::vector < VHbbCandidate > > vhbbCandHandleZ;
                 vhbbCandHandleZ.getByLabel(ev, "hbbBestCSVPt20Candidates");
                 candZ = vhbbCandHandleZ.product();
@@ -1304,41 +1673,92 @@ int main(int argc, char *argv[]) {
                 fwlite::Handle < std::vector < VHbbCandidate > > vhbbCandHandle;
                 vhbbCandHandle.getByLabel(ev, "hbbHighestPtHiggsPt30Candidates");
                 candW = vhbbCandHandle.product();
-                
+
             } else {
                 candZlocal->clear();
                 candWlocal->clear();
                 fwlite::Handle < VHbbEvent > vhbbHandle;
                 vhbbHandle.getByLabel(ev, "HbbAnalyzerNew");
                 modifiedEvent = *vhbbHandle.product();
-                
+
+                if (aux.mcH.size() > 0) {
+                    float pt = aux.mcH[0].p4.Pt();
+                    int nMCJets = 0;
+                    if (aux.mcW.size() > 1) pt = aux.mcW[1].p4.Pt();
+                    if (aux.mcZ.size() > 1) pt = aux.mcZ[1].p4.Pt();
+                    for (size_t j = 0; j < modifiedEvent.simpleJets2.size(); j++) {
+                        if (modifiedEvent.simpleJets2[j].bestMCp4.Pt() > 20 &&
+                            fabs(modifiedEvent.simpleJets2[j].bestMCp4.Eta()) < 2.5)
+                            nMCJets++;
+                    }
+                    weightSignalQCD = weightNNLOQCDsignal(pt, nMCJets);
+                    weightSignalEWK = weightNLOEWKsignal(pt);
+                }
+                countWithSignalQCDcorrections->Fill(1, weightSignalQCD);
+
                 if (isMC_) {
                     iEvent = &modifiedEvent;
 
+                    for (size_t j = 0; j < modifiedEvent.subJets.size(); j++)
+                        modifiedEvent.subJets[j] = jec.correct(modifiedEvent.subJets[j], aux.puInfo.rho, true);
+                    for (size_t j = 0; j < modifiedEvent.filterJets.size(); j++)
+                        modifiedEvent.filterJets[j] = jec.correct(modifiedEvent.filterJets[j], aux.puInfo.rho, true);
                     for (size_t j = 0; j < modifiedEvent.simpleJets2.size(); j++) {
                         //VHbbEvent::SimpleJet orig = modifiedEvent.simpleJets2[j];
-                        //VHbbEvent::SimpleJet origRemade = jec.correct(modifiedEvent.simpleJets2[j], aux.puInfo.rho, true, true); // do ref check, can be commented out 
-                        //VHbbEvent::SimpleJet corr2011 = jec.correctRight(modifiedEvent.simpleJets2[j], aux.puInfo.rho, true, true); // do ref check, can be commented out 
-                        /// Use correctRight() or correct()?
-                        //modifiedEvent.simpleJets2[j] = jec.correct(modifiedEvent.simpleJets2[j], aux.puInfo.rho, true); 
+                        //VHbbEvent::SimpleJet origRemade = jec.correct(modifiedEvent.simpleJets2[j], aux.puInfo.rho, true, true); // do ref check, can be commented out
+                        //VHbbEvent::SimpleJet corr2011 = jec.correctRight(modifiedEvent.simpleJets2[j], aux.puInfo.rho, true, true); // do ref check, can be commented out
+                        if (modifiedEvent.simpleJets2[j].p4.Pt() > METtype1diff_type1JetPtThreshold &&
+                            (modifiedEvent.simpleJets2[j].chargedEmEFraction +
+                            modifiedEvent.simpleJets2[j].neutralEmEFraction) < METtype1diff_skipEMfractionThreshold) {
+                            // There must be a better way to do this?
+                            METtype1diff_mex += modifiedEvent.simpleJets2[j].p4.Px();
+                            METtype1diff_mey += modifiedEvent.simpleJets2[j].p4.Py();
+                            METtype1diff_sumet -= modifiedEvent.simpleJets2[j].p4.Et();
+                        }
+                        modifiedEvent.simpleJets2[j] = jec.correct(modifiedEvent.simpleJets2[j], aux.puInfo.rho, true);
                         //std::cout << "Original " << orig.p4.Pt() << " == " << origRemade.p4.Pt() << " using CHS2011 " << corr2011.p4.Pt() << " final: " << modifiedEvent.simpleJets2[j].p4.Pt() << std::endl;
-                        
+                        if (modifiedEvent.simpleJets2[j].p4.Pt() > METtype1diff_type1JetPtThreshold &&
+                            (modifiedEvent.simpleJets2[j].chargedEmEFraction +
+                             modifiedEvent.simpleJets2[j].neutralEmEFraction) < METtype1diff_skipEMfractionThreshold) {
+                            METtype1diff_mex -= modifiedEvent.simpleJets2[j].p4.Px();
+                            METtype1diff_mey -= modifiedEvent.simpleJets2[j].p4.Py();
+                            METtype1diff_sumet += modifiedEvent.simpleJets2[j].p4.Et();
+                        }
+
                         /// Smear jets to match data resolution
                         TLorentzVector & p4 = modifiedEvent.simpleJets2[j].p4;
                         const TLorentzVector & mcp4 = modifiedEvent.simpleJets2[j].bestMCp4;
-                        if ((fabs(p4.Pt()-mcp4.Pt())/p4.Pt()) < 0.5) {  // limit the effect to the core 
+                        if ((fabs(p4.Pt() - mcp4.Pt())/p4.Pt()) < 0.5) {  // limit the effect to the core
                             float cor = (p4.Pt() + resolutionBias(fabs(p4.Eta()))*(p4.Pt()-mcp4.Pt()))/p4.Pt();
                             p4.SetPtEtaPhiE(p4.Pt()*cor, p4.Eta(), p4.Phi(), p4.E()*cor);
                         }
                     }
-                
+
                 } else {
                     iEvent = &modifiedEvent;
 
-                    //for (size_t j = 0; j < modifiedEvent.simpleJets2.size(); j++) {
-                        /// Use correctRight() or correct()?
-                    //  modifiedEvent.simpleJets2[j] = jec.correct(modifiedEvent.simpleJets2[j], aux.puInfo.rho, false); 
-                    //}
+                    for (size_t j = 0; j < modifiedEvent.subJets.size(); j++)
+                        modifiedEvent.subJets[j] = jec.correct(modifiedEvent.subJets[j], aux.puInfo.rho, false);
+                    for (size_t j = 0; j < modifiedEvent.filterJets.size(); j++)
+                        modifiedEvent.filterJets[j] = jec.correct(modifiedEvent.filterJets[j], aux.puInfo.rho, false);
+                    for (size_t j = 0; j < modifiedEvent.simpleJets2.size(); j++) {
+                        if (modifiedEvent.simpleJets2[j].p4.Pt() > METtype1diff_type1JetPtThreshold &&
+                            (modifiedEvent.simpleJets2[j].chargedEmEFraction +
+                            modifiedEvent.simpleJets2[j].neutralEmEFraction) < METtype1diff_skipEMfractionThreshold) {
+                            // There must be a better way to do this?
+                            METtype1diff_mex += modifiedEvent.simpleJets2[j].p4.Px();
+                            METtype1diff_mey += modifiedEvent.simpleJets2[j].p4.Py();
+                            METtype1diff_sumet -= modifiedEvent.simpleJets2[j].p4.Et();
+                        }
+                        modifiedEvent.simpleJets2[j] = jec.correct(modifiedEvent.simpleJets2[j], aux.puInfo.rho, false);
+                        if (modifiedEvent.simpleJets2[j].p4.Pt() > METtype1diff_type1JetPtThreshold &&
+                            (modifiedEvent.simpleJets2[j].chargedEmEFraction +
+                             modifiedEvent.simpleJets2[j].neutralEmEFraction) < METtype1diff_skipEMfractionThreshold) {
+                            METtype1diff_mex -= modifiedEvent.simpleJets2[j].p4.Px();
+                            METtype1diff_mey -= modifiedEvent.simpleJets2[j].p4.Py();
+                            METtype1diff_sumet += modifiedEvent.simpleJets2[j].p4.Et();
+                        }
+                    }
                 }
 
                 algoZ->run(iEvent, *candZlocal, aux);
@@ -1355,7 +1775,7 @@ int main(int argc, char *argv[]) {
                     candWlocal->clear();
                     algoRecoverLowPt->run(iEvent, *candWlocal, aux);
                 }
-                
+
                 candZ = candZlocal;
                 candW = candWlocal;
             }  // end if not fromCandidate
@@ -1367,11 +1787,11 @@ int main(int argc, char *argv[]) {
             if (cand->size() == 0)  continue;
             //std::cout << "cand->size() " << cand->size() << std::endl;
             //std::cout << "cand->at(0).H.jets.size() " << cand->at(0).H.jets.size() << std::endl;
-            
+
             if (cand->size() > 1) {
                 std::cout << "MULTIPLE CANDIDATES: " << cand->size() << std::endl;
             }
-            
+
             /// Switch to candW if the first candidate is Wmun or Wen
             if (cand->at(0).candidateType == VHbbCandidate::Wmun || cand->at(0).candidateType == VHbbCandidate::Wen) {
                 cand = candW;
@@ -1381,14 +1801,15 @@ int main(int argc, char *argv[]) {
                 //std::cout << "W event loss due to tigther cuts" << std::endl;
                 continue;
             }
-            
+
             /// The VHbb Candidate
             /// Note that only the first one is used.
             const VHbbCandidate & vhCand = cand->at(0);
             Vtype = vhCand.candidateType;
+            VtypeWithTau = vhCand.candidateTypeWithTau;
             if (vhCand.H.HiggsFlag) H.HiggsFlag = 1;  else H.HiggsFlag = 0;
             if (vhCand.FatH.FatHiggsFlag) FatH.FatHiggsFlag = 1;  else FatH.FatHiggsFlag = 0;
-                        
+
             /// FIXME: Skip events if neither HiggsFlag nor FatHiggsFlag is true?
             //if (H.HiggsFlag != 1 && FatH.FatHiggsFlag != 1)  continue;
 
@@ -1415,9 +1836,12 @@ int main(int argc, char *argv[]) {
                     aJets.set(vhCand.additionalJets[j], j);
                     if (vhCand.additionalJets[j].csv > btagThr)
                         numBJets++;
+                    if (VtypeWithTau == VHbbCandidate::Wtaun) {
+                        aJets.selectedTauDR[j] = vhCand.VTau.taus[0].p4.DeltaR(vhCand.additionalJets[j].p4);
+                    }
                 }
                 numJets = vhCand.additionalJets.size() + 2;
-                
+
             	H.dR = reco::deltaR(vhCand.H.jets[0].p4.Eta(), vhCand.H.jets[0].p4.Phi(), vhCand.H.jets[1].p4.Eta(), vhCand.H.jets[1].p4.Phi());
 	            H.dPhi = reco::deltaPhi(vhCand.H.jets[0].p4.Phi(),vhCand.H.jets[1].p4.Phi());
 	            H.dEta = TMath::Abs(vhCand.H.jets[0].p4.Eta() - vhCand.H.jets[1].p4.Eta());
@@ -1430,8 +1854,9 @@ int main(int argc, char *argv[]) {
                 hJets.cosTheta[0] = vhCand.H.helicities[0];
                 hJets.cosTheta[1] = vhCand.H.helicities[1];
             }  // end if HiggsFlag
-            
+
             /// Fatjet H
+            nfathFilterJets = 0;
             fathFilterJets.reset();
             aJetsFat.reset();
             if (vhCand.FatH.FatHiggsFlag) {
@@ -1475,7 +1900,14 @@ int main(int argc, char *argv[]) {
             V.eta = vhCand.V.p4.Eta();
             V.phi = vhCand.V.p4.Phi();
             VMt = vhCand.Mt();
-            
+
+            if (VtypeWithTau == VHbbCandidate::Wtaun) {
+                //VTau.mass = vhCand.VTau.p4.M();
+                VTau.mass = vhCand.MtTau();
+                VTau.pt = vhCand.VTau.p4.Pt();
+                VTau.eta = vhCand.VTau.p4.Eta();
+                VTau.phi = vhCand.VTau.p4.Phi();
+            }
 
             /// Pileup Reweighting
             PUweight = 1.0;
@@ -1509,7 +1941,9 @@ int main(int argc, char *argv[]) {
             countWithPUM->Fill(1.0, PUweightM);
             countWithPUAB->Fill(1.0, PUweightAB);
             countWithPU2011B->Fill(1.0, PUweight2011B);
-            
+            countWithMCProd->Fill(1.0, weightMCProd);
+            countWithPUMCProd->Fill(1.0, weightMCProd * PUweight);
+
             /// Energy densities
             rho = aux.puInfo.rho;
             rho25 = aux.puInfo.rho25;
@@ -1517,11 +1951,45 @@ int main(int argc, char *argv[]) {
             nPVs = aux.pvInfo.nVertices;
             //nGoodPVs = aux.pvInfo.nGoodVertices;
 
+            /// PDF reweighting
+            // Change it if you want to rescale the energy
+            double _newECMS = 8000;     // energy in GeV
+            double _origECMS = 8000;    // energy in GeV
+            float Q = hepeup_.SCALUP;
+            int id1 = hepeup_.IDUP[0];
+            double x1 = fabs(hepeup_.PUP[0][2] / (_origECMS / 2));
+            double x1prime = fabs(hepeup_.PUP[0][2] / (_newECMS / 2));
+            int id2 = hepeup_.IDUP[1];
+            double x2 = fabs(hepeup_.PUP[1][2] / (_origECMS / 2));
+            double x2prime = fabs(hepeup_.PUP[1][2] / (_newECMS / 2));
+            //gluon is 0 in the LHAPDF numberin
+            if (id1 == 21)  id1 = 0;
+            if (id2 == 21)  id2 = 0;
+            int _pdfmember = 0; //member = 0 is the pdf central value.
+            //madgraph default pdf
+            //LHAPDF::usePDFMember(1,_pdfmember);
+            double oldpdf1 = LHAPDF::xfx(1, x1, Q, id1) / x1;
+            double oldpdf2 = LHAPDF::xfx(1, x2, Q, id2) / x2;
+            double newpdf1 = LHAPDF::xfx(1, x1prime, Q, id1) / x1prime;
+            double newpdf2 = LHAPDF::xfx(1, x2prime, Q, id2) / x2prime;
+            PDFweight[0] = (newpdf1 / oldpdf1) * (newpdf2 / oldpdf2);
+
+            //new pdf set
+            for (unsigned int setpdf = 2; setpdf < pdfNames.size()+2; ++setpdf) {
+                for (int pdfmember = 0; pdfmember < LHAPDF::numberPDF(setpdf); ++pdfmember) {
+                    LHAPDF::usePDFMember(setpdf, pdfmember);    //load the right memeber once again to be sure...
+                    newpdf1 = LHAPDF::xfx(setpdf, x1prime, Q, id1) / x1prime;
+                    newpdf2 = LHAPDF::xfx(setpdf, x2prime, Q, id2) / x2prime;
+                    int norm = (setpdf - 2) * LHAPDF::numberPDF(setpdf);  // normalisation
+                    PDFweight[norm + setpdf - 1 + pdfmember] = (newpdf1 / oldpdf1) * (newpdf2 / oldpdf2);
+                }
+            }
+
             /// LHE Info
-            fwlite::Handle < LHEEventProduct > evt;
-            //std::cout << "Label for lhe = " << evt.getBranchNameFor(ev,"source") << std::endl;
-            if (!((evt.getBranchNameFor(ev, "source")).empty())) {
-                evt.getByLabel(ev, "source");
+            fwlite::Handle < LHEEventProduct > lhevt;
+            //std::cout << "Label for lhe = " << lhevt.getBranchNameFor(ev,"source") << std::endl;
+            if (!((lhevt.getBranchNameFor(ev, "source")).empty())) {
+                lhevt.getByLabel(ev, "source");
                 //std::cout << "LHEEventProduct found!" << std::endl;
                 bool lCheck = false;
                 bool lbarCheck = false;
@@ -1531,7 +1999,7 @@ int main(int argc, char *argv[]) {
                 lheHT = 0.;
                 lheNj = 0;
                 TLorentzVector l, lbar, vl, vlbar, V_tlv;
-                const lhef::HEPEUP hepeup_ = evt->hepeup();
+                const lhef::HEPEUP hepeup_ = lhevt->hepeup();
                 const std::vector < lhef::HEPEUP::FiveVector > pup_ = hepeup_.PUP; // px, py, pz, E, M
                 for (unsigned int i = 0; i < pup_.size(); ++i) {
                     int id = hepeup_.IDUP[i];  // pdgId
@@ -1557,7 +2025,6 @@ int main(int argc, char *argv[]) {
                         vlbar.SetPxPyPzE(hepeup_.PUP[i][0], hepeup_.PUP[i][1], hepeup_.PUP[i][2], hepeup_.PUP[i][3]);
                         vlbarCheck = true;
                     }
-
                     if (id == 13) {
                         l.SetPxPyPzE(hepeup_.PUP[i][0], hepeup_.PUP[i][1], hepeup_.PUP[i][2], hepeup_.PUP[i][3]);
                         lCheck = true;
@@ -1614,7 +2081,7 @@ int main(int argc, char *argv[]) {
             trigger.setEvent(&ev, "HLT", triggers);
             for (unsigned int j = 0; j < triggers.size(); j++)
                 triggerFlags[j] = trigger.accept(triggers[j]);
-            
+
             /// Filters
             patFilter.setEvent(&ev, "VH", patFilters);
             hbhe = patFilter.accept("hbhe");
@@ -1623,7 +2090,7 @@ int main(int argc, char *argv[]) {
             hcallaserFlag = patFilter.accept("hcallaserFilter");
             trackingfailureFlag = patFilter.accept("trackingfailureFilter");
             eebadscFlag = patFilter.accept("eebadscFilter");
-            
+
             /// Track Sharing Flags
             TkSharing.HiggsCSVtkSharing = TkSharing.HiggsIPtkSharing = TkSharing.HiggsSVtkSharing = TkSharing.FatHiggsCSVtkSharing = TkSharing.FatHiggsIPtkSharing = TkSharing.FatHiggsSVtkSharing = false;
 
@@ -1638,7 +2105,7 @@ int main(int argc, char *argv[]) {
                   }// loop tracks in second hjet
                 }// loop tracks in first hjet
               }// if tracks in jet
-  
+
               // ip tracks
               if (vhCand.H.jets[0].btagNTracks > 0 && vhCand.H.jets[1].btagNTracks > 0){
                 for (int t=0;t!=vhCand.H.jets[0].btagNTracks;t++){
@@ -1649,7 +2116,7 @@ int main(int argc, char *argv[]) {
                   }// loop tracks in second hjet
                 }// loop tracks in first hjet
               }// if tracks in jet
-              
+
               // sv tracks
               if (vhCand.H.jets[0].vtxNTracks > 0 && vhCand.H.jets[1].vtxNTracks > 0){
                 for (int t=0;t!=vhCand.H.jets[0].vtxNTracks;t++){
@@ -1661,7 +2128,7 @@ int main(int argc, char *argv[]) {
                 }// loop tracks in first hjet
               }// if tracks in jet
             } // end if HiggsFlag
-       
+
             if(vhCand.FatH.FatHiggsFlag && nfathFilterJets > 1){
               // csv tracks
               if (vhCand.FatH.jets[0].csvNTracks > 0 && vhCand.FatH.jets[1].csvNTracks > 0){
@@ -1673,7 +2140,7 @@ int main(int argc, char *argv[]) {
                   }// loop tracks in second hjet
                 }// loop tracks in first hjet
               }// if tracks in jet
-              
+
               // ip tracks
               if (vhCand.FatH.jets[0].btagNTracks > 0 && vhCand.FatH.jets[1].btagNTracks > 0){
                 for (int t=0;t!=vhCand.FatH.jets[0].btagNTracks;t++){
@@ -1684,7 +2151,7 @@ int main(int argc, char *argv[]) {
                   }// loop tracks in second hjet
                 }// loop tracks in first hjet
               }// if tracks in jet
-              
+
               // sv tracks
               if (vhCand.FatH.jets[0].vtxNTracks > 0 && vhCand.FatH.jets[1].vtxNTracks > 0){
                 for (int t=0;t!=vhCand.FatH.jets[0].vtxNTracks;t++){
@@ -1696,7 +2163,7 @@ int main(int argc, char *argv[]) {
                 }// loop tracks in first hjet
               }// if tracks in jet
             }// end if FatHiggsFlag
-            
+
             /// IVF
             fwlite::Handle < std::vector < reco::Vertex > > SVC;
             SVC.getByLabel(ev, "bcandidates");
@@ -1737,7 +2204,7 @@ int main(int argc, char *argv[]) {
                 SVH.eta = BCands_H.Eta();
                 SVH.phi = BCands_H.Phi();
             }
-            
+
             /// SimBHadron
             const SimBHadronCollection * sbhc;
             SimBs.reset();
@@ -1762,8 +2229,8 @@ int main(int argc, char *argv[]) {
 	                SimBsH.phi = SimBs_H.Phi();
                 }
             }
-            
-            
+
+
             /// MET
             MET.et = vhCand.V.mets.at(0).p4.Pt();  // default to Type-1 corrected MET
             MET.phi = vhCand.V.mets.at(0).p4.Phi();
@@ -1776,7 +2243,7 @@ int main(int argc, char *argv[]) {
             fakeMET.phi = 0;
             if (Vtype == VHbbCandidate::Zmumu) {
                 TVector3 mu1 = vhCand.V.muons[0].p4.Vect();
-                TVector3 mu2 = vhCand.V.muons[1].p4.Vect();
+                TVector3 mu2 = vhCand.V.muons[vhCand.V.secondLepton].p4.Vect();
                 TVector3 sum = vhCand.V.mets.at(0).p4.Vect() + mu1 + mu2;
                 fakeMET.et = sum.Pt();
                 fakeMET.phi = sum.Phi();
@@ -1793,11 +2260,17 @@ int main(int argc, char *argv[]) {
             METtype1p2corr.sumet = iEvent->metType1p2.sumEt;
             METtype1p2corr.sig = iEvent->metType1p2.metSig;
 
+            TVector2 METtype1diff_vec2(METtype1diff_mex, METtype1diff_mey);
+            METtype1diff.et = METtype1diff_vec2.Mod();
+            METtype1diff.phi = METtype1diff_vec2.Phi();
+            METtype1diff.sumet = METtype1diff_sumet;
+            METtype1diff.sig = 0;
+
             METnoPU.et = iEvent->pfmetNoPU.p4.Pt();
             METnoPU.phi = iEvent->pfmetNoPU.p4.Phi();
             METnoPU.sumet = iEvent->pfmetNoPU.sumEt;
             METnoPU.sig = iEvent->pfmetNoPU.metSig;
-            
+
             METnoPUCh.et = iEvent->pfmetNoPUCh.p4.Pt();
             METnoPUCh.phi = iEvent->pfmetNoPUCh.p4.Phi();
             METnoPUCh.sumet = iEvent->pfmetNoPUCh.sumEt;
@@ -1812,13 +2285,13 @@ int main(int argc, char *argv[]) {
             MHT.phi = iEvent->mht.p4.Phi();
             MHT.ht = iEvent->mht.sumEt;
             MHT.sig = iEvent->mht.metSig;
-            
+
             //std::cout << " iEvent->metUncInfo.size() " << iEvent->metUncInfo.size() << std::endl;
             for (size_t m = 0; m < iEvent->metUncInfo.size(); m++) {
                 metUnc.set(iEvent->metUncInfo[m], m);
-                //std::cout << "metUncInfo[" << m <<" ].et = " << metUnc.et[m] << std::endl; 
+                //std::cout << "metUncInfo[" << m <<" ].et = " << metUnc.et[m] << std::endl;
             }
-            
+
             // Loop on jets
             double maxBtag = -999.;
             minDeltaPhijetMET = 999.;
@@ -1856,7 +2329,7 @@ int main(int argc, char *argv[]) {
 		                    btagJetInfos.push_back(btagEff.jetInfo(vhCand.additionalJets[j]));
                     }
                 }
-            
+
             } else {
                 // Loop on all jets
                 for (unsigned int j = 0; j < iEvent->simpleJets2.size(); j++) {
@@ -1889,27 +2362,28 @@ int main(int argc, char *argv[]) {
                 // Loop on Higgs jets
                 if (vhCand.H.HiggsFlag) {
                     for (unsigned int j = 0; j < vhCand.H.jets.size(); j++) {
-                        // if we use the highest pt pair, only the two higgs jet should be used to compute the SF because the other jets are excluded 
-                        // by a criteria (pt of the dijet) that is not btag SF dependent 
+                        // if we use the highest pt pair, only the two higgs jet should be used to compute the SF because the other jets are excluded
+                        // by a criteria (pt of the dijet) that is not btag SF dependent
                         if (!((isW && !useHighestPtHiggsW) || (!isW && !useHighestPtHiggsZ))) {
                             btagJetInfos.push_back(btagEff.jetInfo(vhCand.H.jets[j]));
                         }
                     }
                 }  // end if HiggsFlag
             }
-            
+
             /// Trigger weights and set leptons
             vLeptons.reset();
-            weightTrig = 1.;    // better to default to 1 
+            weightTrig = 1.;    // better to default to 1
             weightTrigMay = -1.;
             weightTrigV4 = -1.;
             weightTrigOrMu30 = 1.;
             TLorentzVector leptonForTop;
             size_t firstAddMu = 0;
             size_t firstAddEle = 0;
+            size_t firstAddTau = 0;
             if (Vtype == VHbbCandidate::Zmumu) {
                 vLeptons.set(vhCand.V.muons[0], 0, 13, aux);
-                vLeptons.set(vhCand.V.muons[1], 1, 13, aux);
+                vLeptons.set(vhCand.V.muons[vhCand.V.secondLepton], 1, 13, aux);
                 float cweightID = triggerWeight.scaleMuID(vLeptons.pt[0],vLeptons.eta[0]) * triggerWeight.scaleMuID(vLeptons.pt[1],vLeptons.eta[1]) ;
                 float weightTrig1 = triggerWeight.scaleMuIsoHLT(vLeptons.pt[0],vLeptons.eta[0]);
                 float weightTrig2 = triggerWeight.scaleMuIsoHLT(vLeptons.pt[1],vLeptons.eta[1]);
@@ -1918,14 +2392,14 @@ int main(int argc, char *argv[]) {
 
                 // 2012
                 weightTrig2012DiMuon = triggerWeight.doubleMuon2012A(vLeptons.pt[0],vLeptons.eta[0],vLeptons.pt[1],vLeptons.eta[1]);
-                float weightTrig2012SingleMuonMu1 = triggerWeight.singleMuon2012A(vLeptons.pt[0],vLeptons.eta[0]);         
-                float weightTrig2012SingleMuonMu2 = triggerWeight.singleMuon2012A(vLeptons.pt[1],vLeptons.eta[1]);         
+                float weightTrig2012SingleMuonMu1 = triggerWeight.singleMuon2012A(vLeptons.pt[0],vLeptons.eta[0]);
+                float weightTrig2012SingleMuonMu2 = triggerWeight.singleMuon2012A(vLeptons.pt[1],vLeptons.eta[1]);
                 weightTrig2012SingleMuon = weightTrig2012SingleMuonMu1+weightTrig2012SingleMuonMu2-weightTrig2012SingleMuonMu1*weightTrig2012SingleMuonMu2;
                 weightTrig2012 = weightTrig2012SingleMuon * triggerWeight.muId2012A(vLeptons.pt[0],vLeptons.eta[0]) * triggerWeight.muId2012A(vLeptons.pt[1],vLeptons.eta[1]) ;
 
                 weightTrig2012ABDiMuon = triggerWeightAB.doubleMuon2012A(vLeptons.pt[0],vLeptons.eta[0],vLeptons.pt[1],vLeptons.eta[1]);
-                float weightTrig2012ABSingleMuonMu1 = triggerWeightAB.singleMuon2012A(vLeptons.pt[0],vLeptons.eta[0]);         
-                float weightTrig2012ABSingleMuonMu2 = triggerWeightAB.singleMuon2012A(vLeptons.pt[1],vLeptons.eta[1]);         
+                float weightTrig2012ABSingleMuonMu1 = triggerWeightAB.singleMuon2012A(vLeptons.pt[0],vLeptons.eta[0]);
+                float weightTrig2012ABSingleMuonMu2 = triggerWeightAB.singleMuon2012A(vLeptons.pt[1],vLeptons.eta[1]);
                 weightTrig2012ABSingleMuon = weightTrig2012ABSingleMuonMu1+weightTrig2012ABSingleMuonMu2-weightTrig2012ABSingleMuonMu1*weightTrig2012ABSingleMuonMu2;
                 weightTrig2012AB = weightTrig2012ABSingleMuon * triggerWeightAB.muId2012A(vLeptons.pt[0],vLeptons.eta[0]) * triggerWeightAB.muId2012A(vLeptons.pt[1],vLeptons.eta[1]) ;
 
@@ -1936,10 +2410,10 @@ int main(int argc, char *argv[]) {
                 nvlep = 2;
                 firstAddMu = 2;
             }
-            
+
             if (Vtype == VHbbCandidate::Zee) {
                 vLeptons.set(vhCand.V.electrons[0], 0, 11, aux);
-                vLeptons.set(vhCand.V.electrons[1], 1, 11, aux);
+                vLeptons.set(vhCand.V.electrons[vhCand.V.secondLepton], 1, 11, aux);
                 std::vector < float > pt, eta;
                 pt.push_back(vLeptons.pt[0]);
                 eta.push_back(vLeptons.eta[0]);
@@ -1947,8 +2421,8 @@ int main(int argc, char *argv[]) {
                 eta.push_back(vLeptons.eta[1]);
                 weightEleRecoAndId=triggerWeight.scaleID95Ele(vLeptons.pt[0],vLeptons.eta[0]) * triggerWeight.scaleRecoEle(vLeptons.pt[0],vLeptons.eta[0]) *
                     triggerWeight.scaleID95Ele(vLeptons.pt[1],vLeptons.eta[1]) * triggerWeight.scaleRecoEle(vLeptons.pt[1],vLeptons.eta[1]);
-                weightEleTrigElePart = triggerWeight.scaleDoubleEle17Ele8(pt,eta); 
-                weightEleTrigEleAugPart = triggerWeight.scaleDoubleEle17Ele8Aug(pt,eta); 
+                weightEleTrigElePart = triggerWeight.scaleDoubleEle17Ele8(pt,eta);
+                weightEleTrigEleAugPart = triggerWeight.scaleDoubleEle17Ele8Aug(pt,eta);
                 weightTrig = (weightEleTrigElePart*1.14+weightEleTrigEleAugPart*0.98 )/2.12 * weightEleRecoAndId;
 
                 // 2012
@@ -1956,24 +2430,24 @@ int main(int argc, char *argv[]) {
                 float weightTrig2012ASingleEle1 = triggerWeight.singleEle2012Awp95(vLeptons.pt[0],vLeptons.eta[0]);
                 float weightTrig2012ASingleEle2 = triggerWeight.singleEle2012Awp95(vLeptons.pt[1],vLeptons.eta[1]);
                 weightTrig2012ASingleEle = weightTrig2012ASingleEle1+weightTrig2012ASingleEle2-weightTrig2012ASingleEle1*weightTrig2012ASingleEle2;
-                weightTrig2012A = weightTrig2012ADiEle * triggerWeight.eleId2012A(vLeptons.pt[0],vLeptons.eta[0]) * triggerWeight.eleId2012A(vLeptons.pt[1],vLeptons.eta[1]) ; 
+                weightTrig2012A = weightTrig2012ADiEle * triggerWeight.eleId2012A(vLeptons.pt[0],vLeptons.eta[0]) * triggerWeight.eleId2012A(vLeptons.pt[1],vLeptons.eta[1]) ;
 
                 weightTrig2012DiEle = triggerWeight.doubleEle2012A(vLeptons.pt[0],vLeptons.eta[0],vLeptons.pt[1],vLeptons.eta[1]);
                 float weightTrig2012SingleEle1 = triggerWeight.singleEle2012Awp95(vLeptons.pt[0],vLeptons.eta[0]);
                 float weightTrig2012SingleEle2 = triggerWeight.singleEle2012Awp95(vLeptons.pt[1],vLeptons.eta[1]);
                 weightTrig2012SingleEle = weightTrig2012SingleEle1+weightTrig2012SingleEle2-weightTrig2012SingleEle1*weightTrig2012SingleEle2;
-                weightTrig2012 = weightTrig2012DiEle * triggerWeight.eleId2012A(vLeptons.pt[0],vLeptons.eta[0]) * triggerWeight.eleId2012A(vLeptons.pt[1],vLeptons.eta[1]) ; 
+                weightTrig2012 = weightTrig2012DiEle * triggerWeight.eleId2012A(vLeptons.pt[0],vLeptons.eta[0]) * triggerWeight.eleId2012A(vLeptons.pt[1],vLeptons.eta[1]) ;
 
                 weightTrig2012ABDiEle = triggerWeightAB.doubleEle2012A(vLeptons.pt[0],vLeptons.eta[0],vLeptons.pt[1],vLeptons.eta[1]);
                 float weightTrig2012ABSingleEle1 = triggerWeightAB.singleEle2012Awp95(vLeptons.pt[0],vLeptons.eta[0]);
                 float weightTrig2012ABSingleEle2 = triggerWeightAB.singleEle2012Awp95(vLeptons.pt[1],vLeptons.eta[1]);
                 weightTrig2012ABSingleEle = weightTrig2012ABSingleEle1+weightTrig2012ABSingleEle2-weightTrig2012ABSingleEle1*weightTrig2012ABSingleEle2;
                 weightTrig2012AB = weightTrig2012ABDiEle * triggerWeightAB.eleId2012A(vLeptons.pt[0],vLeptons.eta[0]) * triggerWeightAB.eleId2012A(vLeptons.pt[1],vLeptons.eta[1]) ;
-                
+
                 nvlep = 2;
                 firstAddEle = 2;
             }
-            
+
             if (Vtype == VHbbCandidate::Wmun) {
                 leptonForTop = vhCand.V.muons[0].p4;
                 vLeptons.set(vhCand.V.muons[0], 0, 13, aux);
@@ -1983,10 +2457,10 @@ int main(int argc, char *argv[]) {
                 weightTrig = cweightID * cweightTrig;
                 float weightTrig1OrMu30 = triggerWeight.scaleMuOr30IsoHLT(vLeptons.pt[0],vLeptons.eta[0]);
                 weightTrigOrMu30 = cweightID*weightTrig1OrMu30;
-                
+
                 // 2012
                 weightTrig2012ASingleMuon = triggerWeight.singleMuon2012A(vLeptons.pt[0],vLeptons.eta[0]);
-                weightTrig2012AMuonPlusWCandPt = weightTrig2012ASingleMuon + 
+                weightTrig2012AMuonPlusWCandPt = weightTrig2012ASingleMuon +
                     triggerWeight.muPlusWCandPt2012A_legMu(vLeptons.pt[0],vLeptons.eta[0])*triggerWeight.muPlusWCandPt2012A_legW(vhCand.V.p4.Pt(),0);
                 weightTrig2012A = weightTrig2012ASingleMuon * triggerWeight.muId2012A(vLeptons.pt[0],vLeptons.eta[0]) ;
 
@@ -2002,7 +2476,7 @@ int main(int argc, char *argv[]) {
                 nvlep = 1;
                 firstAddMu = 1;
             }
-            
+
             if (Vtype == VHbbCandidate::Wen) {
                 leptonForTop = vhCand.V.electrons[0].p4;
                 vLeptons.set(vhCand.V.electrons[0], 0, 11, aux);
@@ -2026,9 +2500,19 @@ int main(int argc, char *argv[]) {
 
                 weightTrig2012ABSingleEle = triggerWeightAB.singleEle2012Awp80(vLeptons.pt[0],vLeptons.eta[0]);
                 weightTrig2012AB = weightTrig2012ABSingleEle * triggerWeightAB.eleId2012Awp80(vLeptons.pt[0],vLeptons.eta[0]) ;
-                
+
                 nvlep = 1;
                 firstAddEle = 1;
+            }
+
+            vLeptonsTaus.reset();
+            if (VtypeWithTau == VHbbCandidate::Wtaun) {
+                if (vhCand.VTau.taus.size() > 0) {
+                    vLeptonsTaus.set(vhCand.VTau.taus[0], 0, 15, aux);
+                    //cout << vLeptonsTaus.pt[0] << ", " << vLeptonsTaus.decayModeFinding[0] << endl;
+                    nvlepTau = 1;
+                    firstAddTau = 1;
+                }
             }
 
             if (isMC_) {
@@ -2038,21 +2522,21 @@ int main(int argc, char *argv[]) {
                 weightTrigMET150 = triggerWeight.scaleMET150(MET.et);
                 weightTrigMET802CJet = weightTrigMET80 * weightTrig2CJet20;
                 weightTrigMET1002CJet = weightTrigMET100 * weightTrig2CJet20;
-                
+
                 // 2012
                 weightTrig2012DiJet30MHT80 = triggerWeight.scaleDiJet30MHT80_2012A(vhCand.V.mets.at(0).p4.Pt());
                 weightTrig2012PFMET150 = triggerWeight.scalePFMET150_2012AB(vhCand.V.mets.at(0).p4.Pt());  // demonstrated to hold also for RunC (used averaged efficiency)
                 weightTrig2012SumpT100MET100 = triggerWeight.scaleSumpT100MET100_2012B(vhCand.V.mets.at(0).p4.Pt());  // demonstrated to hold also for RunC (used averaged efficiency)
                 weightTrig2012APFMET150orDiJetMET = triggerWeight.scalePFMET150orDiJetMET_2012A(vhCand.V.mets.at(0).p4.Pt());
-                weightTrig2012BPFMET150orDiJetMET=triggerWeight.scalePFMET150orDiJetMET_2012B(vhCand.V.mets.at(0).p4.Pt()); 
-                weightTrig2012CPFMET150orDiJetMET=triggerWeight.scalePFMET150orDiJetMET_2012C(vhCand.V.mets.at(0).p4.Pt()); 
+                weightTrig2012BPFMET150orDiJetMET=triggerWeight.scalePFMET150orDiJetMET_2012B(vhCand.V.mets.at(0).p4.Pt());
+                weightTrig2012CPFMET150orDiJetMET=triggerWeight.scalePFMET150orDiJetMET_2012C(vhCand.V.mets.at(0).p4.Pt());
             }
-            
+
             if (Vtype == VHbbCandidate::Znn) {
                 float weightTrig1 = triggerWeight.scaleMetHLT(vhCand.V.mets.at(0).p4.Pt());
                 weightTrigMETLP = weightTrig1;
                 weightTrig = weightTrigMET150 + weightTrigMET802CJet - weightTrigMET802CJet * weightTrigMET150;
-                
+
                 nvlep = 0;
             }
 
@@ -2076,7 +2560,7 @@ int main(int argc, char *argv[]) {
                 weightTrigMET1002CJet = 1.;
                 weightTrigMETLP = 1.;
             }
-            
+
 
             aLeptons.reset();
             nalep = 0;
@@ -2087,12 +2571,12 @@ int main(int argc, char *argv[]) {
                     aLeptons.set(vhCand.V.electrons[j], nalep++, 11, aux);
             } else {
                 for (size_t j = 0; j < iEvent->muInfo.size(); j++) {
-                    if ((j != vhCand.V.firstLepton && j != vhCand.V.secondLepton)
+                    if ((j != vhCand.V.firstLeptonOrig && j != vhCand.V.secondLeptonOrig)
                         || ((Vtype != VHbbCandidate::Wmun) && (Vtype != VHbbCandidate::Zmumu)))
                         aLeptons.set(iEvent->muInfo[j], nalep++, 13, aux);  // nalep++ in a function is bad practice. Fix?
                 }
                 for (size_t j = 0; j < iEvent->eleInfo.size(); j++) {
-                    if ((j != vhCand.V.firstLepton && j != vhCand.V.secondLepton)
+                    if ((j != vhCand.V.firstLeptonOrig && j != vhCand.V.secondLeptonOrig)
                         || ((Vtype != VHbbCandidate::Wen) && (Vtype != VHbbCandidate::Zee)))
                         aLeptons.set(iEvent->eleInfo[j], nalep++, 11, aux);  // nalep++ in a function is bad practice. Fix?
                 }
@@ -2133,15 +2617,15 @@ int main(int argc, char *argv[]) {
             }
 
             //FIXME: Too much warnings coming from calling Eta(), fix?
-            //gendrcc=aux.genCCDeltaR(); 
-            //gendrbb=aux.genBBDeltaR(); 
+            //gendrcc=aux.genCCDeltaR();
+            //gendrbb=aux.genBBDeltaR();
 
             genHpt = aux.mcH.size() > 0 ? aux.mcH[0].p4.Pt() : -99;
             genZpt = aux.mcZ.size() > 0 ? aux.mcZ[0].p4.Pt() : -99;
             genWpt = aux.mcW.size() > 0 ? aux.mcW[0].p4.Pt() : -99;
 
-            // Z* is status=3 and Nmother=2 (q and qbar)  
-            // Z is status=2 and Ndau=2 (mup and mum)  
+            // Z* is status=3 and Nmother=2 (q and qbar)
+            // Z is status=2 and Ndau=2 (mup and mum)
             for (unsigned int i = 0; i < aux.mcZ.size(); i++) {
                 if (aux.mcZ[i].status == 3) {
                     genZstar.mass = aux.mcZ[i].p4.M();
@@ -2208,8 +2692,8 @@ int main(int argc, char *argv[]) {
                     if (aux.mcW[i].momid != -99)
                         genWstar.momid = aux.mcW[i].momid;
                 }
-                
-                if (aux.mcW[i].dauid.size() > 1 && 
+
+                if (aux.mcW[i].dauid.size() > 1 &&
                     (abs(aux.mcW[i].dauid[0]) == 13 || abs(aux.mcW[i].dauid[0]) == 11)) {
                     genW.mass = aux.mcW[i].p4.M();
                     genW.pt = aux.mcW[i].p4.Pt();
@@ -2221,7 +2705,7 @@ int main(int argc, char *argv[]) {
                         genW.momid = aux.mcW[i].momid;
                 }
             }
-            
+
             // b coming from Higgs
             for (unsigned int i = 0; i < aux.mcB.size(); i++) {
                 if (abs(aux.mcB[i].momid) != 5) {
@@ -2254,7 +2738,7 @@ int main(int argc, char *argv[]) {
                     if (aux.mcBbar[i].momid != -99)
                         genBbar.momid = aux.mcBbar[i].momid;
                 }
-                
+
                 if (aux.mcBbar[i].momid == -6) {
                     genTbar.bmass = aux.mcBbar[i].p4.M();
                     genTbar.bpt = aux.mcBbar[i].p4.Pt();
@@ -2288,18 +2772,34 @@ int main(int argc, char *argv[]) {
                     }
                 }
                 /*
-                   /// now check if a semileptonic W is also in a bjets....      
-                   if ( ( (WminusMode==11 || WminusMode==13 || WminusMode==15  ) || (WplusMode==11 || WplusMode==13 || WplusMode==15  ))  && deltaR(vhCand.H.jets[0].p4.Eta(),vhCand.H.jets[0].p4.Phi(), aux.mcW[j].p4.Eta(), aux.mcW[j].p4.Phi())<0.3 ) hJets.isSemiLeptMCtruth[0]=1;
-                   if ( ( (WminusMode==11 || WminusMode==13 || WminusMode==15  ) || (WplusMode==11 || WplusMode==13 || WplusMode==15  ))  && deltaR(vhCand.H.jets[1].p4.Eta(),vhCand.H.jets[1].p4.Phi(), aux.mcW[j].p4.Eta(), aux.mcW[j].p4.Phi())<0.3 ) hJets.isSemiLeptMCtruth[1]=1;
+                    /// now check if a semileptonic W is also in a bjets....
+                    if ( ( (WminusMode==11 || WminusMode==13 || WminusMode==15) || (WplusMode==11 || WplusMode==13 || WplusMode==15) ) && deltaR(vhCand.H.jets[0].p4.Eta(),vhCand.H.jets[0].p4.Phi(), aux.mcW[j].p4.Eta(), aux.mcW[j].p4.Phi())<0.3 )  hJets.isSemiLeptMCtruth[0] = 1;
+                    if ( ( (WminusMode==11 || WminusMode==13 || WminusMode==15) || (WplusMode==11 || WplusMode==13 || WplusMode==15) ) && deltaR(vhCand.H.jets[1].p4.Eta(),vhCand.H.jets[1].p4.Phi(), aux.mcW[j].p4.Eta(), aux.mcW[j].p4.Phi())<0.3 )  hJets.isSemiLeptMCtruth[1] = 1;
 
-                   for( int j=0; j < naJets && j < MAXJ; j++ ) 
-                   {
-                   if ((idd==11 || idd==13 || idd==15  )  && deltaR(vhCand.additionalJets[j].p4.Eta(),vhCand.additionalJets[j].p4.Phi(), aux.mcW[j].p4.Eta(), aux.mcW[j].p4.Phi()) <0.3) aJets.isSemiLept[j]=1;
-
-                   }
+                    for (int j=0; j < naJets && j < MAXJ; j++) {
+                        if ((idd==11 || idd==13 || idd==15) && deltaR(vhCand.additionalJets[j].p4.Eta(),vhCand.additionalJets[j].p4.Phi(), aux.mcW[j].p4.Eta(), aux.mcW[j].p4.Phi())<0.3 ) aJets.isSemiLept[j]=1;
+                    }
                  */
             }
-            
+
+            tauMinusMode = -99;
+            tauPlusMode = -99;
+            for (unsigned int j = 0; j < aux.mcTau.size(); j++) {
+                for (unsigned int k = 0; k < aux.mcTau[j].dauid.size(); k++) {
+                    int idd = abs(aux.mcTau[j].dauid[k]);
+                    if (idd != 15 && idd != 16) {
+                        if (tauMinusMode == -99 && aux.mcTau[j].charge == -1)
+                            tauMinusMode = idd;
+                        if (tauPlusMode == -99 && aux.mcTau[j].charge == +1)
+                            tauPlusMode = idd;
+                    }
+                    if (verbose) {
+                        std::cout << "(j,k,m_Tau,dauid,pt_dau,momid)=(" << j << "," << k << "," << aux.mcTau[j].p4.M() << "
+                                  << aux.mcTau[j].dauFourMomentum[k].Pt() << "," << aux.mcTau[j].momid  <<")" << std::endl;
+                    }
+                }
+            }
+
             /// Compute pull angle from AK7
             if (vhCand.H.HiggsFlag) {
                 if (!fromCandidate) {
@@ -2315,7 +2815,7 @@ int main(int argc, char *argv[]) {
                         if (ak7wrt1[0].p4.DeltaR(ak7wrt2[0].p4) > 0.1) {
                             ak7_matched.push_back(ak7wrt1[0]);
                             ak7_matched.push_back(ak7wrt2[0]);
-                        
+
                         // else look at the second best
                         } else {
                             // ak7wrt1 is best
@@ -2345,7 +2845,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Closing file " << inputFiles_[iFile] << std::endl;
         inFile->Close();  // close input file
     }  // end loop over files
-    
+
     std::cout << "------------------------------- " << std::endl;
     std::cout << "Events: " << ievt << std::endl;
     std::cout << "Saved : " << jevt << std::endl;
@@ -2357,11 +2857,11 @@ int main(int argc, char *argv[]) {
     //_outTree->Write();
     _outFile->Write();
     _outFile->Close();
-    
+
     delete algoZ; delete algoW; delete algoRecoverLowPt;
     delete nominalShape; delete upBCShape; delete downBCShape; delete upLShape; delete downLShape;
     delete nominalShape4p; delete upBCShape4p; delete downBCShape4p;
-    
+
     return 0;
 }
 

@@ -16,17 +16,19 @@ class HbbCandidateFinderAlgo {
 
     VHbbCandidate changeHiggs(bool useHighestPtHiggs, const VHbbCandidate & old);
 
-    void run(const VHbbEvent * event, 
-             std::vector < VHbbCandidate > & candidates, 
+    void run(const VHbbEvent * event,
+             std::vector < VHbbCandidate > & candidates,
              const VHbbEventAuxInfo & aux);
 
     bool findDiJets(const std::vector < VHbbEvent::SimpleJet > & jetsin,
                     VHbbEvent::SimpleJet & j1, VHbbEvent::SimpleJet & j2,
-                    std::vector < VHbbEvent::SimpleJet > & addJets);
+                    std::vector < VHbbEvent::SimpleJet > & addJets,
+                    size_t * indices=0);
 
     bool findDiJetsHighestPt(const std::vector < VHbbEvent::SimpleJet > & jetsin,
                              VHbbEvent::SimpleJet & j1, VHbbEvent::SimpleJet & j2,
-                             std::vector < VHbbEvent::SimpleJet > & addJets);
+                             std::vector < VHbbEvent::SimpleJet > & addJets,
+                             size_t * indices=0);
 
     bool findFatJet(const std::vector < VHbbEvent::HardJet > & jetsin,
                     const std::vector < VHbbEvent::SimpleJet > & subjetsin,

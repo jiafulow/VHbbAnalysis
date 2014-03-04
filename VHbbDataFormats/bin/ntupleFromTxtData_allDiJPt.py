@@ -21,6 +21,11 @@ process.fwliteInput = cms.PSet(
     PUdatafileName2011B = cms.string(baseAddFiles+"MyDataPileupHistogramObserved.root"),
     PUmcfileName = cms.string(baseAddFiles+"MC_S10_fromTwiki_60bins.root"),
     PUdatafileName = cms.string(baseAddFiles+"data_PU_60bins_190456-202305_69.4mb.root"),
+    PUdatafileNameMinus = cms.string(baseAddFiles+"data_PU_60bins_190456-202305_66.5mb.root"),
+    PUdatafileNamePlus = cms.string(baseAddFiles+"data_PU_60bins_190456-202305_72.4mb.root"),
+    PUdatafileNameAB = cms.string(baseAddFiles+"data_PU_60bins_190456-196509_69.4mb.root"),
+    badEventsFileName = cms.string(baseAddFiles+"HCALLaser2012AllDatasets.txt"),
+
     #PUdatafileName = cms.string(baseAddFiles+"Cert_190456-196509_8TeV_PromptReco_Collisions12_JSON.root"),
 #    Weight3DfileName = cms.string(baseAddFiles+"Weight3D_Summer12.root"),
     Weight3DfileName = cms.string(""),
@@ -31,12 +36,14 @@ process.fwliteInput = cms.PSet(
     skipEvents   = cms.int32(0),                             ## optional
     )
 
-JSONfile = '/gpfs/ddn/cms/user/arizzi/Hbb/V42/CMSSW_5_3_3_patch2/src/VHbbAnalysis/VHbbDataFormats/bin/Cert_190456-203002_8TeV_PromptReco_Collisions12_JSON.txt'
+JSONfile = '/gpfs/ddn/cms/user/arizzi/Hbb/V42/CMSSW_5_3_3_patch2/src/VHbbAnalysis/VHbbDataFormats/bin/Cert_190456-196531_8TeV_13Jul2012ReReco_v2_Cert_190782-190949_8TeV_06Aug2012ReReco_Cert_201191-201191_8TeV_11Dec2012ReReco-recover_Cert_190456-208686_8TeV_PromptReco.txt'
+#Cert_190456-196531_8TeV_13Jul2012ReReco_ert_190782-190949_8TeV_06Aug2012ReReco_Cert_198022-198523_8TeV_24Aug2012ReReco_Cert_198941-203002_8TeV_PromptReco_Recover201191-201191_8TeV_11Dec2012ReReco__203002-208686_8TeV_PromptReco_Collisions12_JSON.txt'
 lumiList = LumiList.LumiList (filename = JSONfile).getCMSSWString().split(',')
 process.fwliteInput.lumisToProcess.extend(lumiList)
 
 
 channel =  re.sub(".txt","",os.environ.get("FILETOPROCESS"))
+channel =  re.sub(".*/","",channel)
 
 
 for l in lines :
@@ -109,7 +116,10 @@ process.Analyzer = cms.PSet(
         "HLT_IsoMu20_WCandPt80_v.*", #47
         "HLT_Mu17_TkMu8_v.*", #48
         "HLT_DiCentralPFJet30_PFMHT80_v.*", #49 ## run2012A 
-        "HLT_DiCentralPFJet30_PFMET80_v.*", #50 ## run2012B 
+        "HLT_DiCentralPFJet30_PFMET80_v.*", #50 ## run2012B prescaled       
+        "HLT_LooseIsoPFTau35_Trk20_Prong1_v.*", #51
+        "HLT_LooseIsoPFTau35_Trk20_Prong1_MET70_v.*", #52
+        "HLT_LooseIsoPFTau35_Trk20_Prong1_MET75_v.*", #53
 
   ),
     isMC =     cms.bool(False),
@@ -162,7 +172,7 @@ process.Analyzer = cms.PSet(
   
     
 
-   process.Analyzer2012ABOnly = cms.PSet(
+process.Analyzer2012ABOnly = cms.PSet(
     idMuFileName = cms.string(baseAddFiles+"ScaleEffs42.root"),
     hltMuFileName = cms.string(baseAddFiles+"ScaleFactor_muonEffsOnlyIsoToHLT2.2fb_efficiency.root"),
     hltEle1FileName = cms.string(baseAddFiles+"Ele17.root"),

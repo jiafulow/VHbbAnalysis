@@ -21,7 +21,7 @@ class VHbbEvent {
             chargedHadronEFraction(-99), neutralHadronEFraction(-99),
             chargedEmEFraction(-99), neutralEmEFraction(-99),
             nConstituents(-99), ptRaw(-99), ptLeadTrack(-99), jetArea(-99),
-            constituentPtDistribution(-99), constituentEtaPhiSpread(-99), 
+            constituentPtDistribution(-99), constituentEtaPhiSpread(-99),
             bestMCid(-99), bestMCmomid(-99), puJetIdL(-99), puJetIdM(-99),
             puJetIdT(-99), puJetIdMva(-99) {
         }
@@ -66,7 +66,6 @@ class VHbbEvent {
         float puJetIdL, puJetIdM, puJetIdT, puJetIdMva;
     };
 
-
     class HardJet {
       public:
         HardJet(): constituents(-99) {}
@@ -75,6 +74,25 @@ class VHbbEvent {
         TLorentzVector p4;
         std::vector < TLorentzVector > subFourMomentum;
         std::vector < float > etaSub, phiSub;
+    };
+
+    class RawJet {
+      public:
+        RawJet(): Nconstituents(-99), Ngenconstituents(-99) {
+        }
+        int Nconstituents;
+        int Ngenconstituents;
+        TLorentzVector p4, genP4;
+        std::vector < float > constituents_px;
+        std::vector < float > constituents_py;
+        std::vector < float > constituents_pz;
+        std::vector < float > constituents_e;
+        std::vector < int > constituents_pdgId;
+        std::vector < float > genconstituents_px;
+        std::vector < float > genconstituents_py;
+        std::vector < float > genconstituents_pz;
+        std::vector < float > genconstituents_e;
+        std::vector < int > genconstituents_pdgId;
     };
 
     class METInfo {
@@ -94,18 +112,17 @@ class VHbbEvent {
             chi2(-99), globChi2(-99), cat(-99), nValidTracker(-99),
             nValidPixel(-99), nMatches(-99), nHits(-99), nPixelHits(-99),
             globNHits(-99), validMuStations(-99), emEnergy(-99),
-            hadEnergy(-99), nValidLayers(-99), isPF(-99), mcId(-99),
-            mcMomId(-99), mcgMomId(-99) {
+            hadEnergy(-99), nValidLayers(-99), isPF(-99),
+            mcId(-99), mcMomId(-99), mcgMomId(-99) {
         }
       public:
-        TLorentzVector p4;
+        TLorentzVector p4, mcFourMomentum;
         int charge;
         float tIso, eIso, hIso, pfChaIso, pfChaPUIso, pfPhoIso, pfNeuIso,
             acop, ipDb, ipErrDb, zPVPt, zPVProb, chi2, globChi2;
         int cat, nValidTracker, nValidPixel, nMatches, nHits, nPixelHits,
             globNHits, validMuStations;
         float emEnergy, hadEnergy;
-        TLorentzVector mcFourMomentum;
         int nValidLayers, isPF;
         int mcId, mcMomId, mcgMomId;
         std::vector < int > hltMatchedBits;
@@ -117,11 +134,11 @@ class VHbbEvent {
             tIso(-99), eIso(-99), hIso(-99), pfChaIso(-99), pfChaPUIso(-99),
             pfPhoIso(-99), pfNeuIso(-99), acop(-99), sihih(-99), Dphi(-99),
             Deta(-99), HoE(-99), convDist(-99), convDcot(-99), innerHits(-99),
-            isEB(false), isEE(false), ipDb(-99), ipErrDb(-99), 
+            isEB(false), isEE(false), ipDb(-99), ipErrDb(-99),
             dxy(-99), dz(-99), pfPhoIsoDoubleCounted(-99),
-            id95(-99), id85(-99), id80(-99), id70(-99), id95r(-99), id85r(-99),
-            id80r(-99), id70r(-99), 
-            // MVA EleID 2012 input vars 
+            id95(-99), id85(-99), id80(-99), id70(-99),
+            id95r(-99), id85r(-99), id80r(-99), id70r(-99),
+            // MVA EleID 2012 input vars
             // keep same names to make life easier in integrating with MVA evaluation code
             fMVAVar_EoP(-99), fMVAVar_HoE(-99), fMVAVar_IoEmIoP(-99),
             fMVAVar_PreShowerOverRaw(-99), fMVAVar_R9(-99), fMVAVar_d0(-99),
@@ -134,7 +151,7 @@ class VHbbEvent {
             mcId(-99), mcMomId(-99), mcgMomId(-99) {
         }
       public:
-        TLorentzVector p4;
+        TLorentzVector p4, mcFourMomentum;
         float scEta, scPhi;
         int charge;
         float tIso, eIso, hIso, pfChaIso, pfChaPUIso, pfPhoIso, pfNeuIso,
@@ -151,7 +168,6 @@ class VHbbEvent {
             fMVAVar_gsfchi2, fMVAVar_ip3d, fMVAVar_kfchi2, fMVAVar_kfhits,
             fMVAVar_phiwidth, fMVAVar_pt, fMVAVar_see, fMVAVar_spp, mvaOut,
             mvaOutTrig;
-        TLorentzVector mcFourMomentum;
         int mcId, mcMomId, mcgMomId;
         std::vector < int > hltMatchedBits;
     };
@@ -160,29 +176,37 @@ class VHbbEvent {
       public:
         TauInfo(): charge(-99), tIso(-99), eIso(-99), hIso(-99), pfChaIso(-99),
             pfChaPUIso(-99), pfPhoIso(-99), pfNeuIso(-99), acop(-99),
-            byIsolation(-99), trackIsolation(-99), byTaNCfrOnePercent(-99),
-            byTaNCfrHalfPercent(-99), byTaNCfrQuarterPercent(-99),
-            byTaNCfrTenthPercent(-99), byTaNC(-99), mcId(-99), mcMomId(-99),
-            mcgMomId(-99), againstElectronLoose(-99),
-            againstElectronMedium(-99), againstElectronTight(-99),
+            byIsolation(-99), trackIsolation(-99), byTaNC(-99),
+            byTaNCfrOnePercent(-99), byTaNCfrHalfPercent(-99),
+            byTaNCfrQuarterPercent(-99), byTaNCfrTenthPercent(-99),
+            againstElectronLoose(-99), againstElectronMedium(-99),
+            againstElectronTight(-99),
             againstMuonLoose(-99), againstMuonTight(-99),
             byLooseIsolation(-99), byMediumIsolation(-99),
             byTightIsolation(-99), byVLooseIsolation(-99),
             decayModeFinding(-99), isolationPFChargedHadrCandsPtSum(-999999.),
-            isolationPFGammaCandsEtSum(-999999.),
-            leadPFChargedHadrCandPt(-999999.), NsignalPFChargedHadrCands(-99),
-            NsignalPFGammaCands(-99),
-            byLooseCombinedIsolationDeltaBetaCorr(-99),
-            againstElectronMVA(-99) {
+            isolationPFGammaCandsEtSum(-999999.), leadPFChargedHadrCandPt(-999999.),
+            NsignalPFChargedHadrCands(-99), NsignalPFGammaCands(-99),
+            byLooseCombinedIsolationDeltaBetaCorr(-99), againstElectronMVA(-99),
+            byLooseCombinedIsolationDeltaBetaCorr3Hits(-99),
+            byMediumCombinedIsolationDeltaBetaCorr3Hits(-99),
+            byTightCombinedIsolationDeltaBetaCorr3Hits(-99),
+            againstElectronMVA3raw(-99), againstElectronMVA3category(-99),
+            againstElectronLooseMVA3(-99), againstElectronMediumMVA3(-99),
+            againstElectronTightMVA3(-99), againstElectronVTightMVA3(-99),
+            againstElectronDeadECAL(-99), byLooseIsolationMVA(-99),
+            byMediumIsolationMVA(-99), byTightIsolationMVA(-99),
+            byLooseIsolationMVA2(-99), byMediumIsolationMVA2(-99),
+            byTightIsolationMVA2(-99), againstMuonLoose2(-99),
+            againstMuonMedium2(-99), againstMuonTight2(-99),
+            mcId(-99), mcMomId(-99), mcgMomId(-99) {
         }
       public:
-        TLorentzVector p4;
+        TLorentzVector p4, mcFourMomentum;
         int charge;
-        float tIso, eIso, hIso, pfChaIso, pfChaPUIso, pfPhoIso, pfNeuIso,
-            acop;
-        float byIsolation, trackIsolation, byTaNCfrOnePercent,
-            byTaNCfrHalfPercent, byTaNCfrQuarterPercent, byTaNCfrTenthPercent,
-            byTaNC;
+        float tIso, eIso, hIso, pfChaIso, pfChaPUIso, pfPhoIso, pfNeuIso, acop;
+        float byIsolation, trackIsolation, byTaNC, byTaNCfrOnePercent,
+            byTaNCfrHalfPercent, byTaNCfrQuarterPercent, byTaNCfrTenthPercent;
         int mcId, mcMomId, mcgMomId;
         float againstElectronLoose, againstElectronMedium,
             againstElectronTight, againstMuonLoose, againstMuonTight;
@@ -192,7 +216,16 @@ class VHbbEvent {
             leadPFChargedHadrCandPt;
         int NsignalPFChargedHadrCands, NsignalPFGammaCands;
         float byLooseCombinedIsolationDeltaBetaCorr, againstElectronMVA;
-        TLorentzVector mcFourMomentum;
+        float byLooseCombinedIsolationDeltaBetaCorr3Hits,
+            byMediumCombinedIsolationDeltaBetaCorr3Hits,
+            byTightCombinedIsolationDeltaBetaCorr3Hits;
+        float againstElectronMVA3raw, againstElectronMVA3category,
+            againstElectronLooseMVA3, againstElectronMediumMVA3,
+            againstElectronTightMVA3, againstElectronVTightMVA3,
+            againstElectronDeadECAL;
+        float byLooseIsolationMVA, byMediumIsolationMVA, byTightIsolationMVA,
+            byLooseIsolationMVA2, byMediumIsolationMVA2, byTightIsolationMVA2,
+            againstMuonLoose2, againstMuonMedium2, againstMuonTight2;
     };
 
     class DiMuonInfo {
@@ -209,13 +242,20 @@ class VHbbEvent {
 
 
   public:
-    std::vector < SimpleJet > simpleJets;
-    std::vector < SimpleJet > simpleJets2;
-    std::vector < SimpleJet > simpleJets3;
-    std::vector < SimpleJet > simpleJets4;
-    std::vector < SimpleJet > subJets;
-    std::vector < SimpleJet > filterJets;
-    std::vector < HardJet > hardJets;
+    std::vector < SimpleJet > simpleJets;        // unused
+    std::vector < SimpleJet > simpleJets2;       // anti-kt R=0.5 PF jets
+    std::vector < SimpleJet > simpleJets3;       // unused
+    std::vector < SimpleJet > simpleJets4;       // anti-kt R=0.7 PF jets
+    std::vector < SimpleJet > subJets;           // CA R=1.2 mass drop subjets (FastJet 2)
+    std::vector < SimpleJet > filterJets;        // CA R=1.2 mass drop filtered R=0.3 subjets (FastJet 2)
+    std::vector < HardJet   > hardJets;          // CA R=1.2 mass drop fatjets (FastJet 2)
+
+    std::vector < SimpleJet > CA12mdft_subJets;  // CA R=1.2 mass drop filtered R=0.3 subjets (FastJet 3)
+    std::vector < HardJet   > CA12mdft_hardJets; // CA R=1.2 mass drop fatjets (FastJet 3)
+    std::vector < SimpleJet > CA12pr_subJets;    // CA R=1.2 pruned subjets (FastJet 3)
+    std::vector < SimpleJet > CA12ft_subJets;    // CA R=1.2 filtered subjets (FastJet 3)
+    std::vector < RawJet    > CA12_rawJets;      // CA R=1.2 raw fatjets (FastJet 3)
+
 
     METInfo met;
     METInfo metType1;
@@ -224,7 +264,7 @@ class VHbbEvent {
     METInfo calomet;
     METInfo pfmetNoPU;
     METInfo pfmetNoPUCh;
-    
+
     std::vector < METInfo > metUncInfo;
     std::vector < MuonInfo > muInfo;
     std::vector < ElectronInfo > eleInfo;
@@ -237,4 +277,5 @@ class VHbbEvent {
 
 };
 #endif  // VHbbEvent__H
+
 
