@@ -1,0 +1,112 @@
+# ==============================================================================
+# VHbbAnalysis
+#   https://github.com/jiafulow/VHbbAnalysis/
+#   (TWiki?)
+# Ntuple tag        : NtupleV44
+# CMSSW release     : CMSSW_5_3_14_patch2
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# Setup for the first time (at FNAL)
+# ------------------------------------------------------------------------------
+#source /uscmst1/prod/sw/cms/cshrc prod
+#setenv SCRAM_ARCH slc5_amd64_gcc462
+#scram p -n NtupleV44 CMSSW CMSSW_5_3_14_patch2
+#cd NtupleV44/src
+#cmsenv
+#eval `ssh-agent`
+#ssh-add
+
+
+# ------------------------------------------------------------------------------
+# PAT recipe
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATReleaseNotes52X
+# Description       : Update selectors (CMSSW_5_3_14_patch1)
+# TWiki revision    : r179 - 11 Feb 2014
+# Commit SHA        : 59ef4a1d0d9409963148b2e0d5b769b42de4c021
+# ------------------------------------------------------------------------------
+git cms-addpkg PhysicsTools/PatAlgos
+
+
+# ------------------------------------------------------------------------------
+# MET recipe
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMETRecipe53X
+# Description       : CMSSW_5_3_14 (patch1 or later)
+# TWiki revision    : r29 - 17 Feb 2014
+# Commit SHA        : 0dfb46d6960dba1ba3f05428d71034d7f0b4a71a
+# ------------------------------------------------------------------------------
+git cms-merge-topic -u TaiSakuma:53X-met-131120-01
+
+
+# ------------------------------------------------------------------------------
+# MVA MET, No-PU MET and Pileup Jet ID (they are bundled together)
+#   https://twiki.cern.ch/twiki/bin/view/CMS/MVAMet
+# Description       : Installation
+# TWiki revision    : r15 - 20 Dec 2013
+# Commit SHA        : ee5210df5e1781d73044c3f698d3242ecb41ba61
+# ------------------------------------------------------------------------------
+# Beware that this version of Pileup Jet ID uses 5x working points, not 53x
+git-cms-merge-topic -u cms-met:53X-MVaNoPuMET-20131217-01
+
+
+# ------------------------------------------------------------------------------
+# MVA Electron ID
+#   https://twiki.cern.ch/twiki/bin/view/CMS/MultivariateElectronIdentification
+# Description       : Recipe for 53X from Git
+# TWiki revision    : r53 - 14 Jan 2014
+# Commit SHA        : (from release)
+# ------------------------------------------------------------------------------
+git cms-addpkg EgammaAnalysis/ElectronTools
+cd EgammaAnalysis/ElectronTools/data/
+cat download.url | xargs wget
+cd -
+
+
+# ------------------------------------------------------------------------------
+# Tau ID
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePFTauID
+# Description       : Legacy Tau ID (Run I) / 53X / 5_3_12 and higher
+# TWiki revision    : r153 - 04 Mar 2014
+# Commit SHA        : --
+# ------------------------------------------------------------------------------
+# Already included in CMSSW_5_3_12
+
+
+# ------------------------------------------------------------------------------
+# TobTecFakesFilter
+# No git version yet. Use a temporary solution
+# ------------------------------------------------------------------------------
+#cvs co -d KStenson/TrackingFilters UserCode/KStenson/TrackingFilters
+#cp KStenson/TrackingFilters/plugins/TobTecFakesFilter.cc RecoMET/METFilters/plugins/
+#cp KStenson/TrackingFilters/python/tobtecfakesfilter_cfi.py RecoMET/METFilters/python/
+#rm -rf KStenson/TrackingFilters
+git cms-addpkg RecoMET/METFilters
+wget --no-check-certificate https://gist.githubusercontent.com/jiafulow/1cecbd551b4075219af4/raw/d7fb810e20a18330be8de0e00bb127878f1573a6/TobTecFakesFilter.cc -O RecoMET/METFilters/plugins/TobTecFakesFilter.cc
+
+
+# ------------------------------------------------------------------------------
+# Check dependencies (optional)
+# ------------------------------------------------------------------------------
+#git cms-checkdeps -a
+
+
+# ------------------------------------------------------------------------------
+# LAST BUT NOT LEAST
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# VHbbAnalysis (separated from cms-sw repository for now)
+# git branch        : CMSSW_5_3_14_patch2_dev
+# ------------------------------------------------------------------------------
+git clone git@github.com:jiafulow/VHbbAnalysis.git
+cd VHbbAnalysis
+git checkout CMSSW_5_3_14_patch2_dev
+cd ..
+
+
+# ------------------------------------------------------------------------------
+# Compile & Run
+# ------------------------------------------------------------------------------
+scram b -j8
+
+#cmsRun VHbbAnalysis/HbbAnalyzer/test/patData.py

@@ -1,0 +1,9 @@
+# TODO
+
+[ ] Drop 7 TeV stuff
+
+[ ] Integrate the Step 1 production into B2G framework for easier jet/MET development
+
+[ ] Recreate the Step 2 maker
+
+-- 2014-03-04
