@@ -34,14 +34,14 @@ GLOBALTAGS = {
     "Run2012C-24Aug2012-v1"         : "FT_53_V10_AN2::All",
     "Run2012C-PromptReco-v1"        : "GR_P_V40_AN1::All",
     "Run2012C-PromptReco-v2"        : "GR_P_V41_AN2::All",
-    "Run2012D-PromptReco-v1"        : "GR_P_V42_AN2::All",
+    "Run2012D-PromptReco-v1"        : "GR_P_V42_AN4::All",
     }
 
 GLOBALTAG = ""
 if RUN_ON_MC:
     GLOBALTAG = GLOBALTAGS["Summer12_DR53X"]
 else:
-    GLOBALTAG = GLOBALTAGS["Run2012C-PromptReco-v1"]  # check before use
+    GLOBALTAG = GLOBALTAGS["Run2012D-PromptReco-v1"]  # check before use
 
 
 ################################################################################
@@ -59,13 +59,8 @@ process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 ## Source
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-        #"/store/data/Run2012C/SingleMu/AOD/PromptReco-v2/000/200/369/60F3A873-74E2-E111-8A04-003048D37538.root",
-        "/store/data/Run2012C/MET/AOD/PromptReco-v1/000/198/859/8C808C7D-92CD-E111-AE97-003048D3733E.root",
-        "/store/data/Run2012C/MET/AOD/PromptReco-v1/000/198/860/B6346A43-93CD-E111-B9EF-BCAEC53296F7.root",
-        "/store/data/Run2012C/MET/AOD/PromptReco-v1/000/198/898/F0BF5EF9-D7CD-E111-AFDD-001D09F2527B.root",
-        "/store/data/Run2012C/MET/AOD/PromptReco-v1/000/198/910/B407D1A8-63CE-E111-B387-001D09F34488.root",
-        "/store/data/Run2012C/MET/AOD/PromptReco-v1/000/198/913/4AE2FEC7-78CE-E111-9D10-485B3962633D.root",
-        #"/store/mc/Summer12_DR53X/ZH_ZToNuNu_HToBB_M-125_8TeV-powheg-herwigpp/AODSIM/PU_S10_START53_V7A-v1/0000/046ED31B-82FC-E111-BA0E-00215E220F78.root",
+        #"/store/data/Run2012C/MET/AOD/PromptReco-v1/000/198/860/B6346A43-93CD-E111-B9EF-BCAEC53296F7.root",
+        "/store/data/Run2012D/MET/AOD/PromptReco-v1/000/208/307/62E3DCE8-373D-E211-A16B-002481E0DEC6.root",
         )
     )
 
