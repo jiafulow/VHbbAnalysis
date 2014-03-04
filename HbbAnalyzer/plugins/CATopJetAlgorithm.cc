@@ -1,6 +1,6 @@
 // Original author: Brock Tweedie (JHU)
 // Ported to CMSSW by: Sal Rappoccio (JHU)
-// $Id: CATopJetAlgorithm.cc,v 1.1 2011/06/08 17:25:32 tboccali Exp $
+// $Id: CATopJetAlgorithm.cc,v 1.2 2011/06/08 17:30:41 tboccali Exp $
 
 #include "VHbbAnalysis/HbbAnalyzer/interface/CATopJetAlgorithm.h"
 #include "FWCore/Framework/interface/ESHandle.h"

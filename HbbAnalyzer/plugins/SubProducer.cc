@@ -13,7 +13,7 @@
 //
 // Original Author:  David Lopes Pegna,Address unknown,NONE,
 //         Created:  Wed Jul 22 19:17:38 EDT 2009
-// $Id: SubProducer.cc,v 1.1 2011/02/22 21:52:54 dlopes Exp $
+// $Id: SubProducer.cc,v 1.1 2011/06/08 17:25:32 tboccali Exp $
 //
 //
 

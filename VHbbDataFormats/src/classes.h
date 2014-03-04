@@ -4,12 +4,12 @@
 #include "DataFormats/Common/interface/Wrapper.h"
 
 namespace { 
-  VHbbEvent pippodd;
-  VHbbEventAuxInfo pdippodd;
-  edm::Wrapper<VHbbEvent> lkj;
-  edm::Wrapper<VHbbEventAuxInfo> lkjd;
-  VHbbCandidate pippo2;
-  std::vector<VHbbCandidate> pippo3;
-  edm::Wrapper<std::vector<VHbbCandidate> > pippo4;
+  VHbbEvent pippo1;
+  VHbbEventAuxInfo pippo2;
+  edm::Wrapper<VHbbEvent> pippo3;
+  edm::Wrapper<VHbbEventAuxInfo> pippo4;
+  VHbbCandidate pippo5;
+  std::vector<VHbbCandidate> pippo6;
+  edm::Wrapper<std::vector<VHbbCandidate> > pippo7;
     
 }
