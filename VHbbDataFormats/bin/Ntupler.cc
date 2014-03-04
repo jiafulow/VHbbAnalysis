@@ -2850,7 +2850,7 @@ int main(int argc, char *argv[]) {
                             if (H1B_cand->pdgId() == 5) {
                                 genH1B = returnGenParticleInfo(H1B_cand);
                             } else
-                                std::cout << ERROR: First h0's first daughter is not a b!" << std::endl;
+                                std::cout << "ERROR: First h0's first daughter is not a b!" << std::endl;
                             const reco::Candidate * H1Bbar_cand = H1_cand->daughter(1);
                             if (H1Bbar_cand->pdgId() == -5) {
                                 genH1Bbar = returnGenParticleInfo(H1Bbar_cand);
@@ -2858,7 +2858,7 @@ int main(int argc, char *argv[]) {
                                 std::cout << "ERROR: First h0's second daughter is not a bbar!" << std::endl;
                         } else
                             std::cout << "ERROR: H0's first daughter is not an h0!" << std::endl;
-                        
+
                         const reco::Candidate * H2_cand = p->daughter(1);
                         if (H2_cand->pdgId() == 25) {
                             genH2 = returnGenParticleInfo(H2_cand);
