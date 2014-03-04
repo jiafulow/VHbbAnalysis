@@ -2,7 +2,7 @@
 //
 // Package:    HbbAnalyzerNew
 // Class:      HbbAnalyzerNew
-// 
+//
 /**\class HbbAnalyzerNew HbbAnalyzerNew.cc Analysis/HbbAnalyzer/src/HbbAnalyzerNew.cc
 
 Description: <one line class summary>
@@ -50,7 +50,7 @@ Implementation:
 #include "JetMETCorrections/Objects/interface/JetCorrector.h"
 #include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
 
-/// 
+///
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
@@ -139,7 +139,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     ////////////////////////////////////////////////////////////////////////////
     /// Handles                                                              ///
     ////////////////////////////////////////////////////////////////////////////
-    
+
     /// Electrons
     edm::Handle < edm::View < pat::Electron > > electronHandle;
     iEvent.getByLabel(eleLabel_, electronHandle);
@@ -183,7 +183,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     //edm::Handle < edm::View < pat::Photon > > phoHandle;
     //iEvent.getByLabel(phoLabel_,phoHandle);
     //edm::View < pat::Photon > photons = *phoHandle;
-    
+
     /// Photons used in isolation
     edm::Handle < edm::View < reco::PFCandidate > > photonIsoH;
     iEvent.getByLabel("pfAllPhotons", photonIsoH);
@@ -193,7 +193,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     edm::Handle < edm::View < reco::MET > > metHandle;
     iEvent.getByLabel(metLabel_, metHandle);
     edm::View < reco::MET > mets = *metHandle;
-    
+
     /// MET with Type-1 correction (PF)
     edm::Handle < edm::View < reco::MET > > metType1Handle;
     iEvent.getByLabel(metType1Label_, metType1Handle);
@@ -208,12 +208,12 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     edm::Handle < edm::View < reco::Candidate > > eleNoCutsHandle;
     iEvent.getByLabel(eleNoCutsLabel_, eleNoCutsHandle);
     edm::View < reco::Candidate > elesNoCuts = *eleNoCutsHandle;
-    
+
     /// Muons used for soft lepton info
     edm::Handle < edm::View < reco::Candidate > > muonNoCutsHandle;
     iEvent.getByLabel(muoNoCutsLabel_, muonNoCutsHandle);
     edm::View < reco::Candidate > muonsNoCuts = *muonNoCutsHandle;
-    
+
     /// pfMET with CHS
     edm::Handle < edm::View < reco::MET > > pfMETNoPUHandle;
     iEvent.getByLabel("pfMETNoPU", pfMETNoPUHandle);
@@ -223,12 +223,12 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     edm::Handle < edm::View < reco::MET > > pfMETNoPUChargeHandle;
     iEvent.getByLabel("pfMETNoPUCharge", pfMETNoPUChargeHandle);
     edm::View < reco::MET > pfmetsNoPUCharge = *pfMETNoPUChargeHandle;
-    
+
     /// caloMET
     edm::Handle < edm::View < reco::MET > > calometHandle;
     iEvent.getByLabel("met", calometHandle);
     edm::View < reco::MET > calomets = *calometHandle;
-    
+
     /// MHT
     edm::Handle < edm::View < reco::MET > > mHTHandle;
     iEvent.getByLabel("patMETsHT", mHTHandle);
@@ -281,7 +281,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     if (recVtxs->size() == 0) {
         std::cerr << "ERROR: No primary vertex!" << std::endl;
     }
-    
+
     /// Primary Vertices (with minNdof and maxZ cuts)
     edm::Handle < reco::VertexCollection > goodVertices;
     iEvent.getByLabel("goodOfflinePrimaryVertices", goodVertices);
@@ -325,7 +325,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
             }
         }
     }
-    
+
     /// Energy Densities
     edm::Handle < double > rhoHandle;
     iEvent.getByLabel(edm::InputTag("kt6PFJets", "rho"), rhoHandle);
@@ -334,7 +334,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     edm::Handle < double > rho25Handle;
     iEvent.getByLabel(edm::InputTag("kt6PFJets25", "rho"), rho25Handle);
     auxInfo->puInfo.rho25 = *rho25Handle;
-    
+
     edm::Handle < double > rho25HandleIso;
     iEvent.getByLabel(edm::InputTag("kt6PFJetsForIsolation", "rho"), rho25HandleIso); // take from RECO?
     auxInfo->puInfo.rho25Iso = *rho25HandleIso;
@@ -423,7 +423,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
                     ptemp.dauFourMomentum.push_back(GENPTOLORP(dau));
                 }
                 auxInfo->mcTau.push_back(ptemp);
-                
+
             } else if (id == 5) {  // b
                 VHbbEventAuxInfo::ParticleMCInfo ptemp;
                 ptemp.status = p.status();
@@ -441,7 +441,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
                     ptemp.dauFourMomentum.push_back(GENPTOLORP(dau));
                 }
                 auxInfo->mcB.push_back(ptemp);
-            
+
             } else if (id == -5) {  // bbar
                 VHbbEventAuxInfo::ParticleMCInfo ptemp;
                 ptemp.status = p.status();
@@ -459,7 +459,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
                     ptemp.dauFourMomentum.push_back(GENPTOLORP(dau));
                 }
                 auxInfo->mcBbar.push_back(ptemp);
-            
+
             } else if (abs(id) == 4) {
                 VHbbEventAuxInfo::ParticleMCInfo ptemp;
                 ptemp.status = p.status();
@@ -480,7 +480,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
             }
         }  // end for loop
     }  // end if runOnMC_
-    
+
     /// MC Weights
     if (runOnMC_) {
         edm::Handle < GenEventInfoProduct > evt_info;
@@ -494,7 +494,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     ////////////////////////////////////////////////////////////////////////////
     /// VHbbEvent                                                            ///
     ////////////////////////////////////////////////////////////////////////////
-    
+
     /// Trigger Results
     edm::Handle < edm::TriggerResults > hltresults;
     iEvent.getByLabel(hltResults_, hltresults);
@@ -503,14 +503,14 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         std::cerr << "ERROR: No trigger results!" << std::endl;
     }
     const edm::TriggerNames & triggerNames_ = iEvent.triggerNames(*hltresults);
-    
+
     /// JEC Uncertainty
     edm::ESHandle < JetCorrectorParametersCollection > JetCorParColl;
     iSetup.get < JetCorrectionsRecord > ().get("AK5PFchs", JetCorParColl);
     const JetCorrectorParameters & JetCorPar = (*JetCorParColl)["Uncertainty"];
     JetCorrectionUncertainty * jecUnc = new JetCorrectionUncertainty(JetCorPar);
 
-    
+
 #ifdef ENABLE_SIMPLEJETS1
     edm::Handle < edm::View < pat::Jet > > simplejet1Handle;
     iEvent.getByLabel(simplejet1Label_, simplejet1Handle);
@@ -570,7 +570,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         sj.puJetIdMva = (*puJetIdMVA)[simplejets2.refAt(idx)];
         int idflag = (*puJetIdFlag)[simplejets2.refAt(idx)];
         //std::cout << " PU JetID MVA " << sj.puJetIdMva;
-        
+
         if (PileupJetIdentifier::passJetId(idflag, PileupJetIdentifier::kLoose)) {
             //std::cout << " pass loose wp";
             sj.puJetIdL = 1;
@@ -610,7 +610,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
                     std::clog << "genJet matched mother id = " << sj.bestMCmomid << std::endl;
                 }
             }
-            // add flag if a mc lepton is found inside a cone around the jets... 
+            // add flag if a mc lepton is found inside a cone around the jets...
             iEvent.getByLabel("genParticles", genParticles);
 
             for (size_t i = 0; i < genParticles->size(); ++i) {
@@ -619,7 +619,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
                 if (p.pt() > lep_ptCutForBjets_)
                     id = p.pdgId();
                 //std::cout<< "found a gen lepton with pt " << p.pt() << std::endl;
-                if ((abs(id) == 13 || abs(id) == 11) && 
+                if ((abs(id) == 13 || abs(id) == 11) &&
                     (reco::deltaR(p.eta(), p.phi(), sj.p4.Eta(), sj.p4.Phi()) < 0.5))
                     sj.isSemiLeptMCtruth = 1;
             }
@@ -639,7 +639,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
             if (Smpt > lep_ptCutForBjets_ && SmJdR < 0.5) {
                 sj.isSemiLept = 1;
-                //isSemiLept(-99), isSemiLeptMCtruth(-99), SoftLeptpdgId(-99), SoftLeptIdlooseMu(-99), SoftLeptId95(-99), SoftLeptPt(-99), SoftLeptdR(-99), SoftLeptptRel(-99), SoftLeptRelCombIso(-99), 
+                //isSemiLept(-99), isSemiLeptMCtruth(-99), SoftLeptpdgId(-99), SoftLeptIdlooseMu(-99), SoftLeptId95(-99), SoftLeptPt(-99), SoftLeptdR(-99), SoftLeptptRel(-99), SoftLeptRelCombIso(-99),
                 sj.SoftLeptpdgId = 13;
                 sj.SoftLeptdR = SmJdR;
                 sj.SoftLeptPt = Smpt;
@@ -657,7 +657,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
             float Smeta = e.eta();
             float Smphi = e.phi();
             float SmJdR = reco::deltaR(Smeta, Smphi, sj.p4.Eta(), sj.p4.Phi());
-            
+
             if (Smpt > lep_ptCutForBjets_ && SmJdR < 0.5) {
                 sj.isSemiLept = 1;
                 sj.SoftLeptpdgId = 11;
@@ -670,9 +670,9 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
                 //std::cout << "before ele id " << std::endl;
                 //std::cout << " e.e.sigmaIetaIeta " << e.sigmaIetaIeta() <<  std::endl;
                 //std::cout << " e.isEB() " << e.isEB() << std::endl;
-                
+
                 if (
-	                 ( fabs(Smeta)<2.5 && !( fabs(Smeta)>1.4442 && fabs(Smeta)<1.566))  && 
+	                 ( fabs(Smeta)<2.5 && !( fabs(Smeta)>1.4442 && fabs(Smeta)<1.566))  &&
 	                 (( fabs(Smeta)>1.566  && (e.sigmaIetaIeta()<0.01) && ( e.deltaPhiSuperClusterTrackAtVtx()<0.8  && e.deltaPhiSuperClusterTrackAtVtx()>-0.8) && ( e.deltaEtaSuperClusterTrackAtVtx()<0.007 && e.deltaEtaSuperClusterTrackAtVtx()>-0.007 )  )
 	                  || ( fabs(Smeta)<1.4442  && (e.sigmaIetaIeta()<0.03) && ( e.deltaPhiSuperClusterTrackAtVtx()<0.7 && e.deltaPhiSuperClusterTrackAtVtx()>-0.7 ) && ( e.deltaEtaSuperClusterTrackAtVtx()<0.01 && e.deltaEtaSuperClusterTrackAtVtx()>-0.01 ) ))
 	               )
@@ -740,7 +740,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
     // C A 1 2   R A W   J E T S
     //std::cout << "Fill CA12 Raw jet!" << std::endl;
-    for(edm::View<pat::Jet>::const_iterator jet_iter = ca12jets.begin(); jet_iter!=ca12jets.end(); ++jet_iter){
+    for (edm::View<pat::Jet>::const_iterator jet_iter = ca12jets.begin(); jet_iter!=ca12jets.end(); ++jet_iter){
         const std::vector<reco::PFCandidatePtr>& constituents = jet_iter->getPFConstituents();
         //std::cout << "size: " << constituents.size() << std::endl;
         VHbbEvent::RawJet rj;
@@ -772,7 +772,6 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     // C A 1 2   M A S S D R O P / F I L T E R E D   J E T S
     //std::cout << "Fill CA12 MDFT jet!" << std::endl;
     for(edm::View<pat::Jet>::const_iterator jet_iter = camdft12jets.begin(); jet_iter!=camdft12jets.end(); ++jet_iter){
-        if(printJet) {std::cout << "Jet Pt: " << jet_iter->pt() << " E,M: " << jet_iter->p4().E() << " " << jet_iter->p4().M() << "\n";}
         const reco::Jet::Constituents& constituents = jet_iter->getJetConstituents();
         //std::cout << "size: " << constituents.size() << std::endl;
         VHbbEvent::HardJet hj;
@@ -781,7 +780,6 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
         for (unsigned int iJC=0; iJC<constituents.size(); ++iJC) {
             const reco::Jet::Constituent& icandJet = constituents.at(iJC);
-            if(printJet) {std::cout << "subJet Pt: " << icandJet->pt() << " subJet E,M,eta,phi: " <<  icandJet->p4().E() << "," << icandJet->p4().M() << "," << icandJet->eta() << "," << icandJet->phi() << "\n"; }
             hj.subFourMomentum.push_back(GENPTOLORP(icandJet));
             hj.etaSub.push_back(icandJet->eta());
             hj.phiSub.push_back(icandJet->phi());
@@ -886,7 +884,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         setJecUnc(fj, jecUnc);
 
         if (runOnMC_) {
-            //fillScaleFactors(sj, btagSFs);
+            //fillScaleFactors(fj, btagSFs);
 
             /// PAT genJet matching
             /// physical parton for mother info ONLY
@@ -910,46 +908,46 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
             }
         }  // end if runOnMC_
 
-        // Lepton cleaning
-        for(edm::View<reco::Candidate>::const_iterator mu = muonsNoCuts.begin(); mu!=muonsNoCuts.end() && sj.isSemiLept!=1; ++mu){
+        // Lepton cleaning (better do this at Step 2?)
+        for(edm::View<reco::Candidate>::const_iterator mu = muonsNoCuts.begin(); mu!=muonsNoCuts.end() && fj.isSemiLept!=1; ++mu){
 	      //      std::cout<< "found a muon with pt " << mu->pt()   << std::endl;
 	      const pat::Muon& m = static_cast <const pat::Muon&> (*mu);
 	      float Smpt = m.pt();
 	      float Smeta = m.eta();
 	      float Smphi = m.phi();
 
-	      float SmJdR = deltaR(Smeta, Smphi, sj.p4.Eta(), sj.p4.Phi());
+	      float SmJdR = deltaR(Smeta, Smphi, fj.p4.Eta(), fj.p4.Phi());
 
 	      if   ( Smpt> lep_ptCutForBjets_ && SmJdR <0.5)  {
-	        sj.isSemiLept=1;
+	        fj.isSemiLept=1;
 	        //isSemiLept(-99), isSemiLeptMCtruth(-99), SoftLeptPt(-99), SoftLeptdR(-99), SoftLeptptRel(-99), SoftLeptpdgId(-99), SoftLeptIdlooseMu(-99), SoftLeptId95(-99), SoftLeptRelCombIso(-99),
-	        sj.SoftLeptpdgId =13;
-	        sj.SoftLeptdR= SmJdR;
-	        sj.SoftLeptPt=Smpt;
+	        fj.SoftLeptpdgId =13;
+	        fj.SoftLeptdR= SmJdR;
+	        fj.SoftLeptPt=Smpt;
 	        TVector3 mvec ( m.p4().Vect().X(), m.p4().Vect().Y(), m.p4().Vect().Z()  );
-	        sj.SoftLeptptRel=  sj.p4.Perp(  mvec );
-	        sj.SoftLeptRelCombIso = (m.trackIso() + m.ecalIso() + m.hcalIso() ) / Smpt ;
-	        sj.SoftLeptIdlooseMu=m.muonID("TMLastStationLoose");
+	        fj.SoftLeptptRel=  fj.p4.Perp( mvec );
+	        fj.SoftLeptRelCombIso = (m.trackIso() + m.ecalIso() + m.hcalIso() ) / Smpt ;
+	        fj.SoftLeptIdlooseMu=m.muonID("TMLastStationLoose");
 	      }
 	    }
 
-	    for(edm::View<reco::Candidate>::const_iterator ele = elesNoCuts.begin(); ele!=elesNoCuts.end() && sj.isSemiLept!=1; ++ele){
+	    for(edm::View<reco::Candidate>::const_iterator ele = elesNoCuts.begin(); ele!=elesNoCuts.end() && fj.isSemiLept!=1; ++ele){
 
 	      const pat::Electron& e = static_cast <const pat::Electron&> (*ele);
 	      float Smpt = e.pt();
 	      float Smeta = e.eta();
 	      float Smphi = e.phi();
 
-	      float SmJdR = deltaR(Smeta, Smphi, sj.p4.Eta(), sj.p4.Phi());
+	      float SmJdR = deltaR(Smeta, Smphi, fj.p4.Eta(), fj.p4.Phi());
 	      if   ( Smpt> lep_ptCutForBjets_ && SmJdR <0.5)  {
-	        sj.isSemiLept=1;
-	        sj.SoftLeptpdgId =11;
-	        sj.SoftLeptdR= SmJdR;
-	        sj.SoftLeptPt=Smpt;
+	        fj.isSemiLept=1;
+	        fj.SoftLeptpdgId =11;
+	        fj.SoftLeptdR= SmJdR;
+	        fj.SoftLeptPt=Smpt;
 	        TVector3 mvec ( e.p4().Vect().X(), e.p4().Vect().Y(), e.p4().Vect().Z()  );
-	        sj.SoftLeptptRel=  sj.p4.Perp(  mvec );
-	        sj.SoftLeptRelCombIso = (e.trackIso() + e.ecalIso() + e.hcalIso() ) / Smpt ;
-	        //	 sj.SoftLeptId95=e.electronID("eidVBTFCom95");
+	        fj.SoftLeptptRel=  fj.p4.Perp(  mvec );
+	        fj.SoftLeptRelCombIso = (e.trackIso() + e.ecalIso() + e.hcalIso() ) / Smpt ;
+	        //	 fj.SoftLeptId95=e.electronID("eidVBTFCom95");
 	        //std::cout << "before ele id " << std::endl;
 	        // std::cout << " e.e.sigmaIetaIeta " << e.sigmaIetaIeta() <<  std::endl;
 	        //std::cout << " e.isEB() " << e.isEB() << std::endl;
@@ -959,7 +957,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 		    (( abs(Smeta)>1.566  && (e.sigmaIetaIeta()<0.01) && ( e.deltaPhiSuperClusterTrackAtVtx()<0.8  && e.deltaPhiSuperClusterTrackAtVtx()>-0.8) && ( e.deltaEtaSuperClusterTrackAtVtx()<0.007 && e.deltaEtaSuperClusterTrackAtVtx()>-0.007 )  )
 		     || ( abs(Smeta)<1.4442  && (e.sigmaIetaIeta()<0.03) && ( e.deltaPhiSuperClusterTrackAtVtx()<0.7 && e.deltaPhiSuperClusterTrackAtVtx()>-0.7 ) && ( e.deltaEtaSuperClusterTrackAtVtx()<0.01 && e.deltaEtaSuperClusterTrackAtVtx()>-0.01 ) ))
 		      )
-	          sj.SoftLeptId95=1;
+             fj.SoftLeptId95=1;
 	      }
 	    }
 
@@ -989,10 +987,10 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     if (metsHT.size()) {
         fillMET(hbbInfo->mht, metsHT.begin());
     }
-    
+
     /// MET Uncertainties (only with Type-1 correction)
     VHbbEvent::METInfo metunc;
-    
+
     edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetElectronEnDownHandle;
     iEvent.getByLabel("patType1CorrectedPFMetElectronEnDown", patType1CorrectedPFMetElectronEnDownHandle);
     if (patType1CorrectedPFMetElectronEnDownHandle->size()) {
@@ -1005,7 +1003,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         fillMET(metunc, patType1CorrectedPFMetElectronEnUpHandle->begin());
         hbbInfo->metUncInfo.push_back(metunc);
     }
-    
+
     edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetJetEnDownHandle;
     iEvent.getByLabel("patType1CorrectedPFMetJetEnDown", patType1CorrectedPFMetJetEnDownHandle);
     if (patType1CorrectedPFMetJetEnDownHandle->size()) {
@@ -1018,7 +1016,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         fillMET(metunc, patType1CorrectedPFMetJetEnUpHandle->begin());
         hbbInfo->metUncInfo.push_back(metunc);
     }
-    
+
     edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetJetResDownHandle;
     iEvent.getByLabel("patType1CorrectedPFMetJetResDown", patType1CorrectedPFMetJetResDownHandle);
     if (patType1CorrectedPFMetJetResDownHandle->size()) {
@@ -1031,7 +1029,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         fillMET(metunc, patType1CorrectedPFMetJetResUpHandle->begin());
         hbbInfo->metUncInfo.push_back(metunc);
     }
-    
+
     edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetMuonEnDownHandle;
     iEvent.getByLabel("patType1CorrectedPFMetMuonEnDown", patType1CorrectedPFMetMuonEnDownHandle);
     if (patType1CorrectedPFMetMuonEnDownHandle->size()) {
@@ -1044,7 +1042,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         fillMET(metunc, patType1CorrectedPFMetMuonEnUpHandle->begin());
         hbbInfo->metUncInfo.push_back(metunc);
     }
-    
+
     edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetTauEnDownHandle;
     iEvent.getByLabel("patType1CorrectedPFMetTauEnDown", patType1CorrectedPFMetTauEnDownHandle);
     if (patType1CorrectedPFMetTauEnDownHandle->size()) {
@@ -1057,7 +1055,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         fillMET(metunc, patType1CorrectedPFMetTauEnUpHandle->begin());
         hbbInfo->metUncInfo.push_back(metunc);
     }
-    
+
     edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetUnclusteredEnDownHandle;
     iEvent.getByLabel("patType1CorrectedPFMetUnclusteredEnDown", patType1CorrectedPFMetUnclusteredEnDownHandle);
     if (patType1CorrectedPFMetUnclusteredEnDownHandle->size()) {
@@ -1086,10 +1084,10 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         mf.pfNeuIso = mu->neutralHadronIso();
         mf.acop = reco::deltaPhi(mu->phi(), atan2(mf.p4.Px(), mf.p4.Py()));  // change to MET?
         //mf.acop = reco::deltaPhi(mu->phi(), atan2(hbbInfo->met.p4.Py(), hbbInfo->met.p4.Px()));
-        
+
         mf.ipDb = mu->dB();
         mf.ipErrDb = mu->edB();
-        
+
         mf.emEnergy = mu->calEnergy().em;
         mf.hadEnergy = mu->calEnergy().had;
 
@@ -1102,7 +1100,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
             mf.cat |= 2;
         if (mu->isStandAloneMuon())
             mf.cat |= 4;
-        
+
         const reco::TrackRef trkMu1Ref = mu->get < reco::TrackRef > ();
         if (trkMu1Ref.isNonnull()) {
             const reco::Track * MuTrk1 = mu->get < reco::TrackRef > ().get();
@@ -1149,7 +1147,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
         //int muInfo[15];
         //fillMuBlock(mu,  muInfo);
-        
+
         if (runOnMC_) {
             const reco::GenParticle *muMc = mu->genLepton();
             if (muMc) {
@@ -1188,20 +1186,20 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         ef.pfPhoIso = elec->photonIso();
         ef.pfNeuIso = elec->neutralHadronIso();
         ef.acop = reco::deltaPhi(elec->superCluster()->phi(), atan2(hbbInfo->met.p4.Py(), hbbInfo->met.p4.Px()));
-        
+
         ef.ipDb = elec->dB();
         ef.ipErrDb = elec->edB();
 
         // Check if there are photons sharing the super cluster
         ef.pfPhoIsoDoubleCounted = 0;
         for (size_t k = 0; k < photonsForIso.size(); k++) {
-            if (reco::deltaR(elec->eta(), elec->phi(), photonsForIso[k].eta(), photonsForIso[k].phi()) < 0.05 && 
+            if (reco::deltaR(elec->eta(), elec->phi(), photonsForIso[k].eta(), photonsForIso[k].phi()) < 0.05 &&
                 fabs(photonsForIso[k].pt() - elec->pt()) / (photonsForIso[k].pt() + elec->pt()) < 0.05) {
                 std::cout << "Double counting of supercluster!" << std::endl;
                 ef.pfPhoIsoDoubleCounted += photonsForIso[k].pt();
             }
         }
-        
+
         ef.sihih = elec->sigmaIetaIeta();
         ef.Dphi = elec->deltaPhiSuperClusterTrackAtVtx();
         ef.Deta = elec->deltaEtaSuperClusterTrackAtVtx();
@@ -1213,7 +1211,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         }
         ef.isEB = elec->isEB();
         ef.isEE = elec->isEE();
-        
+
         // 2012 EleID
         const pat::Electron & ele = *elec;
         const reco::TrackRef myTrackRef = ele.closestCtfTrackRef();
@@ -1237,13 +1235,13 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         std::vector<float> vCov    = lazyTools.localCovariances(*(ele.superCluster()->seed())) ;
         if (!isnan(vCov[2])) ef.fMVAVar_spp = sqrt (vCov[2]);   //EleSigmaIPhiIPhi
         else ef.fMVAVar_spp = 0.;
-        // fMVAVar_sigmaIEtaIPhi = vCov[1];  //  save also this in your ntuple 
+        // fMVAVar_sigmaIEtaIPhi = vCov[1];  //  save also this in your ntuple
 
         ef.fMVAVar_etawidth        =  ele.superCluster()->etaWidth();
         ef.fMVAVar_phiwidth        =  ele.superCluster()->phiWidth();
         ef.fMVAVar_e1x5e5x5        =  (ele.e5x5()) !=0. ? 1.-(ele.e1x5()/ele.e5x5()) : -1. ;
         ef.fMVAVar_R9              =  lazyTools.e3x3(*(ele.superCluster()->seed())) / ele.superCluster()->rawEnergy();
-        //fMVAVar_nbrems          =  fabs(ele.numberOfBrems());    //  save also this in your ntuple 
+        //fMVAVar_nbrems          =  fabs(ele.numberOfBrems());    //  save also this in your ntuple
 
         // Energy matching
         ef.fMVAVar_HoE             =  ele.hadronicOverEm();
@@ -1253,11 +1251,11 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
         ef.fMVAVar_eleEoPout       =  ele.eEleClusterOverPout();
         ef.fMVAVar_PreShowerOverRaw=  ele.superCluster()->preshowerEnergy() / ele.superCluster()->rawEnergy();
-        // fMVAVar_EoPout          =  ele.eSeedClusterOverPout();     //  save also this in your ntuple 
+        // fMVAVar_EoPout          =  ele.eSeedClusterOverPout();     //  save also this in your ntuple
 
         // Spectators
         ef.fMVAVar_eta             =  ele.superCluster()->eta();
-        ef.fMVAVar_pt              =  ele.pt();                          
+        ef.fMVAVar_pt              =  ele.pt();
 
         // additional for cut based
         ef.dxy = elec->gsfTrack()->dxy(vertex.position());
@@ -1296,7 +1294,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         ef.id80r = elec->electronID("eidVBTFRel80");
         ef.id70 = elec->electronID("eidVBTFCom70");
         ef.id70r = elec->electronID("eidVBTFRel70");
-        
+
         // 2012 MVA EleID
         ef.mvaOut = elec->electronID("mvaNonTrigV0");
         ef.mvaOutTrig = elec->electronID("mvaTrigV0");
@@ -1343,7 +1341,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         tf.eIso = tau->ecalIso();
         tf.hIso = tau->hcalIso();
         tf.acop = reco::deltaPhi(tau->phi(), atan2(hbbInfo->met.p4.Py(), hbbInfo->met.p4.Px()));
-        
+
         if (tau->isTauIDAvailable("againstElectronLoose"))
             tf.againstElectronLoose = tau->tauID("againstElectronLoose");
         if (tau->isTauIDAvailable("againstElectronMedium"))
@@ -1441,7 +1439,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
             " Electrons = "<<hbbInfo->eleInfo.size()<<std::endl<<
             "--------------------- "<<std::endl;
     }
-    
+
 
     iEvent.put(hbbInfo);
     iEvent.put(auxInfo);
@@ -1479,7 +1477,7 @@ TVector2 HbbAnalyzerNew::getTvect(const pat::Jet * patJet) {
             nOfconst++;
         }
     }
-    
+
     /// If there are less than two charged tracks, do not calculate the pull (there is not enough info). Return a null vector.
     if (nOfconst < 2)
         return null;
@@ -1503,12 +1501,12 @@ TVector2 HbbAnalyzerNew::getTvect(const pat::Jet * patJet) {
 TLorentzVector HbbAnalyzerNew::getChargedTracksMomentum(const pat::Jet * patJet) {
     TLorentzVector pi(0, 0, 0, 0);
     TLorentzVector v_j1(0, 0, 0, 0);
-    
+
     if (!patJet->isPFJet()) {
         v_j1 = GENPTOLORP(patJet);
         return v_j1;
     }
-    
+
     std::vector < reco::PFCandidatePtr > j1pfc = patJet->getPFConstituents();
     for (size_t idx = 0; idx < j1pfc.size(); idx++) {
         if (j1pfc.at(idx)->charge() != 0) {
@@ -1524,7 +1522,7 @@ TLorentzVector HbbAnalyzerNew::getChargedTracksMomentum(const pat::Jet * patJet)
 void HbbAnalyzerNew::fillScaleFactors(VHbbEvent::SimpleJet & sj,
                                       const BTagSFContainer& iSF) {
     BinningPointByMap measurePoint;
-    
+
     /// For C/B jets
     /// scale factor = 1 for C/B jets over 240 GeV
     if (abs(sj.flavour) == 4 or abs(sj.flavour) == 5) {
@@ -1548,7 +1546,7 @@ void HbbAnalyzerNew::fillScaleFactors(VHbbEvent::SimpleJet & sj,
         if (iSF.BTAGSF_CSVT->isResultOk(PerformanceResult::BTAGBEFFCORR, measurePoint)) {
             sj.SF_CSVT = iSF.BTAGSF_CSVT->getResult(PerformanceResult::BTAGBEFFCORR, measurePoint);
             sj.SF_CSVTerr = iSF.BTAGSF_CSVT->getResult(PerformanceResult::BTAGBERRCORR, measurePoint);
-            
+
         } else {
             if (verbose_) {
                 std::cerr << "No SF found in the database for this jet" << std::endl;
@@ -1557,7 +1555,7 @@ void HbbAnalyzerNew::fillScaleFactors(VHbbEvent::SimpleJet & sj,
                 std::clog << "No SF found: Jet eta = " << sj.p4.Eta() << std::endl;
             }
         }
-    
+
     /// For U/D/S/G jets
     } else {
         measurePoint.insert(BinningVariables::JetEt, sj.p4.Et());
@@ -1580,7 +1578,7 @@ void HbbAnalyzerNew::fillScaleFactors(VHbbEvent::SimpleJet & sj,
         if (iSF.MISTAGSF_CSVT->isResultOk(PerformanceResult::BTAGLEFFCORR, measurePoint)) {
             sj.SF_CSVT = iSF.MISTAGSF_CSVT->getResult(PerformanceResult::BTAGLEFFCORR, measurePoint);
             sj.SF_CSVTerr = iSF.MISTAGSF_CSVT->getResult(PerformanceResult::BTAGLERRCORR, measurePoint);
-            
+
         } else {
             if (verbose_) {
                 std::cerr << "No SF found in the database for this jet" << std::endl;
@@ -1592,7 +1590,7 @@ void HbbAnalyzerNew::fillScaleFactors(VHbbEvent::SimpleJet & sj,
     }
 }
 
-void HbbAnalyzerNew::fillMET(VHbbEvent::METInfo & met, 
+void HbbAnalyzerNew::fillMET(VHbbEvent::METInfo & met,
                              edm::View < reco::MET >::const_iterator met_iter) {
     met.sumEt = met_iter->sumEt();
     met.metSig = metSignificance(&*(met_iter));
@@ -1669,7 +1667,7 @@ void HbbAnalyzerNew::fillSimpleJet(VHbbEvent::SimpleJet & sj,
         sj.neutralEmEFraction = jet_iter->neutralEmEnergyFraction();
         sj.nConstituents = jet_iter->getPFConstituents().size();
     }
-    
+
     /// Add CSV secondary vertex info
     const reco::SecondaryVertexTagInfo * tf = jet_iter->tagInfoSecondaryVertex();
     if (tf) {
