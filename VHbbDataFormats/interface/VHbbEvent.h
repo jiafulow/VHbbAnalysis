@@ -184,6 +184,7 @@ class VHbbEvent {
             againstMuonLoose(-99), againstMuonTight(-99),
             byLooseIsolation(-99), byMediumIsolation(-99),
             byTightIsolation(-99), byVLooseIsolation(-99),
+            mcId(-99), mcMomId(-99), mcgMomId(-99),
             decayModeFinding(-99), isolationPFChargedHadrCandsPtSum(-999999.),
             isolationPFGammaCandsEtSum(-999999.), leadPFChargedHadrCandPt(-999999.),
             NsignalPFChargedHadrCands(-99), NsignalPFGammaCands(-99),
@@ -198,8 +199,7 @@ class VHbbEvent {
             byMediumIsolationMVA(-99), byTightIsolationMVA(-99),
             byLooseIsolationMVA2(-99), byMediumIsolationMVA2(-99),
             byTightIsolationMVA2(-99), againstMuonLoose2(-99),
-            againstMuonMedium2(-99), againstMuonTight2(-99),
-            mcId(-99), mcMomId(-99), mcgMomId(-99) {
+            againstMuonMedium2(-99), againstMuonTight2(-99) {
         }
       public:
         TLorentzVector p4, mcFourMomentum;
@@ -207,13 +207,13 @@ class VHbbEvent {
         float tIso, eIso, hIso, pfChaIso, pfChaPUIso, pfPhoIso, pfNeuIso, acop;
         float byIsolation, trackIsolation, byTaNC, byTaNCfrOnePercent,
             byTaNCfrHalfPercent, byTaNCfrQuarterPercent, byTaNCfrTenthPercent;
-        int mcId, mcMomId, mcgMomId;
         float againstElectronLoose, againstElectronMedium,
             againstElectronTight, againstMuonLoose, againstMuonTight;
         float byLooseIsolation, byMediumIsolation, byTightIsolation,
-            byVLooseIsolation, decayModeFinding;
-        float isolationPFChargedHadrCandsPtSum, isolationPFGammaCandsEtSum,
-            leadPFChargedHadrCandPt;
+            byVLooseIsolation;
+        int mcId, mcMomId, mcgMomId;
+        float decayModeFinding, isolationPFChargedHadrCandsPtSum, 
+            isolationPFGammaCandsEtSum, leadPFChargedHadrCandPt;
         int NsignalPFChargedHadrCands, NsignalPFGammaCands;
         float byLooseCombinedIsolationDeltaBetaCorr, againstElectronMVA;
         float byLooseCombinedIsolationDeltaBetaCorr3Hits,

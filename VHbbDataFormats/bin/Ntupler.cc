@@ -278,8 +278,7 @@ typedef struct {
 
 typedef struct {
     void reset() {
-        for (int i = 0; i < MAXL; i++)
-        {
+        for (int i = 0; i < MAXL; i++) {
             mass[i]=-99; pt[i]=-99; eta[i]=-99; phi[i]=-99; aodCombRelIso[i]=-99; pfCombRelIso[i]=-99; photonIso[i]=-99; neutralHadIso[i]=-99; chargedHadIso[i]=-99; chargedPUIso[i]=-99; particleIso[i]=-99; dxy[i]=-99; dz[i]=-99; type[i]=-99;  genPt[i]=-99; genEta[i]=-99; genPhi[i]=-99;
             id80[i]=-99; id95[i]=-99; vbtf[i]=-99; id80NoIso[i]=-99;
             charge[i]=-99;wp70[i]=-99; wp80[i]=-99;wp85[i]=-99;wp90[i]=-99;wp95[i]=-99;wpHWW[i]=-99;
@@ -1979,39 +1978,6 @@ int main(int argc, char *argv[]) {
             nPVs = aux.pvInfo.nVertices;
             //nGoodPVs = aux.pvInfo.nGoodVertices;
 
-            /// PDF reweighting
-            // Change it if you want to rescale the energy
-            double _newECMS = 8000;     // energy in GeV
-            double _origECMS = 8000;    // energy in GeV
-            float Q = hepeup_.SCALUP;
-            int id1 = hepeup_.IDUP[0];
-            double x1 = fabs(hepeup_.PUP[0][2] / (_origECMS / 2));
-            double x1prime = fabs(hepeup_.PUP[0][2] / (_newECMS / 2));
-            int id2 = hepeup_.IDUP[1];
-            double x2 = fabs(hepeup_.PUP[1][2] / (_origECMS / 2));
-            double x2prime = fabs(hepeup_.PUP[1][2] / (_newECMS / 2));
-            //gluon is 0 in the LHAPDF numberin
-            if (id1 == 21)  id1 = 0;
-            if (id2 == 21)  id2 = 0;
-            int _pdfmember = 0; //member = 0 is the pdf central value.
-            //madgraph default pdf
-            //LHAPDF::usePDFMember(1,_pdfmember);
-            double oldpdf1 = LHAPDF::xfx(1, x1, Q, id1) / x1;
-            double oldpdf2 = LHAPDF::xfx(1, x2, Q, id2) / x2;
-            double newpdf1 = LHAPDF::xfx(1, x1prime, Q, id1) / x1prime;
-            double newpdf2 = LHAPDF::xfx(1, x2prime, Q, id2) / x2prime;
-            PDFweight[0] = (newpdf1 / oldpdf1) * (newpdf2 / oldpdf2);
-
-            //new pdf set
-            for (unsigned int setpdf = 2; setpdf < pdfNames.size()+2; ++setpdf) {
-                for (int pdfmember = 0; pdfmember < LHAPDF::numberPDF(setpdf); ++pdfmember) {
-                    LHAPDF::usePDFMember(setpdf, pdfmember);    //load the right memeber once again to be sure...
-                    newpdf1 = LHAPDF::xfx(setpdf, x1prime, Q, id1) / x1prime;
-                    newpdf2 = LHAPDF::xfx(setpdf, x2prime, Q, id2) / x2prime;
-                    int norm = (setpdf - 2) * LHAPDF::numberPDF(setpdf);  // normalisation
-                    PDFweight[norm + setpdf - 1 + pdfmember] = (newpdf1 / oldpdf1) * (newpdf2 / oldpdf2);
-                }
-            }
 
             /// LHE Info
             fwlite::Handle < LHEEventProduct > lhevt;
@@ -2029,6 +1995,42 @@ int main(int argc, char *argv[]) {
                 TLorentzVector l, lbar, vl, vlbar, V_tlv;
                 const lhef::HEPEUP hepeup_ = lhevt->hepeup();
                 const std::vector < lhef::HEPEUP::FiveVector > pup_ = hepeup_.PUP; // px, py, pz, E, M
+
+                /// PDF reweighting
+                // Change it if you want to rescale the energy
+                double _newECMS = 8000;     // energy in GeV
+                double _origECMS = 8000;    // energy in GeV
+                float Q = hepeup_.SCALUP;
+                int id1 = hepeup_.IDUP[0];
+                double x1 = fabs(hepeup_.PUP[0][2] / (_origECMS / 2));
+                double x1prime = fabs(hepeup_.PUP[0][2] / (_newECMS / 2));
+                int id2 = hepeup_.IDUP[1];
+                double x2 = fabs(hepeup_.PUP[1][2] / (_origECMS / 2));
+                double x2prime = fabs(hepeup_.PUP[1][2] / (_newECMS / 2));
+                //gluon is 0 in the LHAPDF numberin
+                if (id1 == 21)  id1 = 0;
+                if (id2 == 21)  id2 = 0;
+                int _pdfmember = 0; //member = 0 is the pdf central value.
+                //madgraph default pdf
+                //LHAPDF::usePDFMember(1,_pdfmember);
+                double oldpdf1 = LHAPDF::xfx(1, x1, Q, id1) / x1;
+                double oldpdf2 = LHAPDF::xfx(1, x2, Q, id2) / x2;
+                double newpdf1 = LHAPDF::xfx(1, x1prime, Q, id1) / x1prime;
+                double newpdf2 = LHAPDF::xfx(1, x2prime, Q, id2) / x2prime;
+                PDFweight[0] = (newpdf1 / oldpdf1) * (newpdf2 / oldpdf2);
+
+                //new pdf set
+                for (unsigned int setpdf = 2; setpdf < pdfNames.size()+2; ++setpdf) {
+                    for (int pdfmember = 0; pdfmember < LHAPDF::numberPDF(setpdf); ++pdfmember) {
+                        LHAPDF::usePDFMember(setpdf, pdfmember);    //load the right memeber once again to be sure...
+                        newpdf1 = LHAPDF::xfx(setpdf, x1prime, Q, id1) / x1prime;
+                        newpdf2 = LHAPDF::xfx(setpdf, x2prime, Q, id2) / x2prime;
+                        int norm = (setpdf - 2) * LHAPDF::numberPDF(setpdf);  // normalisation
+                        PDFweight[norm + setpdf - 1 + pdfmember] = (newpdf1 / oldpdf1) * (newpdf2 / oldpdf2);
+                    }
+                }
+
+                /// LHE stitching information
                 for (unsigned int i = 0; i < pup_.size(); ++i) {
                     int id = hepeup_.IDUP[i];  // pdgId
                     int status = hepeup_.ISTUP[i];
@@ -2822,7 +2824,7 @@ int main(int argc, char *argv[]) {
                             tauPlusMode = idd;
                     }
                     if (verbose) {
-                        std::cout << "(j,k,m_Tau,dauid,pt_dau,momid)=(" << j << "," << k << "," << aux.mcTau[j].p4.M() << "
+                        std::cout << "(j,k,m_Tau,dauid,pt_dau,momid)=(" << j << "," << k << "," << aux.mcTau[j].p4.M() << ","
                                   << aux.mcTau[j].dauFourMomentum[k].Pt() << "," << aux.mcTau[j].momid  <<")" << std::endl;
                     }
                 }

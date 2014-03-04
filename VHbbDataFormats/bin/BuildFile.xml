@@ -1,5 +1,6 @@
 <use   name="root"/>
 <use   name="roottmva"/>
+<use   name="lhapdf"/>
 <use   name="DataFormats/FWLite"/>
 <use   name="CondFormats/JetMETObjects"/>
 <use   name="FWCore/FWLite"/>
