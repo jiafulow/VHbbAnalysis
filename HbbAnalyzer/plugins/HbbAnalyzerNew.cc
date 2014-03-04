@@ -57,9 +57,9 @@ Implementation:
 #include "TrackingTools/IPTools/interface/IPTools.h"
 
 /// Pileup jet ID
-#include "CMGTools/External/interface/PileupJetIdentifier.h"
-#include "CMGTools/External/interface/PileupJetIdAlgo.h"
-//#include "CMGTools/External/interface/PileupJetIdProducer.h"
+#include "DataFormats/JetReco/interface/PileupJetIdentifier.h"
+//#include "CMGTools/External/interface/PileupJetIdentifier.h"
+//#include "CMGTools/External/interface/PileupJetIdAlgo.h"
 
 
 #define GENPTOLOR(a) TLorentzVector((a).px(), (a).py(), (a).pz(), (a).energy())

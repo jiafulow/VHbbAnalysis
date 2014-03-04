@@ -26,8 +26,10 @@
 #include "FWCore/PythonParameterSet/interface/PythonProcessDesc.h"
 //#include "PhysicsTools/FWLite/interface/TFileService.h"
 
-//#include "DataFormats/MuonReco/interface/Muon.h"
-//#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/Candidate/interface/CandidateFwd.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
 #include "DataFormats/Math/interface/deltaR.h"
 
@@ -73,7 +75,7 @@ namespace LHAPDF {
 //#include "Math/SMatrix.h"
 
 // ZSV
-#include "ZSV/BAnalysis/interface/SimBHadron.h"
+//#include "ZSV/BAnalysis/interface/SimBHadron.h"
 
 // Move class definition to Ntupler.h ?
 //#include "VHbbAnalysis/VHbbDataFormats/interface/Ntupler.h"
@@ -441,7 +443,7 @@ template <> void LeptonInfo::setSpecific < VHbbEvent::ElectronInfo >
     if(fabs(eta) > 2.4  ) {areaComb=0.26;}
 /*
     if(fabs(eta) <= 1.0 ) {areagamma=0.14; areaNH=0.044; areaComb=0.18;}
- 	if(fabs(eta) > 1.0 &&  fabs(eta) <= 1.479 ) {areagamma=0.13; areaNH=0.065; areaComb=0.20;}
+     if(fabs(eta) > 1.0 &&  fabs(eta) <= 1.479 ) {areagamma=0.13; areaNH=0.065; areaComb=0.20;}
     if(fabs(eta) > 1.479 &&  fabs(eta) <= 2.0 ) {areagamma=0.079; areaNH=0.068; areaComb=0.15;}
     if(fabs(eta) > 2.0 &&  fabs(eta) <= 2.2 ) {areagamma=0.13; areaNH=0.057; areaComb=0.19;}
     if(fabs(eta) > 2.2 &&  fabs(eta) <= 2.3 ) {areagamma=0.15; areaNH=0.058; areaComb=0.21;}
@@ -820,43 +822,43 @@ typedef struct {
     float wMass;
 } TopInfo;
 
-typedef struct {
-    void set(const SimBHadron & sbhc, int i) {
-        mass[i] = sbhc.mass();
-        pt[i] = sbhc.pt();
-        eta[i] = sbhc.eta();
-        phi[i] = sbhc.phi();
-        vtx_x[i] = sbhc.decPosition.x();
-        vtx_y[i] = sbhc.decPosition.y();
-        vtx_z[i] = sbhc.decPosition.z();
-        pdgId[i] = sbhc.pdgId();
-        status[i] = sbhc.status();
-    };
-    void reset() {
-        for (int i = 0; i < MAXB; ++i) {
-            mass[i] = -99; pt[i] = -99; eta[i] = -99; phi[i] = -99; vtx_x[i] = -99; vtx_y[i] = -99; vtx_z[i] = -99; pdgId[i] = -99; status[i] = -99;
-        }
-    };
-    float mass[MAXB];
-    float pt[MAXB];
-    float eta[MAXB];
-    float phi[MAXB];
-    float vtx_x[MAXB];
-    float vtx_y[MAXB];
-    float vtx_z[MAXB];
-    int pdgId[MAXB];
-    int status[MAXB];
-    //int quarkStatus[MAXB];
-    //int brotherStatus[MAXB];
-    //int otherId[MAXB];
-    //bool etaOk[MAXB];
-    //bool simOk[MAXB];
-    //bool trackOk[MAXB];
-    //bool cutOk[MAXB];
-    //bool cutNewOk[MAXB];
-    //bool mcMatchOk[MAXB];
-    //bool matchOk[MAXB];
-} SimBHadronInfo;
+//typedef struct {
+//    void set(const SimBHadron & sbhc, int i) {
+//        mass[i] = sbhc.mass();
+//        pt[i] = sbhc.pt();
+//        eta[i] = sbhc.eta();
+//        phi[i] = sbhc.phi();
+//        vtx_x[i] = sbhc.decPosition.x();
+//        vtx_y[i] = sbhc.decPosition.y();
+//        vtx_z[i] = sbhc.decPosition.z();
+//        pdgId[i] = sbhc.pdgId();
+//        status[i] = sbhc.status();
+//    };
+//    void reset() {
+//        for (int i = 0; i < MAXB; ++i) {
+//            mass[i] = -99; pt[i] = -99; eta[i] = -99; phi[i] = -99; vtx_x[i] = -99; vtx_y[i] = -99; vtx_z[i] = -99; pdgId[i] = -99; status[i] = -99;
+//        }
+//    };
+//    float mass[MAXB];
+//    float pt[MAXB];
+//    float eta[MAXB];
+//    float phi[MAXB];
+//    float vtx_x[MAXB];
+//    float vtx_y[MAXB];
+//    float vtx_z[MAXB];
+//    int pdgId[MAXB];
+//    int status[MAXB];
+//    //int quarkStatus[MAXB];
+//    //int brotherStatus[MAXB];
+//    //int otherId[MAXB];
+//    //bool etaOk[MAXB];
+//    //bool simOk[MAXB];
+//    //bool trackOk[MAXB];
+//    //bool cutOk[MAXB];
+//    //bool cutNewOk[MAXB];
+//    //bool mcMatchOk[MAXB];
+//    //bool matchOk[MAXB];
+//} SimBHadronInfo;
 
 typedef struct {
     void set(const reco::SecondaryVertex & recoSv, const TVector3 recoPv, int isv) {
@@ -908,7 +910,7 @@ int main(int argc, char *argv[]) {
     // Declare variables
     // -------------------------------------------------------------------------
     IVFInfo IVF;
-    SimBHadronInfo SimBs;
+    //SimBHadronInfo SimBs;
     float rho, rho25, rhoN;
     int nPVs, nGoodPVs;
     METInfo MET;
@@ -1035,7 +1037,7 @@ int main(int argc, char *argv[]) {
     const std::vector < std::string > triggers(ana.getParameter < std::vector < std::string > > ("triggers"));
     bool isMC_(ana.getParameter < bool > ("isMC"));
     bool verbose = ana.getParameter < bool > ("verbose");
-	bool isZbbHbbAnalysis = ana.getParameter < bool > ("isZbbHbbAnalysis");
+    bool isZbbHbbAnalysis = ana.getParameter < bool > ("isZbbHbbAnalysis");
     bool fromCandidate = ana.getParameter < bool > ("readFromCandidates");
     double btagThr = ana.getParameter < double > ("bJetCountThreshold");
     bool useHighestPtHiggsZ = ana.getParameter < bool > ("useHighestPtHiggsZ");
@@ -1574,19 +1576,19 @@ int main(int argc, char *argv[]) {
     // IVF Higgs candidate
     _outTree->Branch("SVH", &SVH, "mass/F:pt/F:eta/F:phi/F:dR/F:dPhi/F:dEta/F");
 
-    // SimBHadron
-    _outTree->Branch("nSimBs", &nSimBs, "nSimBs/I");
-    _outTree->Branch("SimBs_mass", &SimBs.mass, "mass[nSimBs]/F");
-    _outTree->Branch("SimBs_pt", &SimBs.pt, "pt[nSimBs]/F");
-    _outTree->Branch("SimBs_eta", &SimBs.eta, "eta[nSimBs]/F");
-    _outTree->Branch("SimBs_phi", &SimBs.phi, "phi[nSimBs]/F");
-    _outTree->Branch("SimBs_vtx_x", &SimBs.vtx_x, "vtx_x[nSimBs]/F");
-    _outTree->Branch("SimBs_vtx_y", &SimBs.vtx_y, "vtx_y[nSimBs]/F");
-    _outTree->Branch("SimBs_vtx_z", &SimBs.vtx_z, "vtx_z[nSimBs]/F");
-    _outTree->Branch("SimBs_pdgId", &SimBs.pdgId, "pdgId[nSimBs]/F");
-    _outTree->Branch("SimBs_status", &SimBs.status, "status[nSimBs]/F");
-    // SimBHadron Higgs Candidate
-    _outTree->Branch("SimBsH", &SimBsH, "mass/F:pt/F:eta/F:phi/F:dR/F:dPhi/F:dEta/F");
+    //// SimBHadron
+    //_outTree->Branch("nSimBs", &nSimBs, "nSimBs/I");
+    //_outTree->Branch("SimBs_mass", &SimBs.mass, "mass[nSimBs]/F");
+    //_outTree->Branch("SimBs_pt", &SimBs.pt, "pt[nSimBs]/F");
+    //_outTree->Branch("SimBs_eta", &SimBs.eta, "eta[nSimBs]/F");
+    //_outTree->Branch("SimBs_phi", &SimBs.phi, "phi[nSimBs]/F");
+    //_outTree->Branch("SimBs_vtx_x", &SimBs.vtx_x, "vtx_x[nSimBs]/F");
+    //_outTree->Branch("SimBs_vtx_y", &SimBs.vtx_y, "vtx_y[nSimBs]/F");
+    //_outTree->Branch("SimBs_vtx_z", &SimBs.vtx_z, "vtx_z[nSimBs]/F");
+    //_outTree->Branch("SimBs_pdgId", &SimBs.pdgId, "pdgId[nSimBs]/F");
+    //_outTree->Branch("SimBs_status", &SimBs.status, "status[nSimBs]/F");
+    //// SimBHadron Higgs Candidate
+    //_outTree->Branch("SimBsH", &SimBsH, "mass/F:pt/F:eta/F:phi/F:dR/F:dPhi/F:dEta/F");
 
     _outTree->Branch("rho", &rho, "rho/F");
     _outTree->Branch("rho25", &rho25, "rho25/F");
@@ -1868,12 +1870,12 @@ int main(int argc, char *argv[]) {
                 }
                 numJets = vhCand.additionalJets.size() + 2;
 
-            	H.dR = reco::deltaR(vhCand.H.jets[0].p4.Eta(), vhCand.H.jets[0].p4.Phi(), vhCand.H.jets[1].p4.Eta(), vhCand.H.jets[1].p4.Phi());
-	            H.dPhi = reco::deltaPhi(vhCand.H.jets[0].p4.Phi(),vhCand.H.jets[1].p4.Phi());
-	            H.dEta = TMath::Abs(vhCand.H.jets[0].p4.Eta() - vhCand.H.jets[1].p4.Eta());
-	            HVdPhi = fabs(reco::deltaPhi(vhCand.H.p4.Phi(), vhCand.V.p4.Phi()) );
-	            HVMass = (vhCand.H.p4 + vhCand.V.p4).M();
-	            HMETdPhi = fabs(reco::deltaPhi(vhCand.H.p4.Phi(), vhCand.V.mets.at(0).p4.Phi()) );
+                H.dR = reco::deltaR(vhCand.H.jets[0].p4.Eta(), vhCand.H.jets[0].p4.Phi(), vhCand.H.jets[1].p4.Eta(), vhCand.H.jets[1].p4.Phi());
+                H.dPhi = reco::deltaPhi(vhCand.H.jets[0].p4.Phi(),vhCand.H.jets[1].p4.Phi());
+                H.dEta = TMath::Abs(vhCand.H.jets[0].p4.Eta() - vhCand.H.jets[1].p4.Eta());
+                HVdPhi = fabs(reco::deltaPhi(vhCand.H.p4.Phi(), vhCand.V.p4.Phi()) );
+                HVMass = (vhCand.H.p4 + vhCand.V.p4).M();
+                HMETdPhi = fabs(reco::deltaPhi(vhCand.H.p4.Phi(), vhCand.V.mets.at(0).p4.Phi()) );
 
                 deltaPullAngle  = VHbbCandidateTools::getDeltaTheta(vhCand.H.jets[0],vhCand.H.jets[1]);
                 deltaPullAngle2 = VHbbCandidateTools::getDeltaTheta(vhCand.H.jets[1],vhCand.H.jets[0]);
@@ -2204,14 +2206,14 @@ int main(int argc, char *argv[]) {
             const math::XYZPoint myPv(recoPv);
 
             //FAKE ERROR MATRIX
-// 	//look here for Matrix filling info http://project-mathlibs.web.cern.ch/project-mathlibs/sw/html/SMatrixDoc.html
-// 	std::vector<double> fillMatrix(6);
-// 	for (int i = 0; i<6; ++i) fillMatrix[i] = 0.;
-// 	fillMatrix[0] = TMath::Power(0.002,2);
-// 	fillMatrix[2] = TMath::Power(0.002,2);
-// 	fillMatrix[5] = TMath::Power(0.002,2);
-// 	const ROOT::Math::SMatrix<double, 3, 3, ROOT::Math::MatRepSym<double, 3> > myFakeMatrixError(fillMatrix.begin(),fillMatrix.end());
-// 	const reco::Vertex recoVtxPv(myPv, myFakeMatrixError);
+//     //look here for Matrix filling info http://project-mathlibs.web.cern.ch/project-mathlibs/sw/html/SMatrixDoc.html
+//     std::vector<double> fillMatrix(6);
+//     for (int i = 0; i<6; ++i) fillMatrix[i] = 0.;
+//     fillMatrix[0] = TMath::Power(0.002,2);
+//     fillMatrix[2] = TMath::Power(0.002,2);
+//     fillMatrix[5] = TMath::Power(0.002,2);
+//     const ROOT::Math::SMatrix<double, 3, 3, ROOT::Math::MatRepSym<double, 3> > myFakeMatrixError(fillMatrix.begin(),fillMatrix.end());
+//     const reco::Vertex recoVtxPv(myPv, myFakeMatrixError);
 
             //REAL ERROR MATRIX
             const reco::Vertex recoVtxPv(myPv, aux.pvInfo.efirstPVInPT2);
@@ -2234,30 +2236,30 @@ int main(int argc, char *argv[]) {
                 SVH.phi = BCands_H.Phi();
             }
 
-            /// SimBHadron
-            const SimBHadronCollection * sbhc;
-            SimBs.reset();
-            if (isMC_) {
-                fwlite::Handle < SimBHadronCollection > SBHC;
-                SBHC.getByLabel(ev, "bhadrons");
-                sbhc = SBHC.product();
-                nSimBs = sbhc->size();
-                for (int j = 0; j < nSimBs && j < MAXB; ++j)
-                    SimBs.set(sbhc->at(j), j);
-                if (nSimBs > 1) {
-                    TLorentzVector SimBs_H1, SimBs_H2, SimBs_H;
-	                SimBs_H1.SetPtEtaPhiM(SimBs.pt[0], SimBs.eta[0], SimBs.phi[0], SimBs.mass[0]);
-	                SimBs_H2.SetPtEtaPhiM(SimBs.pt[1], SimBs.eta[1], SimBs.phi[1], SimBs.mass[1]);
-	                SimBs_H = SimBs_H1 + SimBs_H2;
-	                SimBsH.dR = deltaR(SimBs.eta[0], SimBs.phi[0], SimBs.eta[1], SimBs.phi[1] );
-	                SimBsH.dPhi = deltaPhi(SimBs.phi[0], SimBs.phi[1] );
-	                SimBsH.dEta = TMath::Abs(SimBs.eta[0] - SimBs.eta[1] );
-	                SimBsH.mass = SimBs_H.M();
-	                SimBsH.pt = SimBs_H.Pt();
-	                if (SimBsH.pt > 0.1) SimBsH.eta = SimBs_H.Eta();  else SimBsH.eta = -99;
-	                SimBsH.phi = SimBs_H.Phi();
-                }
-            }
+            ///// SimBHadron
+            //const SimBHadronCollection * sbhc;
+            //SimBs.reset();
+            //if (isMC_) {
+            //    fwlite::Handle < SimBHadronCollection > SBHC;
+            //    SBHC.getByLabel(ev, "bhadrons");
+            //    sbhc = SBHC.product();
+            //    nSimBs = sbhc->size();
+            //    for (int j = 0; j < nSimBs && j < MAXB; ++j)
+            //        SimBs.set(sbhc->at(j), j);
+            //    if (nSimBs > 1) {
+            //        TLorentzVector SimBs_H1, SimBs_H2, SimBs_H;
+            //        SimBs_H1.SetPtEtaPhiM(SimBs.pt[0], SimBs.eta[0], SimBs.phi[0], SimBs.mass[0]);
+            //        SimBs_H2.SetPtEtaPhiM(SimBs.pt[1], SimBs.eta[1], SimBs.phi[1], SimBs.mass[1]);
+            //        SimBs_H = SimBs_H1 + SimBs_H2;
+            //        SimBsH.dR = deltaR(SimBs.eta[0], SimBs.phi[0], SimBs.eta[1], SimBs.phi[1] );
+            //        SimBsH.dPhi = deltaPhi(SimBs.phi[0], SimBs.phi[1] );
+            //        SimBsH.dEta = TMath::Abs(SimBs.eta[0] - SimBs.eta[1] );
+            //        SimBsH.mass = SimBs_H.M();
+            //        SimBsH.pt = SimBs_H.Pt();
+            //        if (SimBsH.pt > 0.1) SimBsH.eta = SimBs_H.Eta();  else SimBsH.eta = -99;
+            //        SimBsH.phi = SimBs_H.Phi();
+            //    }
+            //}
 
 
             /// MET
@@ -2355,7 +2357,7 @@ int main(int argc, char *argv[]) {
                     //}
                     if ((isW && !useHighestPtHiggsW) || (!isW && !useHighestPtHiggsZ)) {  // btag SF computed using only H-jets if best-H made with dijetPt rather than best CSV
                         if(vhCand.additionalJets[j].p4.Pt() > 20)
-		                    btagJetInfos.push_back(btagEff.jetInfo(vhCand.additionalJets[j]));
+                            btagJetInfos.push_back(btagEff.jetInfo(vhCand.additionalJets[j]));
                     }
                 }
 

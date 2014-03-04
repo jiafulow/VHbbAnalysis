@@ -22,7 +22,7 @@
 #include "DataFormats/FWLite/interface/Run.h"
 #include "DataFormats/Luminosity/interface/LumiSummary.h"
 
-#include "VHbbAnalysis/VHbbDataFormats/interface/HbbCandidateFinderAlgo.h" 
+#include "VHbbAnalysis/VHbbDataFormats/interface/HbbCandidateFinderAlgo.h"
 #include "VHbbAnalysis/VHbbDataFormats/src/HbbCandidateFinderAlgo.cc"
 
 #include "VHbbAnalysis/VHbbDataFormats/interface/VHbbEvent.h"
@@ -45,7 +45,6 @@
 //Move class definition to Ntupler.h ?
 //#include "VHbbAnalysis/VHbbDataFormats/interface/Ntupler.h"
 
-#include "ZSV/BAnalysis/interface/SimBHadron.h"
 //btagging
 #include "VHbbAnalysis/VHbbDataFormats/interface/BTagWeight.h"
 //trigger
@@ -71,7 +70,7 @@ using namespace pat;
 #define MAXL 110
 #define MAXB 110
 #define MAXT 160
-#define nMetUnc 24 
+#define nMetUnc 24
 //eleEnDown/Up, muEn, tauEn, JES, JER, Unclustered for type1 MET [0-11] and than type1p2 MET [12-23]
 
 
@@ -86,9 +85,9 @@ bool jsonContainsEvent (const std::vector< edm::LuminosityBlockRange > &jsonVec,
     }
   bool (* funcPtr) (edm::LuminosityBlockRange const &,
 		    edm::LuminosityBlockID const &) = &edm::contains;
-  edm::LuminosityBlockID lumiID (event.id().run(), 
+  edm::LuminosityBlockID lumiID (event.id().run(),
 				 event.id().luminosityBlock());
-  std::vector< edm::LuminosityBlockRange >::const_iterator iter = 
+  std::vector< edm::LuminosityBlockRange >::const_iterator iter =
     std::find_if (jsonVec.begin(), jsonVec.end(),
 		  boost::bind(funcPtr, _1, lumiID) );
   return jsonVec.end() != iter;
@@ -137,11 +136,11 @@ float ElectronIso(const VHbbEvent::ElectronInfo &i,float rho) {
 
   //Correct electron photon double count
   float pho=i.pfPhoIso;
-  if(i.innerHits>0) 
-    { 
+  if(i.innerHits>0)
+    {
       pho-=i.pfPhoIsoDoubleCounted;
     }
-  
+
   // HCP 12
   //  float pfCorrIso = (i.pfChaIso+ std::max(pho-rhoN*areagamma,mincor )+std::max(i.pfNeuIso-rhoN*areaNH,mincor))/i.p4.Pt();
 
@@ -249,7 +248,7 @@ float muon2012PfCorrIso(const VHbbEvent::MuonInfo & i, float rho) {
 
 bool muonId2012Tight(const VHbbEvent::MuonInfo & i, float rho, bool requireiso = true) {
   float pfCorrIso = muon2012PfCorrIso(i,rho);
-  return (i.isPF && i. globChi2<10 && i.nPixelHits>= 1 && i.globNHits != 0 && i.nValidLayers > 5 &&         (i.cat & 0x1) && i.nMatches >=2 && i.ipDb<.2 
+  return (i.isPF && i. globChi2<10 && i.nPixelHits>= 1 && i.globNHits != 0 && i.nValidLayers > 5 &&         (i.cat & 0x1) && i.nMatches >=2 && i.ipDb<.2
 	  && fabs(i.p4.Eta()) < 2.4 && i.p4.Pt() > 20. &&
 	  i.zPVPt < 0.5 && (!requireiso || pfCorrIso < 0.12)); // Added by SCZ from selection
 }
@@ -262,7 +261,7 @@ typedef struct
   float phi;
 } METInfo;
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
   gROOT->Reset();
 
@@ -284,7 +283,7 @@ int main(int argc, char* argv[])
   gSystem->Load("libFWCoreFWLite");
   gSystem->Load("libDataFormatsFWLite");
   AutoLibraryLoader::enable();
-  
+
   // parse arguments
   if ( argc < 2 ) {
     return 0;
@@ -298,14 +297,14 @@ int main(int argc, char* argv[])
   bool verbose_ = ana.getParameter<bool>("verbose");
 
   std::vector<edm::LuminosityBlockRange> jsonVector;
-  if ( in.exists("lumisToProcess") ) 
+  if ( in.exists("lumisToProcess") )
     {
       std::vector<edm::LuminosityBlockRange> const & lumisTemp =
 	in.getUntrackedParameter<std::vector<edm::LuminosityBlockRange> > ("lumisToProcess");
       jsonVector.resize( lumisTemp.size() );
       copy( lumisTemp.begin(), lumisTemp.end(), jsonVector.begin() );
     }
-  
+
   // now get each parameter
   int maxEvents_( in.getParameter<int>("maxEvents") );
   int skipEvents_( in.getParameter<int>("skipEvents") );
@@ -323,7 +322,7 @@ int main(int argc, char* argv[])
   std::string PUdatafileName2011B_ = in.getParameter<std::string> ("PUdatafileName2011B") ;
   std::string Weight3DfileName_ = in.getParameter<std::string> ("Weight3DfileName") ;
 
-  bool isMC_( ana.getParameter<bool>("isMC") );  
+  bool isMC_( ana.getParameter<bool>("isMC") );
 
   float lumiWeight;
   float PUweight, PUweight2011B,PUweight1DObs;
@@ -366,7 +365,7 @@ int main(int argc, char* argv[])
 */
     }
 
-  TFile *_outFile	= new TFile(outputFile_.c_str(), "recreate");	
+  TFile *_outFile	= new TFile(outputFile_.c_str(), "recreate");
   TDirectory *muTrigDir = _outFile->mkdir("muTrigDir");
   TDirectory *muWCandDir =  _outFile->mkdir("muWCandDir");
   TDirectory *muRecoDir = _outFile->mkdir("muRecoDir");
@@ -444,7 +443,7 @@ int main(int argc, char* argv[])
   int muTrigTree_probe_passingDiMuL110_match3, muTrigTree_probe_passingDiMuL13p5_match3, muTrigTree_probe_passingDiMuL1_match3;
   int muTrigTree_probe_passingDiMuL110_match5, muTrigTree_probe_passingDiMuL13p5_match5, muTrigTree_probe_passingDiMuL1_match5;
   int muTrigTree_probe_passingDiMuL110_matchinf, muTrigTree_probe_passingDiMuL13p5_matchinf, muTrigTree_probe_passingDiMuL1_matchinf;
-  float muTrigTree_probe_WCandPt; int muTrigTree_probe_passingWCandPt; 
+  float muTrigTree_probe_WCandPt; int muTrigTree_probe_passingWCandPt;
   int muTrigTree_event_Mu17_Mu8, muTrigTree_event_Mu17_TkMu8;
   int muTrigTree_probe_passingIsoMu24ORMu40, muTrigTree_probe_passingMu40ANDNOTIsoMu24, muTrigTree_probe_passingIsoMu20ANDNOTIsoMu24;
   int muTrigTree_probe_passingIsoMu20ANDNOTIsoMu24ANDNOTMu40, muTrigTree_probe_passingIsoMu24ORMu40ORIsoMu20;
@@ -514,7 +513,7 @@ int main(int argc, char* argv[])
   muTrigTree->Branch("probe_passingDiMuTk17ANDNOTeventMu17Mu8", &muTrigTree_probe_passingDiMuTk17ANDNOTeventMu17Mu8, "probe_passingDiMuTk17ANDNOTeventMu17Mu8/I");
   muTrigTree->Branch("probe_passingDiMuTk8ANDNOTeventMu17Mu8", &muTrigTree_probe_passingDiMuTk8ANDNOTeventMu17Mu8, "probe_passingDiMuTk8ANDNOTeventMu17Mu8/I");
   muTrigTree->Branch("probe_passingDiMuTkDzANDNOTeventMu17Mu8", &muTrigTree_probe_passingDiMuTkDzANDNOTeventMu17Mu8, "probe_passingDiMuTkDzANDNOTeventMu17Mu8/I");
-  
+
   muTrigTree->Branch("dR", &muTrigTree_dR, "dR/F");
   muTrigTree->Branch("mass", &muTrigTree_mass, "mass/F");
   muTrigTree->Branch("ZPt", &muTrigTree_ZPt, "ZPt/F");
@@ -872,9 +871,9 @@ int main(int argc, char* argv[])
 
 
     // loop the events
-      
+
       fwlite::Event ev(inFile);
-      fwlite::Handle< VHbbEventAuxInfo > vhbbAuxHandle; 
+      fwlite::Handle< VHbbEventAuxInfo > vhbbAuxHandle;
       for(ev.toBegin(); !ev.atEnd() ; ++ev, ++ievt)
         {
           if (ievt <= skipEvents_) continue;
@@ -904,11 +903,11 @@ int main(int argc, char* argv[])
 
       /*
       if(isMC_){
- 
+
 	// PU weights // Run2011A
 	std::map<int, unsigned int>::const_iterator puit = aux.puInfo.pus.find(0);
 	int npu =puit->second ;
-	//PUweight =  lumiWeights.weight( npu );        
+	//PUweight =  lumiWeights.weight( npu );
 	//pu->Fill(puit->second);
 	std::map<int, unsigned int>::const_iterator puit0 =  aux.puInfo.pus.find(0);
 	std::map<int, unsigned int>::const_iterator puitm1 = aux.puInfo.pus.find(-1);
@@ -916,8 +915,8 @@ int main(int argc, char* argv[])
 	//PU0=puit0->second;
 	//PUp1=puitp1->second;
 	//PUm1=puitm1->second;
-	//input3DPU->Fill(PUm1,PU0,PUp1);  
-	lumiWeight = lumiWeights2011B.weight3D( puitm1->second, puit0->second,puitp1->second); 
+	//input3DPU->Fill(PUm1,PU0,PUp1);
+	lumiWeight = lumiWeights2011B.weight3D( puitm1->second, puit0->second,puitp1->second);
 
       }
       */
@@ -930,7 +929,7 @@ int main(int argc, char* argv[])
 	// PU weights // Run2011A
 	std::map<int, unsigned int>::const_iterator puit = aux.puInfo.pus.find(0);
 	int npu =puit->second ;
-	PUweight =  lumiWeights.weight( (int) aux.puInfo.truePU ); //use new method with "true PU"        
+	PUweight =  lumiWeights.weight( (int) aux.puInfo.truePU ); //use new method with "true PU"
 	//	pu->Fill(puit->second);
 	// PU weight Run2011B
 	// PU weight Run2011B
@@ -940,10 +939,10 @@ int main(int argc, char* argv[])
 	PU0=puit0->second;
 	PUp1=puitp1->second;
 	PUm1=puitm1->second;
-	//	input3DPU->Fill(PUm1,PU0,PUp1);  
-//	lumiWeight = lumiWeights2011B.weight3D( puitm1->second, puit0->second,puitp1->second); 
-//	PUweight2011B = lumiWeights2011B.weight3D( puitm1->second, puit0->second,puitp1->second); 
-	PUweight1DObs = lumiWeights1DObs.weight( npu); 
+	//	input3DPU->Fill(PUm1,PU0,PUp1);
+//	lumiWeight = lumiWeights2011B.weight3D( puitm1->second, puit0->second,puitp1->second);
+//	PUweight2011B = lumiWeights2011B.weight3D( puitm1->second, puit0->second,puitp1->second);
+	PUweight1DObs = lumiWeights1DObs.weight( npu);
 	nTruePVs = (int) aux.puInfo.truePU;
       } else {
 	nTruePVs = 0;
@@ -1072,7 +1071,7 @@ int main(int argc, char* argv[])
 
 	std::vector<TLorentzVector> ele27L1;
 	std::vector<TLorentzVector> ele27HLT;
-	
+
 	std::vector<TLorentzVector> diEle17;
         std::vector<TLorentzVector> diEle8;
         std::vector<TLorentzVector> diEleDz;
@@ -1340,7 +1339,7 @@ int main(int argc, char* argv[])
 	rhoForEleIso = aux.puInfo.rho25Iso;
 
 	if (verbose_) cout << " rhoN=" << rhoN << " rho=" << rho << " rhoForEleIso=" << rhoForEleIso << endl;
-	
+
 
 	if (verbose_) cout << iEvent->muInfo.size() << " " << iEvent->eleInfo.size() << endl;
 
@@ -1556,7 +1555,7 @@ int main(int argc, char* argv[])
 	      probe_closestJetPt = 0.;
 	      std::vector<TLorentzVector> dijets;
 	      for(size_t j=0; j< iEvent->simpleJets2.size(); j++) {
-		if (iEvent->simpleJets2[j].p4.Pt() > 20. && fabs(iEvent->simpleJets2[j].p4.Eta()) < 2.5 
+		if (iEvent->simpleJets2[j].p4.Pt() > 20. && fabs(iEvent->simpleJets2[j].p4.Eta()) < 2.5
 		    && iEvent->muInfo[probeNumber].p4.DeltaR(iEvent->simpleJets2[j].p4) > 0.5 && iEvent->muInfo[tagNumber].p4.DeltaR(iEvent->simpleJets2[j].p4) > 0.5) {
 		  nJets++;
 		  if (iEvent->simpleJets2[j].csv>0.4) nBJets++;
@@ -1600,25 +1599,25 @@ int main(int argc, char* argv[])
 	    }
 	  }
 	} // potential MuTags;
-            
+
 	std::vector<unsigned int> potentialMuRecoIsoTags;
-	
+
 	for(size_t m=0;m<iEvent->muInfo.size();m++) {
 	  if (muonId2012Tight(iEvent->muInfo[m],rhoN,false) && iEvent->muInfo[m].p4.Pt() > 20. && fabs(iEvent->muInfo[m].p4.Eta()) < 2.4) {
 	    if (verbose_) std::cout << "FOUND RecoIso tag Mu " << iEvent->muInfo[m].p4.Pt() << " " << iEvent->muInfo[m].p4.Eta() << " " << iEvent->muInfo[m].p4.Phi() << endl;
 	    potentialMuRecoIsoTags.push_back(m);
 	  }
 	}
-        
+
 	if (verbose_) cout << " potentialMuRecoIsoTags.size()=" << potentialMuRecoIsoTags.size() << endl;
-        
+
 	if (potentialMuRecoIsoTags.size()>0) {
 	  unsigned int tagNumber = potentialMuRecoIsoTags[rand->Integer(potentialMuRecoIsoTags.size())];
 	  if (verbose_) std::cout << " Picked RecoIso Tag Mu " << iEvent->muInfo[tagNumber].p4.Pt() << " " << iEvent->muInfo[tagNumber].p4.Eta() << " " << iEvent->muInfo[tagNumber].p4.Phi() << endl;
 	  muRecoIsoTree_tag_pt = iEvent->muInfo[tagNumber].p4.Pt();
 	  muRecoIsoTree_tag_eta = iEvent->muInfo[tagNumber].p4.Eta();
 	  muRecoIsoTree_tag_phi = iEvent->muInfo[tagNumber].p4.Phi();
-          
+
 	  bool matched = false;
 	  for (size_t i=0 ; i < mu24Iso.size(); i++) {
 	    if (iEvent->muInfo[tagNumber].p4.DeltaR(mu24Iso[i]) < trigMatchCut) {
@@ -1631,7 +1630,7 @@ int main(int argc, char* argv[])
 	    cout << "Does not pass tightNoIso cuts";
 	  }
 	  if (matched&&muonId2012Tight(iEvent->muInfo[tagNumber],rhoN)) {
-	    
+
 	    std::vector<unsigned int> potentialRecoIsoProbes;
 	    for(size_t m=0;m<iEvent->muInfo.size();m++) {
 	      if (m == tagNumber) continue;
@@ -1641,7 +1640,7 @@ int main(int argc, char* argv[])
 		potentialRecoIsoProbes.push_back(m);
 		if (verbose_) {
 		  cout << "  Found a potential RecoIso probe: " <<  iEvent->muInfo[m].p4.Pt() << " " << iEvent->muInfo[m].p4.Eta() << " " << iEvent->muInfo[m].p4.Phi() << endl;
-		  cout << "  Inv mass: " << mass << " Tight: " << muonId2012Tight(iEvent->muInfo[m],rhoN,false) << " TightIso: " << muonId2012Tight(iEvent->muInfo[m],rhoN) 
+		  cout << "  Inv mass: " << mass << " Tight: " << muonId2012Tight(iEvent->muInfo[m],rhoN,false) << " TightIso: " << muonId2012Tight(iEvent->muInfo[m],rhoN)
 		       << " Iso: " << muon2012PfCorrIso(iEvent->muInfo[m],rhoN) << endl;
 		}
 	      }
@@ -1657,8 +1656,8 @@ int main(int argc, char* argv[])
 	      muRecoIsoTree_mass = (iEvent->muInfo[probeNumber].p4 + iEvent->muInfo[tagNumber].p4).M();
               muRecoIsoTree_ZPt = (iEvent->muInfo[probeNumber].p4 + iEvent->muInfo[tagNumber].p4).Pt();
 	      muRecoIsoTree_dR = iEvent->muInfo[probeNumber].p4.DeltaR(iEvent->muInfo[tagNumber].p4);
-              
-              
+
+
 	      muRecoIsoTree_probe_nearTightNoIso = 0;
 	      muRecoIsoTree_probe_nearTightIso = 0;
 	      for (size_t m=0;m<iEvent->muInfo.size();m++) {
@@ -1666,7 +1665,7 @@ int main(int argc, char* argv[])
 		if (muonId2012Tight(iEvent->muInfo[m],rhoN,false)) muRecoIsoTree_probe_nearTightNoIso = 1;
 		if (muonId2012Tight(iEvent->muInfo[m],rhoN)) muRecoIsoTree_probe_nearTightIso = 1;
 	      }
-              
+
 	      muRecoIsoTree_probe_Iso = muon2012PfCorrIso(iEvent->muInfo[probeNumber],rhoN);
 	      muRecoIsoTree_probe_ipDb = iEvent->muInfo[probeNumber].ipDb;
 	      muRecoIsoTree_probe_zPVPt = iEvent->muInfo[probeNumber].zPVPt;
@@ -1676,7 +1675,7 @@ int main(int argc, char* argv[])
 	      muRecoIsoTree_probe_nPixelHits= iEvent->muInfo[probeNumber].nPixelHits;
 	      muRecoIsoTree_probe_nValidLayers= iEvent->muInfo[probeNumber].nValidLayers;
 	      muRecoIsoTree_probe_nMatches= iEvent->muInfo[probeNumber].nMatches;
-              
+
 	      muRecoIsoTree_probe_passingIsoMu24Iso = 0;
 	      muRecoIsoTree_probe_passingIsoMu24L3 = 0;
 	      for (size_t i=0 ; i < mu24L3.size(); i++) {
@@ -1716,17 +1715,17 @@ int main(int argc, char* argv[])
                   probe_diJetPt = dijets[j].Pt();
                 }
               }
-             
+
 	      muRecoIsoTree->Fill(); // Only if trigger-matched tag and a probe
-              
+
 	    } // potential RecoIso probe size > 0
-            
+
 	  } // trigger-matched tag
 	} // potential tag size > 0
-        
-	
+
+
         std::vector<unsigned int> potentialMuRecoTags;
-	
+
         for(size_t m=0;m<iEvent->muInfo.size();m++) {
           if ((iEvent->muInfo[m].cat & 0x1) && iEvent->muInfo[m].p4.Pt() > 20. && fabs(iEvent->muInfo[m].p4.Eta()) < 2.4) {
             if (verbose_) std::cout << "FOUND reco tag Mu " << iEvent->muInfo[m].p4.Pt() << " " << iEvent->muInfo[m].p4.Eta() << " " << iEvent->muInfo[m].p4.Phi() << endl;
@@ -1765,7 +1764,7 @@ int main(int argc, char* argv[])
 		potentialRecoProbes.push_back(m);
 		if (verbose_) {
 		  cout << "  Found a potential reco probe: " <<  iEvent->muInfo[m].p4.Pt() << " " << iEvent->muInfo[m].p4.Eta() << " " << iEvent->muInfo[m].p4.Phi() << endl;
-		  cout << "  Inv mass: " << mass << " Tight: " << muonId2012Tight(iEvent->muInfo[m],rhoN,false) << " TightIso: " << muonId2012Tight(iEvent->muInfo[m],rhoN) 
+		  cout << "  Inv mass: " << mass << " Tight: " << muonId2012Tight(iEvent->muInfo[m],rhoN,false) << " TightIso: " << muonId2012Tight(iEvent->muInfo[m],rhoN)
 		       << " Iso: " << muon2012PfCorrIso(iEvent->muInfo[m],rhoN) << endl;
 		}
               }
@@ -1848,8 +1847,8 @@ int main(int argc, char* argv[])
 
 	  } // trigger-matched tag
 	} // potential tag size > 0
-            
-            
+
+
 
         std::vector<unsigned int> potentialEleTags;
 
@@ -1908,7 +1907,7 @@ int main(int argc, char* argv[])
 	      eleTrigTree_ZPt = (iEvent->eleInfo[probeNumber].p4 + iEvent->eleInfo[tagNumber].p4).Pt();
               eleTrigTree_dR = iEvent->eleInfo[probeNumber].p4.DeltaR(iEvent->eleInfo[tagNumber].p4);
 
-	      
+
 	      for (size_t i=0 ; i < ele27L1.size(); i++) {
 		if (iEvent->eleInfo[probeNumber].p4.DeltaR(ele27L1[i]) < L1MatchCut) eleTrigTree_probe_passingEle27L1 = 1;
 	      }
@@ -1960,7 +1959,7 @@ int main(int argc, char* argv[])
 
 	    } // HLT probes > 0
 	  }
-	} // potential ele tags 
+	} // potential ele tags
 
         std::vector<unsigned int> potentialEleRecoTags;
 
@@ -2098,25 +2097,25 @@ int main(int argc, char* argv[])
 	  } // matched ele tag
 	} // potential ele tag
 
-            
+
 	std::vector<unsigned int> potentialEleRecoIsoTags;
-	
+
 	for(size_t m=0;m<iEvent->eleInfo.size();m++) {
 	  if (ElectronPresel(iEvent->eleInfo[m]) && iEvent->eleInfo[m].p4.Pt() > 20. && fabs(iEvent->eleInfo[m].p4.Eta()) < 2.5) {
 	    if (verbose_) std::cout << "FOUND RecoIso tag Ele " << iEvent->eleInfo[m].p4.Pt() << " " << iEvent->eleInfo[m].p4.Eta() << " " << iEvent->eleInfo[m].p4.Phi() << endl;
 	    potentialEleRecoIsoTags.push_back(m);
 	  }
 	}
-        
+
 	if (verbose_) cout << " potentialEleRecoIsoTags.size()=" << potentialEleRecoIsoTags.size() << endl;
-        
+
 	if (potentialEleRecoIsoTags.size()>0) {
 	  unsigned int tagNumber = potentialEleRecoIsoTags[rand->Integer(potentialEleRecoIsoTags.size())];
 	  if (verbose_) std::cout << " Picked RecoIso Tag Ele " << iEvent->eleInfo[tagNumber].p4.Pt() << " " << iEvent->eleInfo[tagNumber].p4.Eta() << " " << iEvent->eleInfo[tagNumber].p4.Phi() << endl;
 	  eleRecoIsoTree_tag_pt = iEvent->eleInfo[tagNumber].p4.Pt();
 	  eleRecoIsoTree_tag_eta = iEvent->eleInfo[tagNumber].p4.Eta();
 	  eleRecoIsoTree_tag_phi = iEvent->eleInfo[tagNumber].p4.Phi();
-          
+
 	  bool matched = false;
 	  for (size_t i=0 ; i < ele27HLT.size(); i++) {
 	    if (iEvent->eleInfo[tagNumber].p4.DeltaR(ele27HLT[i]) < trigMatchCut) {
@@ -2168,7 +2167,7 @@ int main(int argc, char* argv[])
 	      eleRecoIsoTree_probe_iso = ElectronIso(iEvent->eleInfo[tagNumber],rhoForEleIso);
 	      eleRecoIsoTree_probe_id = iEvent->eleInfo[tagNumber].mvaOutTrig;
 
-              
+
 	      eleRecoIsoTree_probe_nearWpHWW = 0;
 	      eleRecoIsoTree_probe_nearWp70 = 0;
 	      eleRecoIsoTree_probe_nearWp80 = 0;
@@ -2184,7 +2183,7 @@ int main(int argc, char* argv[])
 		if (ElectronWP(iEvent->eleInfo[probeNumber],rhoForEleIso,90)) eleRecoIsoTree_probe_nearWp90 = 1;
 		if (ElectronWP(iEvent->eleInfo[probeNumber],rhoForEleIso,95)) eleRecoIsoTree_probe_nearWp95 = 1;
 	      }
-              
+
 	      eleRecoIsoTree_probe_passingEle27HLT = 0;
 	      for (size_t i=0 ; i < ele27HLT.size(); i++) {
 		if (iEvent->eleInfo[probeNumber].p4.DeltaR(ele27HLT[i]) < trigMatchCut) eleRecoIsoTree_probe_passingEle27HLT = 1;
@@ -2220,11 +2219,11 @@ int main(int argc, char* argv[])
                   probe_diJetPt = dijets[j].Pt();
                 }
               }
-              
+
 	      eleRecoIsoTree->Fill(); // Only if trigger-matched tag and a probe
-              
+
 	    } // potential RecoIso probe size > 0
-            
+
 	  } // matched ele tag
 	} // potential ele tag
 
@@ -2255,9 +2254,9 @@ int main(int argc, char* argv[])
           interestingNames.push_back("HLT_Mu40_v");
           interestingNames.push_back("HLT_IsoMu20_WCandPt80_v");
 
-	  
+
 	  //	const TriggerPathRefVector trigPathRefs (triggerEvent->pathRefs() );
-	  
+
 	  for ( TriggerPathRefVector::const_iterator trigPathRef  = trigPathRefs.begin(); trigPathRef != trigPathRefs.end(); ++trigPathRef ) {
 	    std::string name = (*trigPathRef)->name();
 	    bool interesting = false;
@@ -2287,7 +2286,7 @@ int main(int argc, char* argv[])
 		for ( TriggerObjectRefVector::const_iterator trigObjRef = trigObjRefs.begin() ; trigObjRef != trigObjRefs.end() ; trigObjRef++) {
 		  std::cout << "    " << (*trigObjRef)->pt() << " " << (*trigObjRef)->eta() << " " << (*trigObjRef)->phi() << std::endl;
 		}
-	      } 
+	      }
 	    }
 	  }
 	}
@@ -2334,28 +2333,28 @@ int main(int argc, char* argv[])
 	}
 	extraTree->Fill();
 
-	  
+
 	} // closed event loop
 
     std::cout << "closing the file: " << inputFiles_[iFile] << std::endl;
     inFile->Close();
     // close input file
   } // loop on files
-     
-  
+
+
   std::cout << "Events: " << ievt <<std::endl;
   std::cout << "TotalCount: " << totalcount <<std::endl;
 
-    
-    
+
+
   _outFile->cd();
   muTrigDir->cd();  muTrigTree->Write();
   muWCandDir->cd();  muWCandTree->Write();
   muRecoDir->cd();  muRecoTree->Write();
-  muRecoIsoDir->cd() ; muRecoIsoTree->Write();  
+  muRecoIsoDir->cd() ; muRecoIsoTree->Write();
   eleTrigDir->cd();  eleTrigTree->Write();
   eleRecoDir->cd();  eleRecoTree->Write();
-  eleRecoIsoDir->cd() ; eleRecoIsoTree->Write();  
+  eleRecoIsoDir->cd() ; eleRecoIsoTree->Write();
   extraDir->cd() ; extraDir->Write();
   _outFile->Write();
   _outFile->Close();
