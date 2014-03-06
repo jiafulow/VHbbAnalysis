@@ -53,6 +53,18 @@
 // LHE Info
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+namespace LHAPDF {
+    void initPDFSet(int nset, int setid, int member = 0);
+    void initPDFSet(int nset, const std::string & filename, int member = 0);
+    int numberPDF(int nset);
+    void usePDFMember(int nset, int member);
+    double xfx(int nset, double x, double Q, int fl);
+    double getXmin(int nset, int member);
+    double getXmax(int nset, int member);
+    double getQ2min(int nset, int member);
+    double getQ2max(int nset, int member);
+    void extrapolate(bool extrapolate = true);
+}
 
 // IVF
 #include "RecoBTag/SecondaryVertex/interface/SecondaryVertex.h"
@@ -177,19 +189,6 @@ float resolutionBias(float eta) {
     if (eta < 2.3) return 0.134;
     if (eta < 5.0) return 0.28;
     return 0.28;
-}
-
-namespace LHAPDF {
-    void initPDFSet(int nset, int setid, int member = 0);
-    void initPDFSet(int nset, const std::string & filename, int member = 0);
-    int numberPDF(int nset);
-    void usePDFMember(int nset, int member);
-    double xfx(int nset, double x, double Q, int fl);
-    double getXmin(int nset, int member);
-    double getXmax(int nset, int member);
-    double getQ2min(int nset, int member);
-    double getQ2max(int nset, int member);
-    void extrapolate(bool extrapolate = true);
 }
 
 
@@ -2233,7 +2232,7 @@ int main(int argc, char *argv[]) {
             //    SVH.dEta = TMath::Abs(IVF.eta[0] - IVF.eta[1]);
             //    SVH.mass = BCands_H.M();
             //    SVH.pt = BCands_H.Pt();
-            //    SVH.eta = BCands_H.Eta();
+            //    if (SVH.pt > 0.1) SVH.eta = BCands_H.Eta();  else SVH.eta = -99;
             //    SVH.phi = BCands_H.Phi();
             //}
 
@@ -2257,7 +2256,7 @@ int main(int argc, char *argv[]) {
             //        SimBsH.dEta = TMath::Abs(SimBs.eta[0] - SimBs.eta[1] );
             //        SimBsH.mass = SimBs_H.M();
             //        SimBsH.pt = SimBs_H.Pt();
-            //        SimBsH.eta = SimBs_H.Eta();
+            //        if (SimBsH.pt > 0.1) SimBsH.eta = SimBs_H.Eta();  else SimBsH.eta = -99;
             //        SimBsH.phi = SimBs_H.Phi();
             //    }
             //}
