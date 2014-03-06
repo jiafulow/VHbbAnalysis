@@ -65,7 +65,7 @@ process.source = cms.Source("PoolSource",
     )
 
 ## Maximal Number of Events
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(3000) )
 
 ## Geometry and Detector Conditions (needed for a few patTuple production steps)
 #process.load("Configuration.StandardSequences.Geometry_cff")
@@ -143,7 +143,7 @@ postfix = "PFlow"
 jetAlgo = "AK5"
 usePF2PAT(process,runPF2PAT=True, jetAlgo=jetAlgo, runOnMC=RUN_ON_MC, postfix=postfix)
 
-# Uncomment this block to use the proper JEC labels and use 
+# Uncomment this block to use the proper JEC labels and use
 # goodOfflinePrimaryVertices instead of offlinePrimaryVertices
 #usePF2PAT(process,runPF2PAT=True,
 #    jetAlgo=jetAlgo, runOnMC=RUN_ON_MC, postfix=postfix,
@@ -200,12 +200,12 @@ getattr(process,"pfNoJet"+postfix).enable = True
 # ------------------------------------------------------------------------------
 # Switch to PF jets in patDefaultSequence
 # ------------------------------------------------------------------------------
-switchJetCollection(process, 
+switchJetCollection(process,
     jetCollection    = cms.InputTag('pfJetsPFlow'),
     doJTA            = True,
-    doBTagging       = True, 
+    doBTagging       = True,
     jetCorrLabel     = ('AK5PFchs', inputJetCorrLabel),
-    doType1MET       = False, 
+    doType1MET       = False,
     genJetCollection = (cms.InputTag("ak5GenJets") if RUN_ON_MC else None),
     doJetID          = False,
     jetIdLabel       = "ak5",
@@ -216,10 +216,10 @@ process.patJets.addTagInfos = True
 # PF Jets with charged hadron subtraction (a.k.a. PFnoPU)
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetEnCorPFnoPU2012
 # ------------------------------------------------------------------------------
-# NB: current JetMET version of PFNoPU leaves about 20% pile-up charged hadrons 
-#     untouched. This compromise was necessary to avoid over-subtracting high 
-#     pT tracks from jets. The L1chs corrections account for these remaining 
-#     pile-up charged hadrons so the following settings must be enabled (these 
+# NB: current JetMET version of PFNoPU leaves about 20% pile-up charged hadrons
+#     untouched. This compromise was necessary to avoid over-subtracting high
+#     pT tracks from jets. The L1chs corrections account for these remaining
+#     pile-up charged hadrons so the following settings must be enabled (these
 #     are different from lepton isolation settings).
 process.pfPileUpPFlow.Vertices = cms.InputTag('goodOfflinePrimaryVertices')
 process.pfPileUpPFlow.checkClosestZVertex = False
@@ -258,8 +258,9 @@ process.eidSequence = cms.Sequence(
     )
 
 # MVA 2012
-process.load('EGamma.EGammaAnalysisTools.electronIdMVAProducer_cfi')
-process.mvaID = cms.Sequence(  process.mvaTrigV0 + process.mvaNonTrigV0 )
+#process.load('EGamma.EGammaAnalysisTools.electronIdMVAProducer_cfi')
+process.load('EgammaAnalysis.ElectronTools.electronIdMVAProducer_cfi')
+process.mvaID = cms.Sequence(  process.mvaTrigV0 + process.mvaTrigNoIPV0 + process.mvaNonTrigV0 )
 
 # ID Sources
 process.patElectrons.electronIDSources = cms.PSet(
@@ -274,6 +275,7 @@ process.patElectrons.electronIDSources = cms.PSet(
     eidVBTFCom70 = cms.InputTag("eidVBTFCom70"),
     # MVA 2012
     mvaTrigV0 = cms.InputTag("mvaTrigV0"),
+    mvaTrigNoIPV0 = cms.InputTag("mvaTrigNoIPV0"),
     mvaNonTrigV0 = cms.InputTag("mvaNonTrigV0"),
     )
 
@@ -293,8 +295,8 @@ process.patElectrons.electronIDSources = cms.PSet(
 #   https://twiki.cern.ch/twiki/bin/view/CMS/EgammaEARhoCorrection
 #   https://twiki.cern.ch/twiki/bin/view/CMS/EgammaPFBasedIsolation
 # ------------------------------------------------------------------------------
-# NB: Electron isolation cone size of 0.4 (default) is used. POG supports both 
-#     0.3 and 0.4. The WPxx definitions were based on the cone of 0.4. 
+# NB: Electron isolation cone size of 0.4 (default) is used. POG supports both
+#     0.3 and 0.4. The WPxx definitions were based on the cone of 0.4.
 #     Effective area numbers were changed to be consistent.
 process.patElectrons.isolationValues = cms.PSet(
     pfNeutralHadrons = cms.InputTag("elPFIsoValueNeutral04PFIdPFIso"),
@@ -413,8 +415,8 @@ addJetCollection(process, cms.InputTag("ak7PFJets"),
     doJetID          = False,
     jetIdLabel       = "ak7",
     #btagdiscriminators = [
-    #    'trackCountingHighPurBJetTags','trackCountingHighEffBJetTags', 
-    #    'jetProbabilityBJetTags', 'jetBProbabilityBJetTags', 
+    #    'trackCountingHighPurBJetTags','trackCountingHighEffBJetTags',
+    #    'jetProbabilityBJetTags', 'jetBProbabilityBJetTags',
     #    'simpleSecondaryVertexHighEffBJetTags','simpleSecondaryVertexHighPurBJetTags',
     #    'combinedSecondaryVertexBJetTags','combinedSecondaryVertexMVABJetTags',
     #    'combinedInclusiveSecondaryVertexBJetTags','combinedMVABJetTags'
@@ -517,7 +519,7 @@ process.ca12PFJetsPFlow = ca4PFJets.clone(
 process.ca12PFJetsPrunedPFlow = ak5PrunedPFlow.clone(
     src = cms.InputTag('pfNoElectron'+postfix),
     doAreaFastjet = cms.bool(True),
-    rParam = cms.double(1.2),    
+    rParam = cms.double(1.2),
     jetAlgorithm = cms.string("CambridgeAachen"),
     #writeCompound = cms.bool(True), # this is used by default
     #jetCollInstanceName = cms.string("SubJets"), # this is used by default
@@ -546,11 +548,11 @@ addJetCollection(process,
     doType1MET=True,
     doL1Cleaning=False,
     doL1Counters=False,
-    genJetCollection = (cms.InputTag("ca12GenJets") if isMC else None),
+    genJetCollection = (cms.InputTag("ca12GenJets") if RUN_ON_MC else None),
     doJetID = False
     )
 
-addJetCollection(process, 
+addJetCollection(process,
     cms.InputTag('ca12PFJetsMassDropFilteredPFlow'), # Jet collection; must be already in the event when patLayer0 sequence is executed
     'CA12MassDropFiltered', 'PF',
     doJTA=True, # Run Jet-Track association & JetCharge
@@ -564,7 +566,7 @@ addJetCollection(process,
     )
 
 ## adding the subjet collections which are b-tagged...
-addJetCollection(process, 
+addJetCollection(process,
     cms.InputTag('ca12PFJetsMassDropFilteredPFlow', 'SubJets'), # Jet collection; must be already in the event when patLayer0 sequence is executed
     'CA12MassDropFilteredSubjets', 'PF',
     doJTA=True, # Run Jet-Track association & JetCharge
@@ -577,7 +579,7 @@ addJetCollection(process,
     doJetID = False
     )
 
-addJetCollection(process, 
+addJetCollection(process,
     cms.InputTag('ca12PFJetsFilteredPFlow', 'SubJets'), # Jet collection; must be already in the event when patLayer0 sequence is executed
     'CA12FilteredSubjets', 'PF',
     doJTA=True, # Run Jet-Track association & JetCharge
@@ -590,7 +592,7 @@ addJetCollection(process,
     doJetID = False
     )
 
-addJetCollection(process, 
+addJetCollection(process,
     cms.InputTag('ca12PFJetsPrunedPFlow', 'SubJets'), # Jet collection; must be already in the event when patLayer0 sequence is executed
     'CA12PrunedSubjets', 'PF',
     doJTA=True, # Run Jet-Track association & JetCharge
@@ -612,16 +614,16 @@ process.cleanPatJets.checkOverlaps.electrons.preselection = (
     "pt > 15.0 && abs(eta) < 2.5 &&"
     "(isEE || isEB) && !isEBEEGap &&"
     " (chargedHadronIso + neutralHadronIso + photonIso)/pt <0.10 &&"
-    "dB < 0.02 && "  #dB is computed wrt PV but is transverse only, no info about dZ(vertex) 
+    "dB < 0.02 && "  #dB is computed wrt PV but is transverse only, no info about dZ(vertex)
     "( "
     "(isEE && ("
     "abs(deltaEtaSuperClusterTrackAtVtx) < 0.005 &&  abs(deltaPhiSuperClusterTrackAtVtx) < 0.02 && sigmaIetaIeta < 0.03 && hadronicOverEm < 0.10 &&  abs(1./ecalEnergy*(1.-eSuperClusterOverP)) < 0.05 "
-    ")) || " 
+    ")) || "
     "(isEB && (  "
     "abs(deltaEtaSuperClusterTrackAtVtx) < 0.004 &&  abs(deltaPhiSuperClusterTrackAtVtx) < 0.03 && sigmaIetaIeta < 0.01 && hadronicOverEm < 0.12 && abs(1./ecalEnergy*(1.-eSuperClusterOverP)) < 0.05"
     "))"
     #or use mvaNonTrigV0 and mvaTrigV0
-    ")" 
+    ")"
     )
 
 #   "ecalDrivenSeed==1 && (abs(superCluster.eta)<2.5)"
@@ -654,10 +656,11 @@ process.cleanPatJets.checkOverlaps.muons.preselection = (
 # ------------------------------------------------------------------------------
 # Pileup Jet ID
 # ------------------------------------------------------------------------------
-# TODO: this is a preliminary version that doesn't know about CHS
-process.load("CMGTools.External.pujetidsequence_cff")
-process.puJetId.jets = cms.InputTag("cleanPatJets")
-process.puJetMva.jets = cms.InputTag("cleanPatJets")
+process.load("RecoJets.JetProducers.PileupJetID_cfi")
+process.pileupJetIdProducerChs.jets = cms.InputTag("cleanPatJets")
+#process.pileupJetIdProducerChs.jets = cms.InputTag("pfNoTauPFlow")
+#process.pileupJetIdProducerChs.inputIsCorrected = False
+#process.pileupJetIdProducerChs.applyJec = True
 
 # ------------------------------------------------------------------------------
 # Cut
@@ -703,24 +706,24 @@ process.selectedVertices.secondaryVertices = cms.InputTag("inclusiveMergedVertic
 process.selectedVertices.minVertices = 0
 process.selectedVertices.vertexFilter.multiplicityMin = 3
 
-process.bcandidates = cms.EDProducer('BCandidateProducer',
-    src = cms.InputTag('selectedVertices','',''),
-    primaryVertices = cms.InputTag('offlinePrimaryVerticesWithBS','',''),
-    minDRUnique = cms.untracked.double(0.4),
-    minvecSumIMifsmallDRUnique = cms.untracked.double(5.5),
-    minCosPAtomerge = cms.untracked.double(0.99),
-    maxPtreltomerge = cms.untracked.double(7777.0)
-    )
-
-process.bhadrons = cms.EDProducer('MCBHadronProducer',
-    quarkId = cms.uint32(5)
-    )
+#process.bcandidates = cms.EDProducer('BCandidateProducer',
+#    src = cms.InputTag('selectedVertices','',''),
+#    primaryVertices = cms.InputTag('offlinePrimaryVerticesWithBS','',''),
+#    minDRUnique = cms.untracked.double(0.4),
+#    minvecSumIMifsmallDRUnique = cms.untracked.double(5.5),
+#    minCosPAtomerge = cms.untracked.double(0.99),
+#    maxPtreltomerge = cms.untracked.double(7777.0)
+#    )
+#
+#process.bhadrons = cms.EDProducer('MCBHadronProducer',
+#    quarkId = cms.uint32(5)
+#    )
 
 ################################################################################
 # MET                                                                          #
 ################################################################################
 # TODO: MET systematic x/y shift correction is currently not applied, but is recommended
-# TODO: MET smearing should be applied to MC only. If it's dropped for data, then 
+# TODO: MET smearing should be applied to MC only. If it's dropped for data, then
 #       process.producePatPFMETCorrections has to be added into process.common sequence.
 # TODO: Update MET filters to HCP recommendation, in particularly:
 #       to include anomalous ECAL laser corrections in 2012A+B rereco datasets
@@ -742,6 +745,14 @@ from PhysicsTools.PatAlgos.tools.metTools import *
 
 # load modules for producing Type 1 / Type 1 + 2 corrections for pat::PFMET objects
 process.load("PhysicsTools.PatUtils.patPFMETCorrections_cff")
+
+# Also do Type-0 correction
+process.producePatPFMETCorrections.replace(
+    process.pfCandMETcorr,
+    process.type0PFMEtCorrection *
+    process.patPFMETtype0Corr *
+    process.pfCandMETcorr
+    )
 
 if not RUN_ON_MC:
     # NOTE: use "ak5PFL1FastL2L3" for MC / "ak5PFL1FastL2L3Residual" for Data
@@ -766,21 +777,21 @@ process.pfMETNoPUCharge = process.pfMETPFlow.clone(
     calculateSignificance = cms.bool(False)
     )
 
-# MHT
-process.patMETsHT = cms.EDProducer("MHTProducer",
-    JetCollection = cms.InputTag("patJets"),  # use selectedPatJets instead?
-    MinJetPt      = cms.double(30),
-    MaxJetEta     = cms.double(5)
-    )
+## MHT
+#process.patMETsHT = cms.EDProducer("MHTProducer",
+#    JetCollection = cms.InputTag("patJets"),  # use selectedPatJets instead?
+#    MinJetPt      = cms.double(30),
+#    MaxJetEta     = cms.double(5)
+#    )
 
 # ------------------------------------------------------------------------------
 # MET Smearing Correction
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATTools#MET_Systematics_Tools
 # ------------------------------------------------------------------------------
-# NB: The photonCollection parameter is set to None per default, in order to 
-#     avoid overlap with the electron collection. 
-# NB: The energies of pat::Jets are smeared by the Data/MC difference in PFJet 
-#     resolution per default. The smearing factors are taken from JME-10-014. 
+# NB: The photonCollection parameter is set to None per default, in order to
+#     avoid overlap with the electron collection.
+# NB: The energies of pat::Jets are smeared by the Data/MC difference in PFJet
+#     resolution per default. The smearing factors are taken from JME-10-014.
 # NB: Type-0 MET correction are applied (default).
 # NB: MET systematic x/y shift correction is not applied (default).
 from PhysicsTools.PatUtils.tools.metUncertaintyTools import runMEtUncertainties
@@ -792,9 +803,9 @@ runMEtUncertainties(process, 'selectedPatElectrons', None, 'selectedPatMuons', '
 ################################################################################
 from PhysicsTools.PatAlgos.tools.trigTools import *
 
-# In general, it should always be used after any modification done to paths 
-# (including the out-path), sequences and the modules they contain, since the 
-# current configuration is used in these tools to determine e.g. the correct 
+# In general, it should always be used after any modification done to paths
+# (including the out-path), sequences and the modules they contain, since the
+# current configuration is used in these tools to determine e.g. the correct
 # order of module executions or the output to be saved in the event.
 switchOnTrigger( process )
 
@@ -854,11 +865,6 @@ process.load('RecoMET.METFilters.trackingFailureFilter_cfi')
 # Hbb Specific                                                                 #
 ################################################################################
 
-# B Hadron truth
-process.bhadrons = cms.EDProducer('MCBHadronProducer',
-    quarkId = cms.uint32(5)
-    )
-
 # Save gen leptons with pt > 5 GeV, b and c quarks, B and D hadrons (and Lambda b,c), Z, W, H, all status 3 particles. Daugthers of Z, W, H.
 process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
 
@@ -881,10 +887,10 @@ process.savedGenParticles = cms.EDProducer(
     )
 
 process.gen = cms.Sequence(
-    process.genParticlesForJets * 
-    process.caVHGenJets * 
-    process.ca12GenJets * 
-    process.bhadrons * 
+    process.genParticlesForJets *
+    process.caVHGenJets *
+    process.ca12GenJets *
+    #process.bhadrons *
     process.savedGenParticles
     )
 
@@ -919,7 +925,6 @@ process.HbbAnalyzerNew = cms.EDProducer("HbbAnalyzerNew",
 
 process.common = cms.Sequence(
     process.goodOfflinePrimaryVertices *
-    process.softElectronCands *
     process.inclusiveVertexing *
     process.eidSequence *
     process.patPF2PATSequencePFlow *
@@ -939,10 +944,10 @@ process.common = cms.Sequence(
     process.mvaID *
     process.patDefaultSequence *
     #process.producePatPFMETCorrections *
-    process.patMETsHT *
+    #process.patMETsHT *
     process.selectedVertices *
-    process.bcandidates *
-    process.puJetIdSqeuence *  # it is not a typo ;-)
+    #process.bcandidates *
+    process.pileupJetIdProducerChs *
     process.HbbAnalyzerNew
     )
 
@@ -964,8 +969,7 @@ process.out.dropMetaData = cms.untracked.string('ALL')
 process.out.outputCommands = cms.untracked.vstring(
     'drop *',
     'keep double_kt6PFJets*_rho_*',
-    'keep *_puJetId_*_*',
-    'keep *_puJetMva_*_*',
+    'keep *_pileupJetIdProducerChs_*_*',
     'keep *_savedGenParticles_*_*',
     'keep *_HbbAnalyzerNew_*_*',
     #'keep VHbbCandidates_*_*_*',
@@ -974,8 +978,8 @@ process.out.outputCommands = cms.untracked.vstring(
     #'keep *_hltTriggerSummaryAOD_*_*',
     #'keep *_selectedVertices_*_*',
     #'keep *_TriggerResults_*_*',
-    'keep *_bcandidates_*_*',
-    'keep *_bhadrons_*_*',
+    #'keep *_bcandidates_*_*',
+    #'keep *_bhadrons_*_*',
     #"keep *_HLTDiCentralJet20MET80_*_*",
     #"keep *_HLTDiCentralJet20MET100HBHENoiseFiltered_*_*",
     #"keep *_HLTPFMHT150_*_*",

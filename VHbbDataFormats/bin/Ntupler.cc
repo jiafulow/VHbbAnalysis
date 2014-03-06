@@ -2195,15 +2195,15 @@ int main(int argc, char *argv[]) {
               }// if tracks in jet
             }// end if FatHiggsFlag
 
-            /// IVF
-            fwlite::Handle < std::vector < reco::Vertex > > SVC;
-            SVC.getByLabel(ev, "bcandidates");
-            const std::vector < reco::Vertex > svc = *(SVC.product());
-
-            IVF.reset();
-            nSvs = svc.size();
-            const TVector3 recoPv = aux.pvInfo.firstPVInPT2;
-            const math::XYZPoint myPv(recoPv);
+            //// IVF
+            //fwlite::Handle < std::vector < reco::Vertex > > SVC;
+            //SVC.getByLabel(ev, "bcandidates");
+            //const std::vector < reco::Vertex > svc = *(SVC.product());
+            //
+            //IVF.reset();
+            //nSvs = svc.size();
+            //const TVector3 recoPv = aux.pvInfo.firstPVInPT2;
+            //const math::XYZPoint myPv(recoPv);
 
             //FAKE ERROR MATRIX
 //     //look here for Matrix filling info http://project-mathlibs.web.cern.ch/project-mathlibs/sw/html/SMatrixDoc.html
@@ -2215,28 +2215,28 @@ int main(int argc, char *argv[]) {
 //     const ROOT::Math::SMatrix<double, 3, 3, ROOT::Math::MatRepSym<double, 3> > myFakeMatrixError(fillMatrix.begin(),fillMatrix.end());
 //     const reco::Vertex recoVtxPv(myPv, myFakeMatrixError);
 
-            //REAL ERROR MATRIX
-            const reco::Vertex recoVtxPv(myPv, aux.pvInfo.efirstPVInPT2);
-            for (int j = 0; j < nSvs && j < MAXB; ++j) {
-                const GlobalVector flightDir = flightDirection(recoPv, svc[j]);
-                reco::SecondaryVertex recoSv(recoVtxPv, svc[j], flightDir, true);
-                IVF.set(recoSv, recoPv, j);
-            }
-            if (nSvs > 1) {
-                TLorentzVector BCands_H1, BCands_H2, BCands_H;
-                BCands_H1.SetPtEtaPhiM(IVF.pt[0], IVF.eta[0], IVF.phi[0], IVF.massBcand[0]);
-                BCands_H2.SetPtEtaPhiM(IVF.pt[1], IVF.eta[1], IVF.phi[1], IVF.massBcand[1]);
-                BCands_H = BCands_H1 + BCands_H2;
-                SVH.dR = deltaR(IVF.eta[0], IVF.phi[0], IVF.eta[1], IVF.phi[1]);
-                SVH.dPhi = deltaPhi(IVF.phi[0], IVF.phi[1]);
-                SVH.dEta = TMath::Abs(IVF.eta[0] - IVF.eta[1]);
-                SVH.mass = BCands_H.M();
-                SVH.pt = BCands_H.Pt();
-                if (SVH.pt > 0.1) SVH.eta = BCands_H.Eta();  else SVH.eta = -99;
-                SVH.phi = BCands_H.Phi();
-            }
+            ////REAL ERROR MATRIX
+            //const reco::Vertex recoVtxPv(myPv, aux.pvInfo.efirstPVInPT2);
+            //for (int j = 0; j < nSvs && j < MAXB; ++j) {
+            //    const GlobalVector flightDir = flightDirection(recoPv, svc[j]);
+            //    reco::SecondaryVertex recoSv(recoVtxPv, svc[j], flightDir, true);
+            //    IVF.set(recoSv, recoPv, j);
+            //}
+            //if (nSvs > 1) {
+            //    TLorentzVector BCands_H1, BCands_H2, BCands_H;
+            //    BCands_H1.SetPtEtaPhiM(IVF.pt[0], IVF.eta[0], IVF.phi[0], IVF.massBcand[0]);
+            //    BCands_H2.SetPtEtaPhiM(IVF.pt[1], IVF.eta[1], IVF.phi[1], IVF.massBcand[1]);
+            //    BCands_H = BCands_H1 + BCands_H2;
+            //    SVH.dR = deltaR(IVF.eta[0], IVF.phi[0], IVF.eta[1], IVF.phi[1]);
+            //    SVH.dPhi = deltaPhi(IVF.phi[0], IVF.phi[1]);
+            //    SVH.dEta = TMath::Abs(IVF.eta[0] - IVF.eta[1]);
+            //    SVH.mass = BCands_H.M();
+            //    SVH.pt = BCands_H.Pt();
+            //    if (SVH.pt > 0.1) SVH.eta = BCands_H.Eta();  else SVH.eta = -99;
+            //    SVH.phi = BCands_H.Phi();
+            //}
 
-            ///// SimBHadron
+            //// SimBHadron
             //const SimBHadronCollection * sbhc;
             //SimBs.reset();
             //if (isMC_) {

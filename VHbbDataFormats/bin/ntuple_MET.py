@@ -13,7 +13,7 @@ dirname = "/pnfs/cms/WAX/11/store/user/jiafu//ZnunuHbb/EDMV42_Step2_V4a_Data_Nov
 
 process.fwliteInput = cms.PSet(
     fileNames   = cms.vstring(
-        "file:PAT.edm.V6.0.root"
+        "file:PAT.edm.0.root"
         ),
     PUmcfileName2011B= cms.string("Summer12MCObserved.root"),
     PUdatafileName2011B = cms.string("MyDataPileupHistogramObserved.root"),
