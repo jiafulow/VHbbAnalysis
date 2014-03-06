@@ -229,10 +229,10 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     iEvent.getByLabel("met", calometHandle);
     edm::View < reco::MET > calomets = *calometHandle;
 
-    /// MHT
-    edm::Handle < edm::View < reco::MET > > mHTHandle;
-    iEvent.getByLabel("patMETsHT", mHTHandle);
-    edm::View < reco::MET > metsHT = *mHTHandle;
+    ///// MHT
+    //edm::Handle < edm::View < reco::MET > > mHTHandle;
+    //iEvent.getByLabel("patMETsHT", mHTHandle);
+    //edm::View < reco::MET > metsHT = *mHTHandle;
 
     /// Can we store unclustered energy?
 
@@ -561,9 +561,9 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
         /// Pileup jet ID
         edm::Handle < edm::ValueMap < float > > puJetIdMVA;
-        iEvent.getByLabel("puJetMva", "fullDiscriminant", puJetIdMVA);
+        iEvent.getByLabel("pileupJetIdProducerChs", "fullDiscriminant", puJetIdMVA);
         edm::Handle < edm::ValueMap < int > > puJetIdFlag;
-        iEvent.getByLabel("puJetMva", "fullId", puJetIdFlag);
+        iEvent.getByLabel("pileupJetIdProducerChs", "fullId", puJetIdFlag);
 
         //std::cout << " pt " << jet_iter->pt() << " eta " << jet_iter->eta() << std::endl;
         unsigned int idx = jet_iter - simplejets2.begin();
@@ -984,9 +984,9 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     if (calomets.size()) {
         fillMET(hbbInfo->calomet, calomets.begin());
     }
-    if (metsHT.size()) {
-        fillMET(hbbInfo->mht, metsHT.begin());
-    }
+    //if (metsHT.size()) {
+    //    fillMET(hbbInfo->mht, metsHT.begin());
+    //}
 
     /// MET Uncertainties (only with Type-1 correction)
     VHbbEvent::METInfo metunc;
