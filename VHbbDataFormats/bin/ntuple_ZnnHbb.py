@@ -12,15 +12,16 @@ dirname = "/pnfs/cms/WAX/11/store/user/jiafu//ZnunuHbb/EDMV42_Step2_V4a_MC_Nov27
 
 process.fwliteInput = cms.PSet(
     fileNames   = cms.vstring(
-        "file:PATMC.edm.V4a.0.root"
+        "file:PATMC.edm.V6.0.root"
         ),
     PUmcfileName2011B= cms.string("Summer12MCObserved.root"),
     PUdatafileName2011B = cms.string("MyDataPileupHistogramObserved.root"),
     PUmcfileName = cms.string("MC_S10_fromTwiki_60bins.root"),
     PUdatafileNameAB = cms.string("data_PU_60bins_190456-196509_69.4mb.root"),
-    PUdatafileName = cms.string("data_PU_60bins_190456-202305_69.4mb.root"),
-    PUdatafileNameMinus = cms.string("data_PU_60bins_190456-202305_66.5mb.root"),
-    PUdatafileNamePlus = cms.string("data_PU_60bins_190456-202305_72.4mb.root"),
+    PUdatafileName = cms.string("data_PU_60bins_190456-208686_69.4mb.root"),
+    PUdatafileNameMinus = cms.string("data_PU_60bins_190456-208686_66.5mb.root"),
+    PUdatafileNamePlus = cms.string("data_PU_60bins_190456-208686_72.4mb.root"),
+    badEventsFileName = cms.string("HCALLaser2012AllDatasets.txt"),
     Weight3DfileName = cms.string(""),
     maxEvents = cms.int32(-1),
     runMin = cms.int32(-1),
@@ -114,9 +115,13 @@ process.Analyzer = cms.PSet(
         "HLT_Mu17_TkMu8_v.*", #48
         "HLT_DiCentralPFJet30_PFMHT80_v.*", #49 ## run2012A
         "HLT_DiCentralPFJet30_PFMET80_v.*", #50 ## run2012B prescaled
+        "HLT_LooseIsoPFTau35_Trk20_Prong1_v.*", #51
+        "HLT_LooseIsoPFTau35_Trk20_Prong1_MET70_v.*", #52
+        "HLT_LooseIsoPFTau35_Trk20_Prong1_MET75_v.*", #53
         ),
     isMC = cms.bool(isMC),
     verbose = cms.bool(False),
+    isZbbHbbAnalysis = cms.bool(False),
     readFromCandidates = cms.bool(False),
     jetPtThresholdZ = cms.double(20),
     jetPtThresholdW = cms.double(20),

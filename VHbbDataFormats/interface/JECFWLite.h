@@ -52,18 +52,6 @@ class JECFWLite {
         jecUncDataRef = new JetCorrectionUncertainty((prefix+"_Uncertainty_"+jettype+".txt").c_str());
     }
 
-    ~JECFWLite() {
-        delete jetCorrectorMC;
-        delete jetCorrectorMCRefWrong;
-        delete jetCorrectorMCRef;
-        delete jetCorrectorData;
-        delete jetCorrectorDataRef;
-        delete jecUncMC;
-        delete jecUncMCRef;
-        delete jecUncData;
-        delete jecUncDataRef;
-    }
-
 
     VHbbEvent::SimpleJet correct(const VHbbEvent::SimpleJet & j, float rho, bool isMC, bool checkRef = false) {
         VHbbEvent::SimpleJet c = j;
