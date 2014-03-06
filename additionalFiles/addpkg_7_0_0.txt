@@ -1,0 +1,69 @@
+# ==============================================================================
+# VHbbAnalysis
+#   https://github.com/jiafulow/VHbbAnalysis/
+#   (TWiki?)
+# Ntuple tag        : NtupleV47
+# CMSSW release     : CMSSW_7_0_0
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+# Setup for the first time (at FNAL)
+# ------------------------------------------------------------------------------
+#source /uscmst1/prod/sw/cms/cshrc prod
+#setenv SCRAM_ARCH slc5_amd64_gcc481
+#scram p -n NtupleV47 CMSSW CMSSW_7_0_0
+#cd NtupleV47/src
+#cmsenv
+#eval `ssh-agent`
+#ssh-add
+
+
+# ------------------------------------------------------------------------------
+# PAT recipe
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATReleaseNotes52X
+# Description       : Add PF isolation to leptons
+# TWiki revision    : r15 - 21 Feb 2014
+# Commit SHA        : d5a27f0c43a1666e1d35eda532df6358b4e82734
+# ------------------------------------------------------------------------------
+git cms-addpkg PhysicsTools/PatAlgos
+git cms-merge-topic -u cms-analysis-tools:7_0_0_pre12-photon
+
+
+# ------------------------------------------------------------------------------
+# MVA Electron ID
+#   https://twiki.cern.ch/twiki/bin/view/CMS/MultivariateElectronIdentification
+# Description       : Recipe for 53X from Git
+# TWiki revision    : r53 - 14 Jan 2014
+# Commit SHA        : (from release)
+# ------------------------------------------------------------------------------
+git cms-addpkg EgammaAnalysis/ElectronTools
+cd EgammaAnalysis/ElectronTools/data/
+cat download.url | xargs wget
+cd -
+
+
+# ------------------------------------------------------------------------------
+# Check dependencies (optional)
+# ------------------------------------------------------------------------------
+#git cms-checkdeps -a
+
+
+# ------------------------------------------------------------------------------
+# LAST BUT NOT LEAST
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# VHbbAnalysis (separated from cms-sw repository for now)
+# git branch        : CMSSW_7_0_0_dev
+# ------------------------------------------------------------------------------
+git clone git@github.com:jiafulow/VHbbAnalysis.git
+cd VHbbAnalysis
+git checkout CMSSW_7_0_0_dev
+cd ..
+
+
+# ------------------------------------------------------------------------------
+# Compile & Run
+# ------------------------------------------------------------------------------
+scram b -j8
+
+#cmsRun VHbbAnalysis/HbbAnalyzer/test/patData.py
