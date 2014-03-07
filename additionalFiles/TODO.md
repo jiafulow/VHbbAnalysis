@@ -1,5 +1,9 @@
 # TODO
 
+[ ] Add back IVF and SimBHadron
+
+[ ] Remove lepton-jet cleaning in Step 1
+
 [ ] Drop 7 TeV stuff
 
 [ ] Integrate the Step 1 production into B2G framework for easier jet/MET development

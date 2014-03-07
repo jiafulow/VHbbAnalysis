@@ -1,4 +1,4 @@
-<flags   CXXFLAGS="-O0 -g -DDEBUG"/>
+<Flags CXXFLAGS="-O0 -g -DDEBUG -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=unused-but-set-variable"/>
 <use   name="FWCore/Framework"/>
 <use   name="FWCore/PluginManager"/>
 <use   name="FWCore/ParameterSet"/>

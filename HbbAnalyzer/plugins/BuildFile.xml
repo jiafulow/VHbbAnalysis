@@ -1,4 +1,4 @@
-<flags   CXXFLAGS="-O0 -g -DDEBUG"/>
+<!--Flags CXXFLAGS="-O0 -g -DDEBUG"/-->
 <use   name="FWCore/Framework"/>
 <use   name="FWCore/PluginManager"/>
 <use   name="FWCore/ParameterSet"/>

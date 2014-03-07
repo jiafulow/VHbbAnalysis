@@ -310,7 +310,6 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     /// Pileup Reweighting
     edm::Handle < std::vector < PileupSummaryInfo > > puHandle;
     if (runOnMC_) {
-        //iEvent.getByType(puHandle);
         iEvent.getByLabel(edm::InputTag("addPileupInfo"), puHandle);
         if (puHandle.isValid()) {
             for (std::vector < PileupSummaryInfo >::const_iterator it =
@@ -484,7 +483,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     /// MC Weights
     if (runOnMC_) {
         edm::Handle < GenEventInfoProduct > evt_info;
-        iEvent.getByType(evt_info);
+        iEvent.getByLabel(edm::InputTag("generator"), evt_info);
         auxInfo->weightMCProd = evt_info->weight();
     } else {
         auxInfo->weightMCProd = 1.;
