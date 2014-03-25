@@ -1,0 +1,1 @@
+/uscms_data/d2/jiafu/VHbbAnalysis/NtupleV47/src/PhysicsTools/PatAlgos/jftest/patTemplate_cfg.py

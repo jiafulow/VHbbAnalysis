@@ -21,7 +21,7 @@
 
 # ------------------------------------------------------------------------------
 # PAT recipe
-#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATReleaseNotes52X
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATReleaseNotes70X
 # Description       : Add PF isolation to leptons
 # TWiki revision    : r15 - 21 Feb 2014
 # Commit SHA        : d5a27f0c43a1666e1d35eda532df6358b4e82734
