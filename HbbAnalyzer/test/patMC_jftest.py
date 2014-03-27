@@ -107,6 +107,7 @@ process.goodOfflinePrimaryVertices = cms.EDFilter(
     filterParams = pvSelector.clone( minNdof = cms.double(4.0), maxZ = cms.double(24.0) ),
     src = cms.InputTag('offlinePrimaryVertices')
     )
+process.out.outputCommands += ['keep *_goodOfflinePrimaryVertices_*_*']
 
 # ------------------------------------------------------------------------------
 # Jet Energy Correction Label
@@ -127,15 +128,19 @@ else:
 # Commit SHA        : fe96f6e1e3d1a1028f0b13e4b3acea36b2bd9a5d                 #
 ################################################################################
 ignorePF2PAT = True
+
 if ignorePF2PAT:
     postfix = ""
     jetAlgo = "AK5"
+    # Note: Without PF2PAT, 'goodOfflinePrimaryVertices' is not used
+
     # bypass PhysicsTools/PatAlgos/python/patSequences_cff.py
     process.load("PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff")
     process.load("PhysicsTools.PatAlgos.selectionLayer1.selectedPatCandidates_cff")
     if not runOnMC:
         process.out.outputCommands += [
-            'drop recoGenJets_*_*_*'
+            'drop recoGenJets_*_*_*',
+            'keep LumiSummary_lumiProducer_*_*',
             ]
         from PhysicsTools.PatAlgos.tools.coreTools import runOnData
         runOnData(process)
@@ -158,7 +163,8 @@ else:
         jetCorrections=('AK5PFchs', inputJetCorrLabel),
         pvCollection=cms.InputTag('goodOfflinePrimaryVertices'),
         typeIMetCorrections=True)
-    # checkClosestZVertex set to 'False' according to https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetEnCorPFnoPU
+    # 'checkClosestZVertex' set to 'False' according to
+    # https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetEnCorPFnoPU
     getattr(process,"pfPileUp"+postfix).checkClosestZVertex = cms.bool(False)
 
     # to switch default tau (HPS) to old default tau (shrinking cone) uncomment
@@ -189,9 +195,9 @@ else:
         )
     if not runOnMC:
         process.out.outputCommands += [
-            'drop recoGenJets_*_*_*'
+            'drop recoGenJets_*_*_*',
+            'keep LumiSummary_lumiProducer_*_*',
             ]
-
 
     # top projections in PF2PAT:
     getattr(process,"pfNoPileUp"+postfix).enable = True
@@ -213,13 +219,14 @@ else:
 
 
 ################################################################################
-# Lepton                                                                       #
+# Lepton/Photon                                                                #
 ################################################################################
+doEleIso04 = True
+doMuIso04 = True
 # Note: CMS recommendations for isolation are R=0.3 for e, R=0.4 for mu,
 #   but VHbb uses R=0.4 for both e and mu. Please double check that the
 #   WPxx definitions (for e) are consistent.
 #   For PU subtraction, VHbb uses EA correction for e, deltaBeta for mu
-
 
 # ------------------------------------------------------------------------------
 # Electron ID
@@ -256,7 +263,7 @@ else:
 #        )
 
 ## MVA electron ID
-## Won't work now because gsfElectrons are removed
+## Won't work for CMSSW_7_X_Y
 #process.load('EgammaAnalysis.ElectronTools.electronIdMVAProducer_cfi')
 #process.mvaID = cms.Sequence( process.mvaTrigV0 + process.mvaTrigNoIPV0 + process.mvaNonTrigV0 )
 ## append them
@@ -264,12 +271,10 @@ else:
 #getattr(process,"patElectrons"+postfix).electronIDSources.mvaNonTrigV0 = cms.InputTag("mvaNonTrigV0")
 #getattr(process,"patElectrons"+postfix).electronIDSources.mvaTrigNoIPV0 = cms.InputTag("mvaTrigNoIPV0")
 
-
 # ------------------------------------------------------------------------------
 # Muon ID
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId
 # ------------------------------------------------------------------------------
-
 
 # ------------------------------------------------------------------------------
 # Tau ID
@@ -277,21 +282,30 @@ else:
 #   https://twiki.cern.ch/twiki/bin/view/CMS/TauIDRecommendation
 # ------------------------------------------------------------------------------
 
+# ------------------------------------------------------------------------------
+# Photon
+# ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
 # Cut
 # ------------------------------------------------------------------------------
-getattr(process,"selectedPatElectrons"+postfix).cut = cms.string("pt > 3")
-getattr(process,"selectedPatMuons"+postfix).cut = cms.string("pt > 3")
-getattr(process,"selectedPatTaus"+postfix).cut = cms.string("pt > 10")
+getattr(process,"selectedPatElectrons"+postfix).cut = cms.string("pt > 3  & abs(eta) < 2.5")
+getattr(process,"selectedPatMuons"+postfix).cut = cms.string("pt > 3 & abs(eta) < 2.5")
+getattr(process,"selectedPatTaus"+postfix).cut = cms.string("pt > 10 & abs(eta) < 2.5")
+getattr(process,"selectedPatPhotons"+postfix).cut = cms.string("pt > 10 & abs(eta) < 2.5")
+getattr(process,"patTaus"+postfix).isoDeposits = cms.PSet()
+getattr(process,"patPhotons"+postfix).isoDeposits = cms.PSet()
 
 
 ################################################################################
 # Jet                                                                          #
 ################################################################################
-
+doAK4 = True
+doAK5 = True
+doCA8 = True
+doCA8TopTag = True
+doCA15 = True
 # ------------------------------------------------------------------------------
-# AK5, AK7
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections
 #   https://twiki.cern.ch/twiki/bin/view/CMS/JetMETAlgorithmsReconstruction
 #   https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution
@@ -300,83 +314,250 @@ getattr(process,"selectedPatTaus"+postfix).cut = cms.string("pt > 10")
 #   https://twiki.cern.ch/twiki/bin/view/CMS/JetID
 #   https://twiki.cern.ch/twiki/bin/view/CMS/PileupJetID
 #   https://twiki.cern.ch/twiki/bin/view/CMS/GluonTag
+#   https://twiki.cern.ch/twiki/bin/view/CMS/BoostedBTagSWSetup
 # ------------------------------------------------------------------------------
 
 from RecoJets.Configuration.RecoPFJets_cff import \
-    ak4PFJets, ak5PFJets, ak7PFJets, ak8PFJets, \
-    ak4PFJetsCHS, ak5PFJetsCHS, ak8PFJetsCHS, \
+    ak5PFJets, ak5PFJetsCHS, kt6PFJets, ak8PFJets, ak8PFJetsCHS, \
     ak8PFJetsCHSPruned, ak8PFJetsCHSFiltered, ak8PFJetsCHSTrimmed, \
-    ca8PFJets, ca8PFJetsCHS, ca8PFJetsCHSPruned, ca8PFJetsCHSFiltered, ca8PFJetsCHSTrimmed, \
+    ca8PFJetsCHS, ca8PFJetsCHSPruned, ca8PFJetsCHSFiltered, ca8PFJetsCHSTrimmed, \
     ca15PFJetsCHSMassDropFiltered, ca15PFJetsCHSFiltered
+#setattr(process, "ak4PFJets"+postfix, ak5PFJets.clone( rParam = 0.4 ))
+process.ak4PFJets = ak5PFJets.clone( rParam = 0.4 )
+#process.kt6PFJets = kt6PFJets
+process.ca8PFJetsCHSPruned = ca8PFJetsCHSPruned.clone( doAreaFastjet = cms.bool(True) )
+process.ca15PFJetsCHSFiltered = ca15PFJetsCHSFiltered.clone(
+    doAreaFastjet = cms.bool(True),
+    ## Uncomment the following three lines to turn 'Filtered' into 'MassDropFiltered'
+    #useMassDropTagger = cms.bool(True),
+    #muCut = cms.double(0.667),
+    #yCut = cms.double(0.08),
+    )
 
-
-#setattr(process, "ak7PFJets"+postfix, ak7PFJets)
-#setattr(process, "ak8PFJets"+postfix, ak8PFJets)
-
-# Add b-tagging
-#getattr(process, "patJets"+postfix).addBTagInfo = True
-
-# FIXME: addJetCollection assumes 'patJetPartons' exists, but it doesn't
-#from PhysicsTools.PatAlgos.mcMatchLayer0.jetFlavourId_cff import patJetPartons
-#process.patJetPartons = patJetPartons
-
-#addJetCollection(process, labelName="AK7PF", postfix=postfix,
-#    jetSource           = cms.InputTag("ak7PFJets"+postfix),
-#    jetCorrections      = ("AK7PFchs", inputJetCorrLabel, ''),
-#    btagDiscriminators  = btagDiscr.keys(),
-#    btagInfos           = btagInfos,
-#    jetTrackAssociation = False,
-#    )
-
-from PhysicsTools.PatAlgos.tools.jetTools import switchJetCollection
-from PhysicsTools.PatAlgos.tools.jetTools import addJetCollection
+if runOnMC:
+    # Create GenJets
+    from RecoJets.Configuration.RecoGenJets_cff import \
+        ak4GenJets, ak4GenJetsNoNu, \
+        ca4GenJets, ca4GenJetsNoNu
+    from RecoJets.Configuration.GenJetParticles_cff import \
+        genParticlesForJets, genParticlesForJetsNoNu
+    process.genParticlesForJets = genParticlesForJets
+    process.genParticlesForJetsNoNu = genParticlesForJetsNoNu
+    process.ak4GenJets = ak4GenJets
+    process.ca8GenJets = ca4GenJets.clone( rParam = 0.8 )
+    process.ca8GenJetsNoNu = ca4GenJetsNoNu.clone( rParam = 0.8 )
+    from RecoJets.JetProducers.SubJetParameters_cfi import SubJetParameters
+    process.ca8GenJetsNoNuPruned = process.ca8GenJetsNoNu.clone(
+        SubJetParameters,
+        usePruning = cms.bool(True),
+        useExplicitGhosts = cms.bool(True),
+        writeCompound = cms.bool(True),
+        jetCollInstanceName=cms.string("SubJets")
+        )
+    from RecoJets.JetProducers.GenJetParameters_cfi import GenJetParameters
+    from RecoJets.JetProducers.caTopTaggers_cff import CATopJetParameters, AnomalousCellParameters
+    process.ca8GenJetsNoNuTopTag = cms.EDProducer(
+        "CATopJetProducer",
+        GenJetParameters.clone( src = cms.InputTag("genParticlesForJetsNoNu") ),
+        AnomalousCellParameters,
+        CATopJetParameters,
+        jetAlgorithm = cms.string("CambridgeAachen"),
+        rParam = cms.double(0.8),
+        writeCompound = cms.bool(True)
+    )
+    process.ca15GenJetsNoNu = ca4GenJetsNoNu.clone( rParam = 1.5 )
+    process.ca15GenJetsNoNuFiltered = process.ca15GenJetsNoNu.clone(
+        useFiltering = cms.bool(True),
+        nFilt = cms.int32(3),
+        rFilt = cms.double(0.3),
+        useExplicitGhosts = cms.bool(True),
+        writeCompound = cms.bool(True),
+        jetCollInstanceName=cms.string("SubJets")
+        )
 
 # addJetCollection(...) has to happen before switchJetCollection(...),
 # otherwise it gives errors when trying to add btag discriminators
+from PhysicsTools.PatAlgos.tools.jetTools import addJetCollection, switchJetCollection
 outputModules = ['out']
-btagInfos = ['secondaryVertexTagInfos', 'inclusiveSecondaryVertexFinderTagInfos', 'inclusiveSecondaryVertexFinderFilteredTagInfos']
-btagDiscriminators = ['combinedSecondaryVertexBJetTags', 'combinedSecondaryVertexPositiveBJetTags', 'combinedSecondaryVertexMVABJetTags', 'combinedInclusiveSecondaryVertexBJetTags', 'combinedInclusiveSecondaryVertexPositiveBJetTags']
+btagInfos = ['impactParameterTagInfos', 'secondaryVertexTagInfos', 'inclusiveSecondaryVertexFinderTagInfos', 'inclusiveSecondaryVertexFinderFilteredTagInfos']
+btagDiscriminators = ['jetBProbabilityBJetTags', 'jetProbabilityBJetTags', 'combinedSecondaryVertexBJetTags', 'combinedSecondaryVertexPositiveBJetTags', 'combinedSecondaryVertexMVABJetTags', 'combinedInclusiveSecondaryVertexBJetTags', 'combinedInclusiveSecondaryVertexPositiveBJetTags']
 
+if doAK5:
+    addJetCollection(
+        process,
+        labelName = 'AK5PF',
+        postfix = postfix,
+        jetSource = cms.InputTag('ak5PFJets'),
+        algo = 'AK5',
+        jetCorrections = ('AK5PF', inputJetCorrLabel, ''),
+        btagDiscriminators = btagDiscriminators,
+        btagInfos = btagInfos,
+        jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
 
-addJetCollection(
-    process,
-    labelName = 'AK5PF',
-    postfix = postfix,
-    jetSource = cms.InputTag('ak5PFJets'),
-    algo = 'AK5',
-    jetCorrections = ('AK5PF', inputJetCorrLabel, ''),
-    btagDiscriminators = btagDiscriminators,
-    btagInfos = btagInfos,
-    jetTrackAssociation = True,
-    outputModules = outputModules,
-    )
+if doAK4:
+    #addJetCollection(
+    #    process,
+    #    labelName = 'AK4PF',
+    #    postfix = postfix,
+    #    jetSource = cms.InputTag('ak4PFJets'),
+    #    algo = 'AK4',
+    #    jetCorrections = ('AK5PF', inputJetCorrLabel, ''),
+    #    btagDiscriminators = btagDiscriminators,
+    #    btagInfos = btagInfos,
+    #    jetTrackAssociation = True,
+    #    outputModules = outputModules,
+    #    )
 
-addJetCollection(
-    process,
-    labelName = 'AK8PFCHS',
-    postfix = postfix,
-    jetSource = cms.InputTag('ak8PFJetsCHS'),
-    algo = 'AK8',
-    jetCorrections = ('AK7PFchs', inputJetCorrLabel, ''),
-    btagDiscriminators = btagDiscriminators,
-    btagInfos = btagInfos,
-    jetTrackAssociation = True,
-    outputModules = outputModules,
-    )
+    addJetCollection(
+        process,
+        labelName = 'AK4PFCHS',
+        postfix = postfix,
+        jetSource = cms.InputTag('ak4PFJetsCHS'),
+        algo = 'AK4',
+        jetCorrections = ('AK5PFchs', inputJetCorrLabel, ''),
+        btagDiscriminators = btagDiscriminators,
+        btagInfos = btagInfos,
+        jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
 
-addJetCollection(
-    process,
-    labelName = 'CA8PFCHS',
-    postfix = postfix,
-    jetSource = cms.InputTag('ak8PFJetsCHS'),
-    algo = 'CA8',
-    jetCorrections = ('AK7PFchs', inputJetCorrLabel, ''),
-    btagDiscriminators = btagDiscriminators,
-    btagInfos = btagInfos,
-    jetTrackAssociation = True,
-    outputModules = outputModules,
-    )
+if doCA8 or doCA8TopTag:
+    #addJetCollection(
+    #    process,
+    #    labelName = 'AK8PF',
+    #    postfix = postfix,
+    #    jetSource = cms.InputTag('ak8PFJets'),
+    #    algo = 'AK8',
+    #    jetCorrections = ('AK7PF', inputJetCorrLabel, ''),
+    #    #btagDiscriminators = btagDiscriminators,
+    #    #btagInfos = btagInfos,
+    #    #jetTrackAssociation = True,
+    #    outputModules = outputModules,
+    #    )
 
+    addJetCollection(
+        process,
+        labelName = 'AK8PFCHS',
+        postfix = postfix,
+        jetSource = cms.InputTag('ak8PFJetsCHS'),
+        algo = 'AK8',
+        jetCorrections = ('AK7PFchs', inputJetCorrLabel, ''),
+        #btagDiscriminators = btagDiscriminators,
+        #btagInfos = btagInfos,
+        #jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
+
+    addJetCollection(
+        process,
+        labelName = 'CA8PFCHS',
+        postfix = postfix,
+        jetSource = cms.InputTag('ca8PFJetsCHS'),
+        algo = 'CA8',
+        jetCorrections = ('AK7PFchs', inputJetCorrLabel, ''),
+        #btagDiscriminators = btagDiscriminators,
+        #btagInfos = btagInfos,
+        #jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
+    #if runOnMC:  getattr(process, 'patJetGenJetMatchPatJetsCA8PFCHS'+postfix).matched = cms.InputTag('ca8GenJets')
+
+    addJetCollection(
+        process,
+        labelName = 'CA8PFCHSPruned',
+        postfix = postfix,
+        jetSource = cms.InputTag('ca8PFJetsCHSPruned'),
+        algo = 'CA8Pruned',
+        jetCorrections = ('AK7PFchs', inputJetCorrLabel, ''),
+        btagDiscriminators = btagDiscriminators,
+        btagInfos = btagInfos,
+        jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
+    if runOnMC:  getattr(process, 'patJetGenJetMatchPatJetsCA8PFCHSPruned'+postfix).matched = cms.InputTag('ca8GenJetsNoNu')
+
+    addJetCollection(
+        process,
+        labelName = 'CA8PFCHSPrunedSubJets',
+        postfix = postfix,
+        jetSource = cms.InputTag('ca8PFJetsCHSPruned', 'SubJets'),
+        algo = 'CA8Pruned',
+        jetCorrections = ('AK5PFchs', inputJetCorrLabel, ''),
+        btagDiscriminators = btagDiscriminators,
+        btagInfos = btagInfos,
+        jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
+    if runOnMC:  getattr(process, 'patJetGenJetMatchPatJetsCA8PFCHSPrunedSubJets'+postfix).matched = cms.InputTag('ca8GenJetsNoNuPruned', 'SubJets')
+
+    ## BoostedJetMerger
+    #process.selectedPatJetsCA8PFCHSPrunedPacked = cms.EDProducer('BoostedJetMerger',
+    #    jetSrc = cms.InputTag('selectedPatJetsCA8PFCHSPruned'+postfix),
+    #    subjetSrc = cms.InputTag('selectedPatJetsCA8PFCHSPrunedSubJets'+postfix)
+    #)
+    #process.out.outputCommands += ['keep *_selectedPatJetsCA8PFCHSPrunedPacked%s_*_*' % postfix]
+
+if doCA8TopTag:
+    addJetCollection(
+        process,
+        labelName = 'CA8PFCHSTopTag',
+        postfix = postfix,
+        jetSource = cms.InputTag('cmsTopTagPFJetsCHS'),
+        algo = 'CA8TopTag',
+        jetCorrections = ('AK7PFchs', inputJetCorrLabel, ''),
+        #btagDiscriminators = btagDiscriminators,
+        #btagInfos = btagInfos,
+        #jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
+    if runOnMC:  getattr(process, 'patJetGenJetMatchPatJetsCA8PFCHSTopTag'+postfix).matched = cms.InputTag('ca8GenJetsNoNu')
+
+    addJetCollection(
+        process,
+        labelName = 'CA8PFCHSTopTagSubJets',
+        postfix = postfix,
+        jetSource = cms.InputTag('cmsTopTagPFJetsCHS', 'caTopSubJets'),
+        algo = 'CA8TopTag',
+        jetCorrections = ('AK5PFchs', inputJetCorrLabel, ''),
+        #btagDiscriminators = btagDiscriminators,
+        #btagInfos = btagInfos,
+        #jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
+    if runOnMC:  getattr(process, 'patJetGenJetMatchPatJetsCA8PFCHSTopTagSubJets'+postfix).matched = cms.InputTag('ca8GenJetsNoNuTopTag', 'caTopSubJets')
+
+if doCA15:
+    addJetCollection(
+        process,
+        labelName = 'CA15PFCHSFiltered',
+        postfix = postfix,
+        jetSource = cms.InputTag('ca15PFJetsCHSFiltered'),
+        algo = 'CA15Filtered',
+        jetCorrections = ('AK7PFchs', inputJetCorrLabel, ''),
+        #btagDiscriminators = btagDiscriminators,
+        #btagInfos = btagInfos,
+        #jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
+    if runOnMC:  getattr(process, 'patJetGenJetMatchPatJetsCA15PFCHSFiltered'+postfix).matched = cms.InputTag('ca15GenJetsNoNu')
+
+    addJetCollection(
+        process,
+        labelName = 'CA15PFCHSFilteredSubJets',
+        postfix = postfix,
+        jetSource = cms.InputTag('ca15PFJetsCHSFiltered', 'SubJets'),
+        algo = 'CA15Filtered',
+        jetCorrections = ('AK5PFchs', inputJetCorrLabel, ''),
+        btagDiscriminators = btagDiscriminators,
+        btagInfos = btagInfos,
+        jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
+    if runOnMC:  getattr(process, 'patJetGenJetMatchPatJetsCA15PFCHSFilteredSubJets'+postfix).matched = cms.InputTag('ca15GenJetsNoNuFiltered', 'SubJets')
+
+# Do switchJetCollection(...) at the end
 switchJetCollection(
     process,
     jetSource = cms.InputTag('ak5PFJetsCHS'),
@@ -389,13 +570,31 @@ switchJetCollection(
     outputModules = outputModules,
     )
 
+# Pileup Jet ID
+#process.load('RecoJets.JetProducers.PileupJetID_cfi')
 
+# Q/G Tagger
+#process.load('RecoJets.JetProducers.QGTagger_cfi')
+
+# Njettiness
+#process.load('RecoJets.JetProducers.nJettinessAdder_cfi')
+##process.selectedPatJetsCA8CHSwithNsub = cms.EDProducer("NjettinessAdder",
+##    src=cms.InputTag("selectedPatJetsCA8CHSWithBeta"),
+##    cone=cms.double(0.8)
+##    )
 
 # ------------------------------------------------------------------------------
 # Cut
 # ------------------------------------------------------------------------------
-getattr(process,"selectedPatJets"+postfix).cut = cms.string("pt > 10")
-
+for labelName in ['', 'AK5PF', 'AK4PF', 'AK4PFCHS', 'CA8PFCHSPrunedSubJets', 'CA8PFCHSTopTagSubJets', 'CA15PFCHSFilteredSubJets']:
+    if hasattr(process,"selectedPatJets"+labelName+postfix):
+        getattr(process,"selectedPatJets"+labelName+postfix).cut = cms.string("pt > 15 & abs(eta) < 5.0")
+for labelName in ['AK8PF', 'AK8PFCHS', 'CA8PFCHS', 'CA8PFCHSPruned']:
+    if hasattr(process,"selectedPatJets"+labelName+postfix):
+        getattr(process,"selectedPatJets"+labelName+postfix).cut = cms.string("pt > 25 & abs(eta) < 5.0")  # jetPtMin = 15.0 at clustering
+for labelName in ['CA8PFCHSTopTag', 'CA15PFCHSFiltered']:
+    if hasattr(process,"selectedPatJets"+labelName+postfix):
+        getattr(process,"selectedPatJets"+labelName+postfix).cut = cms.string("pt > 100 & abs(eta) < 5.0")  # jetPtMin = 100.0 at clustering
 
 
 ################################################################################
@@ -404,6 +603,7 @@ getattr(process,"selectedPatJets"+postfix).cut = cms.string("pt > 10")
 
 # ------------------------------------------------------------------------------
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMETRecipe
 # ------------------------------------------------------------------------------
 
 # apply type I/type I + II PFMEt corrections to pat::MET object
@@ -412,19 +612,42 @@ getattr(process,"selectedPatJets"+postfix).cut = cms.string("pt > 10")
 #runMEtUncertainties(process)
 
 
-process.out.outputCommands += [
-    'keep *_goodOfflinePrimaryVertices_*_*',
-    #'keep double_*_rho_*',
-    ]
-
 ################################################################################
-# HLT                                                                          #
+# Miscellaneous                                                                #
 ################################################################################
 
-#from PhysicsTools.PatAlgos.tools.trigTools import switchOnTriggerStandAlone
-#switchOnTriggerStandAlone( process )
-#process.patTrigger.packTriggerPathNames = cms.bool(True)
+# Trigger
+from PhysicsTools.PatAlgos.tools.trigTools import switchOnTriggerStandAlone
+switchOnTriggerStandAlone( process )
+process.patTrigger.packTriggerPathNames = cms.bool(True)
 
+# GenParticles
+if runOnMC:
+    #process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
+    prunedGenParticles = cms.EDProducer("GenParticlePruner",
+        src = cms.InputTag("genParticles"),
+        select = cms.vstring(
+            "drop *", # this is the default
+            "keep status == 3",  #keep event summary status3 (for pythia)
+            "keep status == 21", #keep particles from the hard matrix element (for pythia8)
+            "keep status == 22", #keep particles from the hard matrix element (for pythia8)
+            "keep status == 23", #keep particles from the hard matrix element (for pythia8)
+            "++keep 23 <= abs(pdgId) <= 25",                                   # keep W,Z,H and their ancestors
+            "++keep abs(pdgId) == 11 || abs(pdgId) == 13 || abs(pdgId) == 15", # keep leptons and their ancestors
+            "++keep abs(pdgId) == 12 || abs(pdgId) == 14 || abs(pdgId) == 16", # keep neutrinos and their ancestors
+            "++keep pdgId == 22 && status == 1 && pt > 10",                    # keep gamma above 10 GeV
+            "drop   status == 2",                                              # drop the shower part of the history
+            "keep++ abs(pdgId) == 15",                                         # but keep keep taus with their daughters
+            "++keep 4 <= abs(pdgId) <= 6 ",                                    # keep also heavy quarks
+            "++keep (400 < abs(pdgId) < 600) || (4000 < abs(pdgId) < 6000)",   # and their hadrons
+            "drop   status == 2 && abs(pdgId) == 21",                          # but remove again gluons in the inheritance chain
+        )
+    )
+    process.out.outputCommands += ['keep *_prunedGenParticles_*_*']
+
+# IVF and BHadron -- FIXME
+
+# HbbAnalyzers -- FIXME
 
 # ------------------------------------------------------------------------------
 # Dump flat python cfg
@@ -432,4 +655,3 @@ process.out.outputCommands += [
 temp = process.dumpPython()
 with open("dump.py",'w') as f:
     f.write(temp)
-
