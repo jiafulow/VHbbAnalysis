@@ -37,10 +37,38 @@ git cms-merge-topic -u cms-analysis-tools:7_0_0_pre12-photon
 # TWiki revision    : r53 - 14 Jan 2014
 # Commit SHA        : (from release)
 # ------------------------------------------------------------------------------
-git cms-addpkg EgammaAnalysis/ElectronTools
-cd EgammaAnalysis/ElectronTools/data/
-cat download.url | xargs wget
-cd -
+#git cms-addpkg EgammaAnalysis/ElectronTools
+#cd EgammaAnalysis/ElectronTools/data/
+#cat download.url | xargs wget
+#cd -
+
+
+# ------------------------------------------------------------------------------
+# MET Filters
+#   https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFilters
+# ------------------------------------------------------------------------------
+git cms-addpkg RecoMET/METFilters
+
+
+# ------------------------------------------------------------------------------
+# PileupJetID, MVA and No-PU MET
+#   https://twiki.cern.ch/twiki/bin/view/CMS/PileupJetID
+#   https://twiki.cern.ch/twiki/bin/view/CMS/MVAMet
+#   https://twiki.cern.ch/twiki/bin/view/CMS/NoPileUpMet
+# ------------------------------------------------------------------------------
+git cms-addpkg RecoJets/JetProducers
+#cd RecoJets/JetProducers/data/
+#cat download.url | xargs wget
+#cd -
+
+# Steal from Phil Harris's Jets_Short repository
+# Commit SHA        : 832d3b54cd70d627a858abbe9af752a976bd5897
+wget --no-check-certificate https://raw.githubusercontent.com/violatingcp/Jets_Short/832d3b/RecoJets/JetProducers/python/PileupJetIDCutParams_cfi.py -O RecoJets/JetProducers/python/PileupJetIDCutParams_cfi.py
+wget --no-check-certificate https://raw.githubusercontent.com/violatingcp/Jets_Short/832d3b/RecoJets/JetProducers/python/PileupJetIDParams_cfi.py -O RecoJets/JetProducers/python/PileupJetIDParams_cfi.py
+wget --no-check-certificate https://raw.githubusercontent.com/violatingcp/Jets_Short/832d3b/RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_Dec2012.weights.xml -O RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_Dec2012.weights.xml
+wget --no-check-certificate https://raw.githubusercontent.com/violatingcp/Jets_Short/832d3b/RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml -O RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml
+wget --no-check-certificate https://raw.githubusercontent.com/violatingcp/Jets_Short/832d3b/RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_MET_53X_Dec2012.weights.xml -O RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_MET_53X_Dec2012.weights.xml
+touch RecoJets/JetProducers/data/dummy.txt
 
 
 # ------------------------------------------------------------------------------
@@ -58,6 +86,12 @@ cd -
 git clone git@github.com:jiafulow/VHbbAnalysis.git
 cd VHbbAnalysis
 git checkout CMSSW_7_0_0_dev
+# Add missing plugin 'TobTecFakesFilter'
+cp additionalFiles/sandbox/TobTecFakesFilter.cc ../RecoMET/METFilters/plugins/
+# Add more optional MET filters
+cp additionalFiles/sandbox/metOptionalFilters_cff.py ../RecoMET/METFilters/python/
+# Use the 53x PileupJetID training files
+cp additionalFiles/sandbox/PileupJetID_53x_cfi.py ../RecoJets/JetProducers/python/
 cd ..
 
 

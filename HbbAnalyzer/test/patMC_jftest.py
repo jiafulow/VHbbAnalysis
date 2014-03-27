@@ -91,6 +91,26 @@ process.out = cms.OutputModule("PoolOutputModule",
     fileName = cms.untracked.string('patTuple.root'),
     outputCommands = cms.untracked.vstring('drop *', *patEventContentNoCleaning )
     )
+process.out.outputCommands += [
+    'drop *_selectedPatJets*_caloTowers_*',
+    'keep recoPFCandidates_particleFlow_*_*',
+    #'keep double_*_rho_*',
+    'keep double_fixedGridRho*_*_*',
+    'keep *_offlinePrimaryVertices_*_*'
+    ]
+if runOnMC:
+    process.out.outputCommands += [
+        #'keep *recoGenParticles_genParticles__*',
+        'keep GenEventInfoProduct_*__*',
+        'keep *_addPileupInfo__*',
+        ]
+else:
+    process.out.outputCommands += [
+        'keep recoBeamHaloSummary_BeamHaloSummary__*',
+        'keep recoGlobalHaloData_GlobalHaloData__*',
+        'keep HcalNoiseSummary_hcalnoise__*',
+        'keep LumiSummary_lumiProducer__*',
+        ]
 
 process.outpath = cms.EndPath(process.out)
 ################################################################################
@@ -138,10 +158,6 @@ if ignorePF2PAT:
     process.load("PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff")
     process.load("PhysicsTools.PatAlgos.selectionLayer1.selectedPatCandidates_cff")
     if not runOnMC:
-        process.out.outputCommands += [
-            'drop recoGenJets_*_*_*',
-            'keep LumiSummary_lumiProducer_*_*',
-            ]
         from PhysicsTools.PatAlgos.tools.coreTools import runOnData
         runOnData(process)
 
@@ -167,6 +183,8 @@ else:
     # https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetEnCorPFnoPU
     getattr(process,"pfPileUp"+postfix).checkClosestZVertex = cms.bool(False)
 
+    process.out.fileName = cms.untracked.string('patTuple_PF2PAT.root')
+
     # to switch default tau (HPS) to old default tau (shrinking cone) uncomment
     # the following:
     # note: in current default taus are not preselected i.e. you have to apply
@@ -177,27 +195,6 @@ else:
     # this will destory the feature of top projection which solves the ambiguity between leptons and jets because
     # there will be overlap between non-PF electrons and jets even though top projection is ON!
     #useGsfElectrons(process, postfix,"03") # to change isolation cone size to 0.3 as it is recommended by EGM POG, use "04" for cone size 0.4
-
-
-    # Add PF2PAT output to the created file
-    process.out.fileName = cms.untracked.string('patTuple_PF2PAT.root')
-    process.out.outputCommands = cms.untracked.vstring(
-        'drop *',
-        'keep recoPFCandidates_particleFlow_*_*',
-        'keep *_selectedPatJets*_*_*',
-        'drop *_selectedPatJets*_caloTowers_*',
-        'keep *_selectedPatElectrons*_*_*',
-        'keep *_selectedPatMuons*_*_*',
-        'keep *_selectedPatTaus*_*_*',
-        'keep *_patMETs*_*_*',
-        'keep *_selectedPatPhotons*_*_*',
-        'keep *_selectedPatTaus*_*_*',
-        )
-    if not runOnMC:
-        process.out.outputCommands += [
-            'drop recoGenJets_*_*_*',
-            'keep LumiSummary_lumiProducer_*_*',
-            ]
 
     # top projections in PF2PAT:
     getattr(process,"pfNoPileUp"+postfix).enable = True
@@ -312,9 +309,6 @@ doCA15 = True
 #   https://twiki.cern.ch/twiki/bin/view/CMS/JECDataMC
 #   https://twiki.cern.ch/twiki/bin/view/CMS/JECUncertaintySources
 #   https://twiki.cern.ch/twiki/bin/view/CMS/JetID
-#   https://twiki.cern.ch/twiki/bin/view/CMS/PileupJetID
-#   https://twiki.cern.ch/twiki/bin/view/CMS/GluonTag
-#   https://twiki.cern.ch/twiki/bin/view/CMS/BoostedBTagSWSetup
 # ------------------------------------------------------------------------------
 
 from RecoJets.Configuration.RecoPFJets_cff import \
@@ -390,9 +384,9 @@ if doAK5:
         jetSource = cms.InputTag('ak5PFJets'),
         algo = 'AK5',
         jetCorrections = ('AK5PF', inputJetCorrLabel, ''),
-        btagDiscriminators = btagDiscriminators,
-        btagInfos = btagInfos,
-        jetTrackAssociation = True,
+        #btagDiscriminators = btagDiscriminators,
+        #btagInfos = btagInfos,
+        #jetTrackAssociation = True,
         outputModules = outputModules,
         )
 
@@ -493,6 +487,7 @@ if doCA8 or doCA8TopTag:
     if runOnMC:  getattr(process, 'patJetGenJetMatchPatJetsCA8PFCHSPrunedSubJets'+postfix).matched = cms.InputTag('ca8GenJetsNoNuPruned', 'SubJets')
 
     ## BoostedJetMerger
+    ## see https://twiki.cern.ch/twiki/bin/view/CMS/BoostedBTagSWSetup
     #process.selectedPatJetsCA8PFCHSPrunedPacked = cms.EDProducer('BoostedJetMerger',
     #    jetSrc = cms.InputTag('selectedPatJetsCA8PFCHSPruned'+postfix),
     #    subjetSrc = cms.InputTag('selectedPatJetsCA8PFCHSPrunedSubJets'+postfix)
@@ -570,13 +565,23 @@ switchJetCollection(
     outputModules = outputModules,
     )
 
+# ------------------------------------------------------------------------------
 # Pileup Jet ID
-#process.load('RecoJets.JetProducers.PileupJetID_cfi')
+#   https://twiki.cern.ch/twiki/bin/view/CMS/PileupJetID
+# ------------------------------------------------------------------------------
+from RecoJets.JetProducers.PileupJetID_53x_cfi import pileupJetIdProducerChs, pileupJetIdProducer
+process.pileupJetIdProducerChs = pileupJetIdProducerChs.clone( jets = cms.InputTag('selectedPatJets'+postfix) )
+process.pileupJetIdProducer = pileupJetIdProducer.clone( jets = cms.InputTag('selectedPatJetsAK5PF'+postfix) )
 
+# ------------------------------------------------------------------------------
 # Q/G Tagger
+#   https://twiki.cern.ch/twiki/bin/view/CMS/GluonTag
+# ------------------------------------------------------------------------------
 #process.load('RecoJets.JetProducers.QGTagger_cfi')
 
+# ------------------------------------------------------------------------------
 # Njettiness
+# ------------------------------------------------------------------------------
 #process.load('RecoJets.JetProducers.nJettinessAdder_cfi')
 ##process.selectedPatJetsCA8CHSwithNsub = cms.EDProducer("NjettinessAdder",
 ##    src=cms.InputTag("selectedPatJetsCA8CHSWithBeta"),
@@ -600,28 +605,125 @@ for labelName in ['CA8PFCHSTopTag', 'CA15PFCHSFiltered']:
 ################################################################################
 # MET                                                                          #
 ################################################################################
-
+doMetCorr = False
+doMetUncert = True
 # ------------------------------------------------------------------------------
+# MET Corrections
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMETRecipe
 # ------------------------------------------------------------------------------
+
+if doMetCorr:
+    # Taken from https://github.com/TaiSakuma/WorkBookMet/blob/master/corrMet_cfg.py
+    ##________________________________________________________________________||
+    process.load("JetMETCorrections.Type1MET.correctionTermsPfMetType1Type2_cff")
+
+    if runOnMC:
+        process.corrPfMetType1.jetCorrLabel = cms.string("ak5PFL1FastL2L3")
+    else:
+        process.corrPfMetType1.jetCorrLabel = cms.string("ak5PFL1FastL2L3Residual")
+
+    ##________________________________________________________________________||
+    process.load("JetMETCorrections.Type1MET.correctionTermsPfMetType0PFCandidate_cff")
+
+    ##________________________________________________________________________||
+    process.load("JetMETCorrections.Type1MET.correctionTermsPfMetType0RecoTrack_cff")
+
+    ##________________________________________________________________________||
+    process.load("JetMETCorrections.Type1MET.correctionTermsPfMetShiftXY_cff")
+
+    if runOnMC:
+        process.corrPfMetShiftXY.parameter = process.pfMEtSysShiftCorrParameters_2012runABCDvsNvtx_mc
+    else:
+        process.corrPfMetShiftXY.parameter = process.pfMEtSysShiftCorrParameters_2012runABCDvsNvtx_data
+
+    ##________________________________________________________________________||
+    process.load("JetMETCorrections.Type1MET.correctedMet_cff")
+
+    ##________________________________________________________________________||
+    process.corrMetSequence = cms.Sequence(
+        process.correctionTermsPfMetType1Type2 +
+        process.correctionTermsPfMetType0RecoTrack +
+        process.correctionTermsPfMetType0PFCandidate +
+        process.correctionTermsPfMetShiftXY +
+        #process.correctionTermsCaloMet +
+        #process.caloMetT1 +
+        #process.caloMetT1T2 +
+        process.pfMetT0rt +
+        process.pfMetT0rtT1 +
+        process.pfMetT0pc +
+        process.pfMetT0pcT1 +
+        process.pfMetT0rtTxy +
+        process.pfMetT0rtT1Txy +
+        process.pfMetT0pcTxy +
+        process.pfMetT0pcT1Txy +
+        process.pfMetT1 +
+        process.pfMetT1Txy
+    )
+    process.p_corrMet = cms.Path(process.corrMetSequence)
+    process.out.outputCommands += ['keep *_pfMetT*__*' ]
+
+# ------------------------------------------------------------------------------
+# MET Uncertainties
+# ------------------------------------------------------------------------------
+if doMetUncert:
+    pass
+
 
 # apply type I/type I + II PFMEt corrections to pat::MET object
 # and estimate systematic uncertainties on MET
 #from PhysicsTools.PatUtils.tools.metUncertaintyTools import runMEtUncertainties
 #runMEtUncertainties(process)
 
+# ------------------------------------------------------------------------------
+# MET Filters
+#   https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFilters
+# ------------------------------------------------------------------------------
+process.load("RecoMET.METFilters.metFilters_cff")
+process.p_HBHENoiseFilter = cms.Path( process.HBHENoiseFilter )
+process.p_CSCTightHaloFilter = cms.Path( process.CSCTightHaloFilter )
+process.p_hcalLaserEventFilter = cms.Path( process.hcalLaserEventFilter )
+process.p_EcalDeadCellTriggerPrimitiveFilter = cms.Path( process.EcalDeadCellTriggerPrimitiveFilter )
+process.p_trackingFailureFilter = cms.Path( process.goodVertices * process.trackingFailureFilter )
+process.p_eeBadScFilter = cms.Path( process.eeBadScFilter )
+process.p_ecalLaserCorrFilter = cms.Path( process.ecalLaserCorrFilter )
+if not runOnMC:
+    process.p_trkPOGFilters = cms.Path( process.trkPOGFilters )
+process.p_metFilters = cms.Path( process.metFilters )  # combined
+
+# Even more filters
+process.load("RecoMET.METFilters.metOptionalFilters_cff")
+process.jetIDFailure.JetSource = cms.InputTag('patJets'+postfix)
+process.p_goodVerticesFilter = cms.Path( process.goodVerticesFilter )
+process.p_noscraping = cms.Path( process.noscraping )
+if not runOnMC:
+    process.p_hcallasereventfilter2012 = cms.Path( process.hcallasereventfilter2012 )
+process.p_EcalDeadCellBoundaryEnergyFilter = cms.Path( process.EcalDeadCellBoundaryEnergyFilter )
+process.p_tobtecfakesFilters = cms.Path( process.tobtecfakesFilters )
+process.p_jetIDFailure = cms.Path( process.jetIDFailure )
+process.p_badMuonFilters = cms.Path( process.badMuonFilters )
+process.p_eeNoiseFilter = cms.Path( process.eeNoiseFilter )
+process.p_metOptionalFilters = cms.Path( process.metOptionalFilters )  # combined
+
 
 ################################################################################
 # Miscellaneous                                                                #
 ################################################################################
 
+# ------------------------------------------------------------------------------
 # Trigger
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATTrigger
+# ------------------------------------------------------------------------------
+#from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger
+#switchOnTrigger( process )
 from PhysicsTools.PatAlgos.tools.trigTools import switchOnTriggerStandAlone
 switchOnTriggerStandAlone( process )
 process.patTrigger.packTriggerPathNames = cms.bool(True)
 
+# ------------------------------------------------------------------------------
 # GenParticles
+#   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideGenParticlePruner
+# ------------------------------------------------------------------------------
 if runOnMC:
     #process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
     prunedGenParticles = cms.EDProducer("GenParticlePruner",
@@ -652,6 +754,10 @@ if runOnMC:
 # ------------------------------------------------------------------------------
 # Dump flat python cfg
 # ------------------------------------------------------------------------------
+print "process.out.outputCommands = ",
+print process.out.outputCommands
+print
+
 temp = process.dumpPython()
 with open("dump.py",'w') as f:
     f.write(temp)
