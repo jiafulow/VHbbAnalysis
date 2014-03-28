@@ -70,6 +70,25 @@ wget --no-check-certificate https://raw.githubusercontent.com/violatingcp/Jets_S
 wget --no-check-certificate https://raw.githubusercontent.com/violatingcp/Jets_Short/832d3b/RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_MET_53X_Dec2012.weights.xml -O RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_MET_53X_Dec2012.weights.xml
 touch RecoJets/JetProducers/data/dummy.txt
 
+# Get rid of warnings
+cp RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_chs_Dec2012.orig.weights.xml
+#sed -i 's/jetPt \&gt; 20\.0/jetPt \&gt; 0.0/' RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml
+
+
+# ------------------------------------------------------------------------------
+# b-tagging
+# ------------------------------------------------------------------------------
+ git cms-addpkg RecoBTag/SecondaryVertex
+
+# Steal from Andrea Rizzi's bb-correlation repository
+wget --no-check-certificate https://raw.githubusercontent.com/arizzi/bb-correlation/master/CMSSW/BAnalysis/BCandidateProducer/plugins/BCandidateProducer.cc -O RecoBTag/SecondaryVertex/plugins/BCandidateProducer.cc
+# Patch BuildFile.xml
+sed -i 's/BtoCharmDecayVertexMerger\.cc/BtoCharmDecayVertexMerger.cc BCandidateProducer.cc/' RecoBTag/SecondaryVertex/plugins/BuildFile.xml
+
+# ZSV
+# Commit SHA        : 8905e53c32b75374cb7602ddd5d0fa03bb5aa45f
+git clone git@github.com:sdevissc/ZSV.git
+
 
 # ------------------------------------------------------------------------------
 # Check dependencies (optional)
