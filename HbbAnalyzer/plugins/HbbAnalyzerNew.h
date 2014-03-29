@@ -95,7 +95,7 @@ class HbbAnalyzerNew: public edm::EDProducer {
     void fillSimpleJet(VHbbEvent::SimpleJet & sj,
                        edm::View < pat::Jet >::const_iterator jet_iter);
 
-    void setJecUnc(VHbbEvent::SimpleJet & sj, 
+    void setJecUnc(VHbbEvent::SimpleJet & sj,
                    JetCorrectionUncertainty * jecunc);
 
     float metSignificance(const reco::MET * met);
@@ -116,6 +116,7 @@ class HbbAnalyzerNew: public edm::EDProducer {
     edm::InputTag subjetLabel_;
     edm::InputTag filterjetLabel_;
     edm::InputTag phoLabel_;
+    edm::InputTag phoForIsoLabel_;
     edm::InputTag metLabel_;
     edm::InputTag metType1Label_;
     edm::InputTag metType1p2Label_;
@@ -124,7 +125,7 @@ class HbbAnalyzerNew: public edm::EDProducer {
     edm::InputTag hltResults_;
     double lep_ptCutForBjets_;
     bool verbose_;
-        
+
     //TMatrixD * pointerPt;
     //TMatrixD * pointerEta;
     //TMatrixD * pointerPhi;

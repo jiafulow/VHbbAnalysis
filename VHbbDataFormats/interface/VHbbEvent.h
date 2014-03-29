@@ -251,7 +251,7 @@ class VHbbEvent {
     std::vector < HardJet   > hardJets;          // CA R=1.2 mass drop fatjets (FastJet 2)
 
     std::vector < SimpleJet > CA12mdft_subJets;  // CA R=1.2 mass drop filtered R=0.3 subjets (FastJet 3)
-    std::vector < HardJet   > CA12mdft_hardJets; // CA R=1.2 mass drop fatjets (FastJet 3)
+    std::vector < HardJet   > CA12ft_hardJets;   // CA R=1.2 filtered fatjets (FastJet 3)
     std::vector < SimpleJet > CA12pr_subJets;    // CA R=1.2 pruned subjets (FastJet 3)
     std::vector < SimpleJet > CA12ft_subJets;    // CA R=1.2 filtered subjets (FastJet 3)
     std::vector < RawJet    > CA12_rawJets;      // CA R=1.2 raw fatjets (FastJet 3)

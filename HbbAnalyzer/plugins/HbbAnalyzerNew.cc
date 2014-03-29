@@ -19,8 +19,9 @@ Implementation:
 
 // Uncomment to save also jet collection 1
 //#define ENABLE_SIMPLEJETS1
+//#define ENABLE_FASTJETS_V2
 
-#include "VHbbAnalysis/HbbAnalyzer/interface/HbbAnalyzerNew.h"
+#include "VHbbAnalysis/HbbAnalyzer/plugins/HbbAnalyzerNew.h"
 
 /// Sim Info
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
@@ -100,6 +101,7 @@ fatjetLabel_(iConfig.getParameter < edm::InputTag > ("fatjetTag")),
 subjetLabel_(iConfig.getParameter < edm::InputTag > ("subjetTag")),
 filterjetLabel_(iConfig.getParameter < edm::InputTag > ("filterjetTag")),
 phoLabel_(iConfig.getParameter < edm::InputTag > ("photonTag")),
+phoForIsoLabel_(iConfig.getParameter < edm::InputTag > ("photonForIsoTag")),
 metLabel_(iConfig.getParameter < edm::InputTag > ("metTag")),
 metType1Label_(iConfig.getParameter < edm::InputTag > ("metType1Tag")),
 metType1p2Label_(iConfig.getParameter < edm::InputTag > ("metType1p2Tag")),
@@ -156,19 +158,19 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     edm::View < pat::Tau > taus = *tauHandle;
 
     /// Fat jets
-    edm::Handle < edm::View < pat::Jet > > fatjetHandle;
-    iEvent.getByLabel(fatjetLabel_, fatjetHandle);
-    edm::View < pat::Jet > fatjets = *fatjetHandle;
+    //edm::Handle < edm::View < pat::Jet > > fatjetHandle;
+    //iEvent.getByLabel(fatjetLabel_, fatjetHandle);
+    //edm::View < pat::Jet > fatjets = *fatjetHandle;
 
     /// Sub jets
-    edm::Handle < edm::View < pat::Jet > > subjetHandle;
-    iEvent.getByLabel(subjetLabel_, subjetHandle);
-    edm::View < pat::Jet > subjets = *subjetHandle;
+    //edm::Handle < edm::View < pat::Jet > > subjetHandle;
+    //iEvent.getByLabel(subjetLabel_, subjetHandle);
+    //edm::View < pat::Jet > subjets = *subjetHandle;
 
     /// Filter jets
-    edm::Handle < edm::View < pat::Jet > > filterjetHandle;
-    iEvent.getByLabel(filterjetLabel_, filterjetHandle);
-    edm::View < pat::Jet > filterjets = *filterjetHandle;
+    //edm::Handle < edm::View < pat::Jet > > filterjetHandle;
+    //iEvent.getByLabel(filterjetLabel_, filterjetHandle);
+    //edm::View < pat::Jet > filterjets = *filterjetHandle;
 
     /// Standard jets
     edm::Handle < edm::View < pat::Jet > > simplejet2Handle;
@@ -185,9 +187,9 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     //edm::View < pat::Photon > photons = *phoHandle;
 
     /// Photons used in isolation
-    edm::Handle < edm::View < reco::PFCandidate > > photonIsoH;
-    iEvent.getByLabel("pfAllPhotons", photonIsoH);
-    edm::View < reco::PFCandidate > photonsForIso = *photonIsoH;
+    edm::Handle < edm::View < reco::PFCandidate > > phoForIsoHandle;
+    iEvent.getByLabel(phoForIsoLabel_, phoForIsoHandle);
+    edm::View < reco::PFCandidate > photonsForIso = *phoForIsoHandle;
 
     /// MET (PF)
     edm::Handle < edm::View < reco::MET > > metHandle;
@@ -195,14 +197,14 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     edm::View < reco::MET > mets = *metHandle;
 
     /// MET with Type-1 correction (PF)
-    edm::Handle < edm::View < reco::MET > > metType1Handle;
-    iEvent.getByLabel(metType1Label_, metType1Handle);
-    edm::View < reco::MET > metsType1 = *metType1Handle;
+    //edm::Handle < edm::View < reco::MET > > metType1Handle;
+    //iEvent.getByLabel(metType1Label_, metType1Handle);
+    //edm::View < reco::MET > metsType1 = *metType1Handle;
 
     /// MET with Type-1+2 correction (PF)
-    edm::Handle < edm::View < reco::MET > > metType1p2Handle;
-    iEvent.getByLabel(metType1p2Label_, metType1p2Handle);
-    edm::View < reco::MET > metsType1p2 = *metType1p2Handle;
+    //edm::Handle < edm::View < reco::MET > > metType1p2Handle;
+    //iEvent.getByLabel(metType1p2Label_, metType1p2Handle);
+    //edm::View < reco::MET > metsType1p2 = *metType1p2Handle;
 
     /// Electrons used for soft lepton info
     edm::Handle < edm::View < reco::Candidate > > eleNoCutsHandle;
@@ -215,19 +217,19 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     edm::View < reco::Candidate > muonsNoCuts = *muonNoCutsHandle;
 
     /// pfMET with CHS
-    edm::Handle < edm::View < reco::MET > > pfMETNoPUHandle;
-    iEvent.getByLabel("pfMETNoPU", pfMETNoPUHandle);
-    edm::View < reco::MET > pfmetsNoPU = *pfMETNoPUHandle;
+    //edm::Handle < edm::View < reco::MET > > pfMETNoPUHandle;
+    //iEvent.getByLabel("pfMETNoPU", pfMETNoPUHandle);
+    //edm::View < reco::MET > pfmetsNoPU = *pfMETNoPUHandle;
 
     /// pfMET with CHS, tracks only
-    edm::Handle < edm::View < reco::MET > > pfMETNoPUChargeHandle;
-    iEvent.getByLabel("pfMETNoPUCharge", pfMETNoPUChargeHandle);
-    edm::View < reco::MET > pfmetsNoPUCharge = *pfMETNoPUChargeHandle;
+    //edm::Handle < edm::View < reco::MET > > pfMETNoPUChargeHandle;
+    //iEvent.getByLabel("pfMETNoPUCharge", pfMETNoPUChargeHandle);
+    //edm::View < reco::MET > pfmetsNoPUCharge = *pfMETNoPUChargeHandle;
 
     /// caloMET
-    edm::Handle < edm::View < reco::MET > > calometHandle;
-    iEvent.getByLabel("met", calometHandle);
-    edm::View < reco::MET > calomets = *calometHandle;
+    //edm::Handle < edm::View < reco::MET > > calometHandle;
+    //iEvent.getByLabel("met", calometHandle);
+    //edm::View < reco::MET > calomets = *calometHandle;
 
     ///// MHT
     //edm::Handle < edm::View < reco::MET > > mHTHandle;
@@ -244,22 +246,25 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     /// b-Tagging scale factors from database
     /// Combined Secondary Vertex Loose
     edm::ESHandle < BtagPerformance > bTagSF_CSVL_;
-    iSetup.get < BTagPerformanceRecord > ().get("BTAGCSVL", bTagSF_CSVL_);
+    iSetup.get < BTagPerformanceRecord > ().get("TTBARWPBTAGCSVL", bTagSF_CSVL_);
     /// Combined Secondary Vertex Medium
     edm::ESHandle < BtagPerformance > bTagSF_CSVM_;
-    iSetup.get < BTagPerformanceRecord > ().get("BTAGCSVM", bTagSF_CSVM_);
+    iSetup.get < BTagPerformanceRecord > ().get("TTBARWPBTAGCSVM", bTagSF_CSVM_);
     /// Combined Secondary Vertex Tight
     edm::ESHandle < BtagPerformance > bTagSF_CSVT_;
-    iSetup.get < BTagPerformanceRecord > ().get("BTAGCSVT", bTagSF_CSVT_);
+    iSetup.get < BTagPerformanceRecord > ().get("TTBARWPBTAGCSVT", bTagSF_CSVT_);
     /// Combined Secondary Vertex Loose
     edm::ESHandle < BtagPerformance > mistagSF_CSVL_;
-    iSetup.get < BTagPerformanceRecord > ().get("MISTAGCSVL", mistagSF_CSVL_);
+    //iSetup.get < BTagPerformanceRecord > ().get("MISTAGCSVL", mistagSF_CSVL_);  // Winter2013
+    iSetup.get < BTagPerformanceRecord > ().get("MISTAGCSVLABCD", mistagSF_CSVL_);  // 2013 (older)
     //Combined Secondary Vertex Medium
     edm::ESHandle < BtagPerformance > mistagSF_CSVM_;
-    iSetup.get < BTagPerformanceRecord > ().get("MISTAGCSVM", mistagSF_CSVM_);
+    //iSetup.get < BTagPerformanceRecord > ().get("MISTAGCSVM", mistagSF_CSVM_);  // Winter2013
+    iSetup.get < BTagPerformanceRecord > ().get("MISTAGCSVMABCD", mistagSF_CSVM_);  // 2013 (older)
     //Combined Secondary Vertex Tight
     edm::ESHandle < BtagPerformance > mistagSF_CSVT_;
-    iSetup.get < BTagPerformanceRecord > ().get("MISTAGCSVT", mistagSF_CSVT_);
+    //iSetup.get < BTagPerformanceRecord > ().get("MISTAGCSVT", mistagSF_CSVT_);  // Winter2013
+    iSetup.get < BTagPerformanceRecord > ().get("MISTAGCSVTABCD", mistagSF_CSVT_);  // 2013 (older)
 
     BTagSFContainer btagSFs;
     btagSFs.BTAGSF_CSVL = (bTagSF_CSVL_.product());
@@ -327,20 +332,21 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
     /// Energy Densities
     edm::Handle < double > rhoHandle;
-    iEvent.getByLabel(edm::InputTag("kt6PFJets", "rho"), rhoHandle);
+    //iEvent.getByLabel(edm::InputTag("kt6PFJets", "rho"), rhoHandle);
+    iEvent.getByLabel(edm::InputTag("fixedGridRhoFastjetAll"), rhoHandle);
     auxInfo->puInfo.rho = *rhoHandle;
 
-    edm::Handle < double > rho25Handle;
-    iEvent.getByLabel(edm::InputTag("kt6PFJets25", "rho"), rho25Handle);
-    auxInfo->puInfo.rho25 = *rho25Handle;
+    //edm::Handle < double > rho25Handle;
+    //iEvent.getByLabel(edm::InputTag("kt6PFJets25", "rho"), rho25Handle);
+    //auxInfo->puInfo.rho25 = *rho25Handle;
 
-    edm::Handle < double > rho25HandleIso;
-    iEvent.getByLabel(edm::InputTag("kt6PFJetsForIsolation", "rho"), rho25HandleIso); // take from RECO?
-    auxInfo->puInfo.rho25Iso = *rho25HandleIso;
+    //edm::Handle < double > rho25HandleIso;
+    //iEvent.getByLabel(edm::InputTag("kt6PFJetsForIsolation", "rho"), rho25HandleIso); // take from RECO?
+    //auxInfo->puInfo.rho25Iso = *rho25HandleIso;
 
-    edm::Handle < double > rhoNeutralHandle;
-    iEvent.getByLabel(edm::InputTag("kt6PFJetsCentralNeutral", "rho"), rhoNeutralHandle);  // take from RECO?
-    auxInfo->puInfo.rhoNeutral = *rhoNeutralHandle;
+    //edm::Handle < double > rhoNeutralHandle;
+    //iEvent.getByLabel(edm::InputTag("kt6PFJetsCentralNeutral", "rho"), rhoNeutralHandle);  // take from RECO?
+    //auxInfo->puInfo.rhoNeutral = *rhoNeutralHandle;
 
     /// GenParticles
     edm::Handle < reco::GenParticleCollection > genParticles;
@@ -560,14 +566,22 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
         /// Pileup jet ID
         edm::Handle < edm::ValueMap < float > > puJetIdMVA;
-        iEvent.getByLabel("pileupJetIdProducerChs", "fullDiscriminant", puJetIdMVA);
+        iEvent.getByLabel("pileupJetIdProducerCHS", "fullDiscriminant", puJetIdMVA);
         edm::Handle < edm::ValueMap < int > > puJetIdFlag;
-        iEvent.getByLabel("pileupJetIdProducerChs", "fullId", puJetIdFlag);
+        iEvent.getByLabel("pileupJetIdProducerCHS", "fullId", puJetIdFlag);
+        edm::Handle < reco::PFJetCollection > puJetIdJets;
+        iEvent.getByLabel("calibratedAK5PFJetsCHS", puJetIdJets);
 
         //std::cout << " pt " << jet_iter->pt() << " eta " << jet_iter->eta() << std::endl;
-        unsigned int idx = jet_iter - simplejets2.begin();
-        sj.puJetIdMva = (*puJetIdMVA)[simplejets2.refAt(idx)];
-        int idflag = (*puJetIdFlag)[simplejets2.refAt(idx)];
+        //unsigned int idx = jet_iter - simplejets2.begin();
+        //sj.puJetIdMva = (*puJetIdMVA)[simplejets2.refAt(idx)];
+        //int idflag = (*puJetIdFlag)[simplejets2.refAt(idx)];
+
+        reco::PFJetRef recojetref(puJetIdJets, jet_iter->originalObjectRef().key());
+        if (fabs(recojetref->pt() - jet_iter->pt()) > 1e-2)
+            std::cout << "WARNING: patJet and recoJetRef do not match: " << recojetref->pt() << " vs " << jet_iter->pt() << std::endl;
+        sj.puJetIdMva = (*puJetIdMVA)[recojetref];
+        int idflag = (*puJetIdFlag)[recojetref];
         //std::cout << " PU JetID MVA " << sj.puJetIdMva;
 
         if (PileupJetIdentifier::passJetId(idflag, PileupJetIdentifier::kLoose)) {
@@ -720,22 +734,23 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
     // S U B S T R U C T U R E
     // (FastJet3)
+    // FIXME: change the name ca12 to ca15 to avoid confusion
     edm::Handle<edm::View<pat::Jet> > ca12jetHandle;
-    iEvent.getByLabel("selectedPatJetsCA12PF",ca12jetHandle);
+    iEvent.getByLabel("selectedPatJetsCA15PFCHS",ca12jetHandle);
     edm::View<pat::Jet> ca12jets = *ca12jetHandle;
-    edm::Handle<edm::View<pat::Jet> > camdft12jetHandle;
-    iEvent.getByLabel("selectedPatJetsCA12MassDropFilteredPF",camdft12jetHandle);
-    edm::View<pat::Jet> camdft12jets = *camdft12jetHandle;
+    edm::Handle<edm::View<pat::Jet> > caft12jetHandle;
+    iEvent.getByLabel("selectedPatJetsCA15PFCHSFiltered",caft12jetHandle);
+    edm::View<pat::Jet> caft12jets = *caft12jetHandle;
 
-    edm::Handle<edm::View<pat::Jet> > camdft12subjetHandle;
-    iEvent.getByLabel("selectedPatJetsCA12MassDropFilteredSubjetsPF",camdft12subjetHandle);
-    edm::View<pat::Jet> camdft12subjets = *camdft12subjetHandle;
+    //edm::Handle<edm::View<pat::Jet> > camdft12subjetHandle;
+    //iEvent.getByLabel("selectedPatJetsCA12MassDropFilteredSubjetsPF",camdft12subjetHandle);
+    //edm::View<pat::Jet> camdft12subjets = *camdft12subjetHandle;
     edm::Handle<edm::View<pat::Jet> > caft12subjetHandle;
-    iEvent.getByLabel("selectedPatJetsCA12FilteredSubjetsPF",caft12subjetHandle);
+    iEvent.getByLabel("selectedPatJetsCA15PFCHSFilteredSubJets",caft12subjetHandle);
     edm::View<pat::Jet> caft12subjets = *caft12subjetHandle;
-    edm::Handle<edm::View<pat::Jet> > capr12subjetHandle;
-    iEvent.getByLabel("selectedPatJetsCA12PrunedSubjetsPF",capr12subjetHandle);
-    edm::View<pat::Jet> capr12subjets = *capr12subjetHandle;
+    //edm::Handle<edm::View<pat::Jet> > capr12subjetHandle;
+    //iEvent.getByLabel("selectedPatJetsCA12PrunedSubjetsPF",capr12subjetHandle);
+    //edm::View<pat::Jet> capr12subjets = *capr12subjetHandle;
 
     // C A 1 2   R A W   J E T S
     //std::cout << "Fill CA12 Raw jet!" << std::endl;
@@ -770,7 +785,7 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
     // C A 1 2   M A S S D R O P / F I L T E R E D   J E T S
     //std::cout << "Fill CA12 MDFT jet!" << std::endl;
-    for(edm::View<pat::Jet>::const_iterator jet_iter = camdft12jets.begin(); jet_iter!=camdft12jets.end(); ++jet_iter){
+    for(edm::View<pat::Jet>::const_iterator jet_iter = caft12jets.begin(); jet_iter!=caft12jets.end(); ++jet_iter){
         const reco::Jet::Constituents& constituents = jet_iter->getJetConstituents();
         //std::cout << "size: " << constituents.size() << std::endl;
         VHbbEvent::HardJet hj;
@@ -783,17 +798,17 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
             hj.etaSub.push_back(icandJet->eta());
             hj.phiSub.push_back(icandJet->phi());
         }
-        hbbInfo->CA12mdft_hardJets.push_back(hj);
+        hbbInfo->CA12ft_hardJets.push_back(hj);
     }
 
     // C A 1 2   M A S S D R O P / F I L T E R E D   S U B J E T S
     //std::cout << "Fill CA12 MDFT subjet!" << std::endl;
-    for(edm::View<pat::Jet>::const_iterator subjet_iter = camdft12subjets.begin(); subjet_iter!=camdft12subjets.end(); ++subjet_iter) {
-        VHbbEvent::SimpleJet sj;
-        fillSimpleJet(sj,subjet_iter);
-        //setJecUnc(sj,jecUnc);
-        hbbInfo->CA12mdft_subJets.push_back(sj);
-    }
+    //for(edm::View<pat::Jet>::const_iterator subjet_iter = camdft12subjets.begin(); subjet_iter!=camdft12subjets.end(); ++subjet_iter) {
+    //    VHbbEvent::SimpleJet sj;
+    //    fillSimpleJet(sj,subjet_iter);
+    //    //setJecUnc(sj,jecUnc);
+    //    hbbInfo->CA12mdft_subJets.push_back(sj);
+    //}
 
     // C A 1 2   F I L T E R E D   S U B J E T S
     //std::cout << "Fill CA12 FT subjet!" << std::endl;
@@ -806,13 +821,14 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
     // C A 1 2   P R U N E D   S U B J E T S
     //std::cout << "Fill CA12 PR subjet!" << std::endl;
-    for(edm::View<pat::Jet>::const_iterator subjet_iter = capr12subjets.begin(); subjet_iter!=capr12subjets.end(); ++subjet_iter) {
-        VHbbEvent::SimpleJet sj;
-        fillSimpleJet(sj,subjet_iter);
-        //setJecUnc(sj,jecUnc);
-        hbbInfo->CA12pr_subJets.push_back(sj);
-    }
+    //for(edm::View<pat::Jet>::const_iterator subjet_iter = capr12subjets.begin(); subjet_iter!=capr12subjets.end(); ++subjet_iter) {
+    //    VHbbEvent::SimpleJet sj;
+    //    fillSimpleJet(sj,subjet_iter);
+    //    //setJecUnc(sj,jecUnc);
+    //    hbbInfo->CA12pr_subJets.push_back(sj);
+    //}
 
+#ifdef ENABLE_FASTJET_V2
     // S U B S T R U C T U R E
     // (FastJet2)
 
@@ -962,27 +978,27 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
 
         hbbInfo->filterJets.push_back(fj);
     }
-
+#endif
 
     /// MET
     if (mets.size()){
         fillMET(hbbInfo->met, mets.begin());
     }
-    if (metsType1.size()){
-        fillMET(hbbInfo->metType1, metsType1.begin());
-    }
-    if (metsType1p2.size()){
-        fillMET(hbbInfo->metType1, metsType1p2.begin());
-    }
-    if (pfmetsNoPU.size()) {
-        fillMET(hbbInfo->pfmetNoPU, pfmetsNoPU.begin());
-    }
-    if (pfmetsNoPUCharge.size()) {
-        fillMET(hbbInfo->pfmetNoPUCh, pfmetsNoPUCharge.begin());
-    }
-    if (calomets.size()) {
-        fillMET(hbbInfo->calomet, calomets.begin());
-    }
+    //if (metsType1.size()){
+    //    fillMET(hbbInfo->metType1, metsType1.begin());
+    //}
+    //if (metsType1p2.size()){
+    //    fillMET(hbbInfo->metType1, metsType1p2.begin());
+    //}
+    //if (pfmetsNoPU.size()) {
+    //    fillMET(hbbInfo->pfmetNoPU, pfmetsNoPU.begin());
+    //}
+    //if (pfmetsNoPUCharge.size()) {
+    //    fillMET(hbbInfo->pfmetNoPUCh, pfmetsNoPUCharge.begin());
+    //}
+    //if (calomets.size()) {
+    //    fillMET(hbbInfo->calomet, calomets.begin());
+    //}
     //if (metsHT.size()) {
     //    fillMET(hbbInfo->mht, metsHT.begin());
     //}
@@ -990,83 +1006,83 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
     /// MET Uncertainties (only with Type-1 correction)
     VHbbEvent::METInfo metunc;
 
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetElectronEnDownHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetElectronEnDown", patType1CorrectedPFMetElectronEnDownHandle);
-    if (patType1CorrectedPFMetElectronEnDownHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetElectronEnDownHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetElectronEnUpHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetElectronEnUp", patType1CorrectedPFMetElectronEnUpHandle);
-    if (patType1CorrectedPFMetElectronEnUpHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetElectronEnUpHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetJetEnDownHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetJetEnDown", patType1CorrectedPFMetJetEnDownHandle);
-    if (patType1CorrectedPFMetJetEnDownHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetJetEnDownHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetJetEnUpHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetJetEnUp", patType1CorrectedPFMetJetEnUpHandle);
-    if (patType1CorrectedPFMetJetEnUpHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetJetEnUpHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetJetResDownHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetJetResDown", patType1CorrectedPFMetJetResDownHandle);
-    if (patType1CorrectedPFMetJetResDownHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetJetResDownHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetJetResUpHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetJetResUp", patType1CorrectedPFMetJetResUpHandle);
-    if (patType1CorrectedPFMetJetResUpHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetJetResUpHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetMuonEnDownHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetMuonEnDown", patType1CorrectedPFMetMuonEnDownHandle);
-    if (patType1CorrectedPFMetMuonEnDownHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetMuonEnDownHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetMuonEnUpHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetMuonEnUp", patType1CorrectedPFMetMuonEnUpHandle);
-    if (patType1CorrectedPFMetMuonEnUpHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetMuonEnUpHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetTauEnDownHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetTauEnDown", patType1CorrectedPFMetTauEnDownHandle);
-    if (patType1CorrectedPFMetTauEnDownHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetTauEnDownHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetTauEnUpHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetTauEnUp", patType1CorrectedPFMetTauEnUpHandle);
-    if (patType1CorrectedPFMetTauEnUpHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetTauEnUpHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetUnclusteredEnDownHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetUnclusteredEnDown", patType1CorrectedPFMetUnclusteredEnDownHandle);
-    if (patType1CorrectedPFMetUnclusteredEnDownHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetUnclusteredEnDownHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
-    edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetUnclusteredEnUpHandle;
-    iEvent.getByLabel("patType1CorrectedPFMetUnclusteredEnUp", patType1CorrectedPFMetUnclusteredEnUpHandle);
-    if (patType1CorrectedPFMetUnclusteredEnUpHandle->size()) {
-        fillMET(metunc, patType1CorrectedPFMetUnclusteredEnUpHandle->begin());
-        hbbInfo->metUncInfo.push_back(metunc);
-    }
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetElectronEnDownHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetElectronEnDown", patType1CorrectedPFMetElectronEnDownHandle);
+    //if (patType1CorrectedPFMetElectronEnDownHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetElectronEnDownHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetElectronEnUpHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetElectronEnUp", patType1CorrectedPFMetElectronEnUpHandle);
+    //if (patType1CorrectedPFMetElectronEnUpHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetElectronEnUpHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetJetEnDownHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetJetEnDown", patType1CorrectedPFMetJetEnDownHandle);
+    //if (patType1CorrectedPFMetJetEnDownHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetJetEnDownHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetJetEnUpHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetJetEnUp", patType1CorrectedPFMetJetEnUpHandle);
+    //if (patType1CorrectedPFMetJetEnUpHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetJetEnUpHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetJetResDownHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetJetResDown", patType1CorrectedPFMetJetResDownHandle);
+    //if (patType1CorrectedPFMetJetResDownHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetJetResDownHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetJetResUpHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetJetResUp", patType1CorrectedPFMetJetResUpHandle);
+    //if (patType1CorrectedPFMetJetResUpHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetJetResUpHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetMuonEnDownHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetMuonEnDown", patType1CorrectedPFMetMuonEnDownHandle);
+    //if (patType1CorrectedPFMetMuonEnDownHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetMuonEnDownHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetMuonEnUpHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetMuonEnUp", patType1CorrectedPFMetMuonEnUpHandle);
+    //if (patType1CorrectedPFMetMuonEnUpHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetMuonEnUpHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetTauEnDownHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetTauEnDown", patType1CorrectedPFMetTauEnDownHandle);
+    //if (patType1CorrectedPFMetTauEnDownHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetTauEnDownHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetTauEnUpHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetTauEnUp", patType1CorrectedPFMetTauEnUpHandle);
+    //if (patType1CorrectedPFMetTauEnUpHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetTauEnUpHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetUnclusteredEnDownHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetUnclusteredEnDown", patType1CorrectedPFMetUnclusteredEnDownHandle);
+    //if (patType1CorrectedPFMetUnclusteredEnDownHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetUnclusteredEnDownHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
+    //edm::Handle < edm::View < reco::MET > > patType1CorrectedPFMetUnclusteredEnUpHandle;
+    //iEvent.getByLabel("patType1CorrectedPFMetUnclusteredEnUp", patType1CorrectedPFMetUnclusteredEnUpHandle);
+    //if (patType1CorrectedPFMetUnclusteredEnUpHandle->size()) {
+    //    fillMET(metunc, patType1CorrectedPFMetUnclusteredEnUpHandle->begin());
+    //    hbbInfo->metUncInfo.push_back(metunc);
+    //}
 
     /// Muons
     for (edm::View < pat::Muon >::const_iterator mu = muons.begin();
@@ -1285,18 +1301,18 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         }
 
         // 2010 EleID
-        ef.id95 = elec->electronID("eidVBTFCom95");
-        ef.id95r = elec->electronID("eidVBTFRel95");
-        ef.id85 = elec->electronID("eidVBTFCom85");
-        ef.id85r = elec->electronID("eidVBTFRel85");
-        ef.id80 = elec->electronID("eidVBTFCom80");
-        ef.id80r = elec->electronID("eidVBTFRel80");
-        ef.id70 = elec->electronID("eidVBTFCom70");
-        ef.id70r = elec->electronID("eidVBTFRel70");
+        //ef.id95 = elec->electronID("eidVBTFCom95");
+        //ef.id95r = elec->electronID("eidVBTFRel95");
+        //ef.id85 = elec->electronID("eidVBTFCom85");
+        //ef.id85r = elec->electronID("eidVBTFRel85");
+        //ef.id80 = elec->electronID("eidVBTFCom80");
+        //ef.id80r = elec->electronID("eidVBTFRel80");
+        //ef.id70 = elec->electronID("eidVBTFCom70");
+        //ef.id70r = elec->electronID("eidVBTFRel70");
 
         // 2012 MVA EleID
-        ef.mvaOut = elec->electronID("mvaNonTrigV0");
-        ef.mvaOutTrig = elec->electronID("mvaTrigV0");
+        //ef.mvaOut = elec->electronID("mvaNonTrigV0");
+        //ef.mvaOutTrig = elec->electronID("mvaTrigV0");
 
         // Electron trigger matching
         for (int itrig = 0; itrig != ntrigs; ++itrig) {
@@ -1639,15 +1655,19 @@ void HbbAnalyzerNew::fillSimpleJet(VHbbEvent::SimpleJet & sj,
     sj.charge = jet_iter->jetCharge();
     sj.ntracks = jet_iter->associatedTracks().size();
     sj.jetArea = jet_iter->jetArea();
-    sj.tche = jet_iter->bDiscriminator("trackCountingHighEffBJetTags");
-    sj.tchp = jet_iter->bDiscriminator("trackCountingHighPurBJetTags");
-    sj.jp = jet_iter->bDiscriminator("jetProbabilityBJetTags");
-    sj.jpb = jet_iter->bDiscriminator("jetBProbabilityBJetTags");
-    sj.ssvhe = jet_iter->bDiscriminator("simpleSecondaryVertexHighEffBJetTags");
-    sj.csv = jet_iter->bDiscriminator("combinedSecondaryVertexBJetTags");
-    sj.csvmva = jet_iter->bDiscriminator("combinedSecondaryVertexMVABJetTags");
-    sj.csvivf = jet_iter->bDiscriminator("combinedInclusiveSecondaryVertexBJetTags");
-    sj.cmva = jet_iter->bDiscriminator("combinedMVABJetTags");
+
+    if (jet_iter->hasTagInfo("secondaryVertexTagInfos")) {
+        //sj.tche = jet_iter->bDiscriminator("trackCountingHighEffBJetTags");
+        //sj.tchp = jet_iter->bDiscriminator("trackCountingHighPurBJetTags");
+        sj.jp = jet_iter->bDiscriminator("jetProbabilityBJetTags");
+        sj.jpb = jet_iter->bDiscriminator("jetBProbabilityBJetTags");
+        //sj.ssvhe = jet_iter->bDiscriminator("simpleSecondaryVertexHighEffBJetTags");
+        sj.csv = jet_iter->bDiscriminator("combinedSecondaryVertexBJetTags");
+        sj.csvmva = jet_iter->bDiscriminator("combinedSecondaryVertexMVABJetTags");
+        sj.csvivf = jet_iter->bDiscriminator("combinedInclusiveSecondaryVertexBJetTags");
+        //sj.cmva = jet_iter->bDiscriminator("combinedMVABJetTags");
+    }
+
     sj.SF_CSVL = 1;
     sj.SF_CSVM = 1;
     sj.SF_CSVT = 1;
@@ -1693,34 +1713,36 @@ void HbbAnalyzerNew::fillSimpleJet(VHbbEvent::SimpleJet & sj,
             sj.vtx3deL = m.error();
         }
     }
-    /// Add CSV track IP info
-    const reco::SecondaryVertexTagInfo * svTagInfos = jet_iter->tagInfoSecondaryVertex();  // identical to tf?
-    const reco::TrackIPTagInfo * ipTagInfos = jet_iter->tagInfoTrackIP();
-    for (edm::RefVector < reco::TrackCollection >::const_iterator t =
-         ipTagInfos->selectedTracks().begin();
-         t != ipTagInfos->selectedTracks().end(); t++) {
-        sj.btagTrackIds.push_back(t->key());
-    }
-    std::vector < const reco::BaseTagInfo * > tagInfos;
-    tagInfos.push_back(dynamic_cast < const reco::BaseTagInfo * >(ipTagInfos));
-    tagInfos.push_back(dynamic_cast < const reco::BaseTagInfo * >(svTagInfos));
-    JetTagComputer::TagInfoHelper helper(tagInfos);
-    reco::TaggingVariableList varList = computer->taggingVariables(helper);  // computer for getting CSV variables
 
-    for (reco::TaggingVariableList::const_iterator iter = varList.begin();
-         iter != varList.end(); ++iter) {
-        //std::cout << reco::TaggingVariableTokens[iter->first] << " = " << iter->second << std::endl;
-        for (edm::RefVector < reco::TrackCollection >::const_iterator t = ipTagInfos->selectedTracks().begin();
+    if (jet_iter->hasTagInfo("secondaryVertexTagInfos")) {
+        /// Add CSV track IP info
+        const reco::SecondaryVertexTagInfo * svTagInfos = jet_iter->tagInfoSecondaryVertex();  // identical to tf?
+        const reco::TrackIPTagInfo * ipTagInfos = jet_iter->tagInfoTrackIP();
+        for (edm::RefVector < reco::TrackCollection >::const_iterator t =
+             ipTagInfos->selectedTracks().begin();
              t != ipTagInfos->selectedTracks().end(); t++) {
-            if (strcmp(reco::TaggingVariableTokens[iter->first], "trackMomentum") == 0 &&
-                (fabs((float) iter->second - (float) (*t)->p()) < 0.0001) ) {
-                sj.csvTrackIds.push_back(t->key());
-            }  // end if tagged track
-        }  // end loop on IPtracks
-    }  // end loop on CSV variables
+            sj.btagTrackIds.push_back(t->key());
+        }
+        std::vector < const reco::BaseTagInfo * > tagInfos;
+        tagInfos.push_back(dynamic_cast < const reco::BaseTagInfo * >(ipTagInfos));
+        tagInfos.push_back(dynamic_cast < const reco::BaseTagInfo * >(svTagInfos));
+        JetTagComputer::TagInfoHelper helper(tagInfos);
+        reco::TaggingVariableList varList = computer->taggingVariables(helper);  // computer for getting CSV variables
 
-    sj.btagNTracks = ipTagInfos->selectedTracks().size();
-    sj.csvNTracks = sj.csvTrackIds.size();
+        for (reco::TaggingVariableList::const_iterator iter = varList.begin();
+             iter != varList.end(); ++iter) {
+            //std::cout << reco::TaggingVariableTokens[iter->first] << " = " << iter->second << std::endl;
+            for (edm::RefVector < reco::TrackCollection >::const_iterator t = ipTagInfos->selectedTracks().begin();
+                 t != ipTagInfos->selectedTracks().end(); t++) {
+                if (strcmp(reco::TaggingVariableTokens[iter->first], "trackMomentum") == 0 &&
+                    (fabs((float) iter->second - (float) (*t)->p()) < 0.0001) ) {
+                    sj.csvTrackIds.push_back(t->key());
+                }  // end if tagged track
+            }  // end loop on IPtracks
+        }  // end loop on CSV variables
+        sj.btagNTracks = ipTagInfos->selectedTracks().size();
+        sj.csvNTracks = sj.csvTrackIds.size();
+    }
 
     /// Add tVector
     sj.tVector = getTvect(&(*jet_iter));

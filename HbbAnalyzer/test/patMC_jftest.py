@@ -157,7 +157,7 @@ ignorePF2PAT = True
 if ignorePF2PAT:
     postfix = ""
     jetAlgo = "AK5"
-    # Note: Without PF2PAT, 'goodOfflinePrimaryVertices' is not used
+    # NOTE: Without PF2PAT, 'goodOfflinePrimaryVertices' is not used
 
     # bypass PhysicsTools/PatAlgos/python/patSequences_cff.py
     process.load("PhysicsTools.PatAlgos.producersLayer1.patCandidates_cff")
@@ -223,13 +223,13 @@ else:
 ################################################################################
 # Lepton/Photon                                                                #
 ################################################################################
-doEleIso04 = True
-doMuIso04 = True
-# Note: CMS recommendations for isolation are R=0.3 for e, R=0.4 for mu,
+# NOTE: CMS recommendations for isolation are R=0.3 for e, R=0.4 for mu,
 #   but VHbb uses R=0.4 for both e and mu. Please double check that the
 #   WPxx definitions (for e) are consistent.
 #   For PU subtraction, VHbb uses EA correction for e, deltaBeta for mu
-# Note: Want to have soft lepton ID as well
+# NOTE: Want to have soft lepton ID as well
+doEleIso04 = True
+doMuIso04 = True
 
 # ------------------------------------------------------------------------------
 # Electron ID
@@ -303,6 +303,7 @@ getattr(process,"patPhotons"+postfix).isoDeposits = cms.PSet()
 ################################################################################
 # Jet                                                                          #
 ################################################################################
+# NOTE: add MC jet smearing?
 doAK4 = True
 doAK5 = True
 doCA8 = True
@@ -325,6 +326,7 @@ from RecoJets.Configuration.RecoPFJets_cff import \
 #setattr(process, "ak4PFJets"+postfix, ak5PFJets.clone( rParam = 0.4 ))
 process.ak4PFJets = ak5PFJets.clone( rParam = 0.4 )
 #process.kt6PFJets = kt6PFJets
+process.ca15PFJetsCHS = ca8PFJetsCHS.clone( rParam = 1.5 )
 process.ca8PFJetsCHSPruned = ca8PFJetsCHSPruned.clone( doAreaFastjet = cms.bool(True) )
 process.ca15PFJetsCHSFiltered = ca15PFJetsCHSFiltered.clone(
     doAreaFastjet = cms.bool(True),
@@ -345,6 +347,7 @@ if runOnMC:
     process.genParticlesForJetsNoNu = genParticlesForJetsNoNu
     process.ak4GenJets = ak4GenJets
     process.ca8GenJets = ca4GenJets.clone( rParam = 0.8 )
+    process.ca15GenJets = ca4GenJets.clone( rParam = 1.5 )
     process.ca8GenJetsNoNu = ca4GenJetsNoNu.clone( rParam = 0.8 )
     from RecoJets.JetProducers.SubJetParameters_cfi import SubJetParameters
     process.ca8GenJetsNoNuPruned = process.ca8GenJetsNoNu.clone(
@@ -522,6 +525,19 @@ if doCA8TopTag:
 
 if doCA15:
     addJetCollection(process,
+        labelName = 'CA15PFCHS',
+        postfix = postfix,
+        jetSource = cms.InputTag('ca15PFJetsCHS'),
+        algo = 'CA15',
+        jetCorrections = ('AK7PFchs', inputJetCorrLabel, ''),
+        #btagDiscriminators = btagDiscriminators,
+        #btagInfos = btagInfos,
+        #jetTrackAssociation = True,
+        outputModules = outputModules,
+        )
+    if runOnMC:  getattr(process, 'patJetGenJetMatchPatJetsCA15PFCHS'+postfix).matched = cms.InputTag('ca15GenJets')
+
+    addJetCollection(process,
         labelName = 'CA15PFCHSFiltered',
         postfix = postfix,
         jetSource = cms.InputTag('ca15PFJetsCHSFiltered'),
@@ -579,8 +595,9 @@ process.calibratedAK5PFJetsCHS = cms.EDProducer('PFJetCorrectionProducer',
     correctors = cms.vstring("ak5PFCHSL1FastL2L3"+residual)
 )
 from RecoJets.JetProducers.PileupJetID_53x_cfi import pileupJetIdProducerChs, pileupJetIdProducer
-process.pileupJetIdProducerChs = pileupJetIdProducerChs.clone( jets = cms.InputTag('calibratedAK5PFJetsCHS') )
+process.pileupJetIdProducerCHS = pileupJetIdProducerChs.clone( jets = cms.InputTag('calibratedAK5PFJetsCHS') )
 process.pileupJetIdProducer = pileupJetIdProducer.clone( jets = cms.InputTag('calibratedAK5PFJets') )
+process.out.outputCommands += ['keep *_pileupJetIdProducerCHS_*_*', 'keep *_pileupJetIdProducer_*_*']
 
 # ------------------------------------------------------------------------------
 # b-tagging
@@ -600,6 +617,12 @@ process.BTauMVAJetTagComputerRecord = cms.ESSource('PoolDBESSource',
     BlobStreamerName = cms.untracked.string('TBufferBlobStreamingService')
 )
 process.es_prefer_BTauMVAJetTagComputerRecord = cms.ESPrefer('PoolDBESSource','BTauMVAJetTagComputerRecord')
+
+# Load performance record
+#process.load("RecoBTag.PerformanceDB.PoolBTagPerformanceDBWinter13")  # Winter2013: this is bugged
+#process.load("RecoBTag.PerformanceDB.BTagPerformanceDBWinter13")  # Winter2013
+process.load("RecoBTag.PerformanceDB.PoolBTagPerformanceDB2013")  # 2013 (older)
+process.load("RecoBTag.PerformanceDB.BTagPerformanceDB2013")  # 2013 (older)
 
 # IVF and BCandidate producer for Vbb cross check analysis
 process.load("RecoVertex.AdaptiveVertexFinder.inclusiveVertexing_cff")
@@ -655,7 +678,7 @@ for labelName in ['', 'AK5PF', 'AK4PF', 'AK4PFCHS', 'CA8PFCHSPrunedSubJets', 'CA
 for labelName in ['AK8PF', 'AK8PFCHS', 'CA8PFCHS', 'CA8PFCHSPruned']:  # jetPtMin = 15.0 at clustering
     if hasattr(process,"selectedPatJets"+labelName+postfix):
         getattr(process,"selectedPatJets"+labelName+postfix).cut = cms.string("pt > 25 & abs(eta) < 5.0")
-for labelName in ['CA8PFCHSTopTag', 'CA15PFCHSFiltered']:  # jetPtMin = 100.0 at clustering
+for labelName in ['CA8PFCHSTopTag', 'CA15PFCHS', 'CA15PFCHSFiltered']:  # jetPtMin = 100.0 at clustering
     if hasattr(process,"selectedPatJets"+labelName+postfix):
         getattr(process,"selectedPatJets"+labelName+postfix).cut = cms.string("pt > 100 & abs(eta) < 5.0")
 
@@ -680,6 +703,8 @@ if runOnMC:
 else:
     patJetCorrLabel = "L2L3Residual"
     sysShiftCorrParam = pfMEtSysShiftCorrParameters_2012runABCDvsNvtx_data
+# Apply Type-0 correction
+process.pfType1CorrectedMet.applyType0Corrections = True
 
 if doMetCorr:
     # Taken from https://github.com/TaiSakuma/WorkBookMet/blob/master/corrMet_cfg.py
@@ -723,7 +748,7 @@ if doMetCorr:
         process.pfMetT1Txy
     )
     process.p_corrMet = cms.Path(process.corrMetSequence)
-    process.out.outputCommands += ['keep *_pfMetT*__*' ]
+    process.out.outputCommands += ['keep *_pfMetT*__*']
 
 # ------------------------------------------------------------------------------
 # MET Uncertainties
@@ -748,8 +773,9 @@ if doMetUnc:
         doApplySysShiftCorr = False,
         pfCandCollection = 'particleFlow',
         jetCorrPayloadName = 'AK5PF',
-        outputModule = outputModules[0],
+        outputModule = '',
         )
+    process.out.outputCommands += ['drop *_*MetUnc_*_*', 'keep selectedPatMETs_patType1CorrectedPFMet*MetUnc_*_*']
 
 
 # ------------------------------------------------------------------------------
@@ -797,6 +823,8 @@ process.p_metOptionalFilters = cms.Path( process.metOptionalFilters )  # combine
 # Trigger
 #   https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATTrigger
 # ------------------------------------------------------------------------------
+# NOTE: In general, it should always be used after any modification done to paths
+# (including the out-path), sequences and the modules they contain
 #from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger
 #switchOnTrigger( process )
 from PhysicsTools.PatAlgos.tools.trigTools import switchOnTriggerStandAlone
@@ -834,7 +862,29 @@ if runOnMC:
 # ------------------------------------------------------------------------------
 # VHbbAnalysis
 # ------------------------------------------------------------------------------
-
+process.HbbAnalyzerNew = cms.EDProducer("HbbAnalyzerNew",
+    runOnMC             = cms.bool(runOnMC),
+    electronTag         = cms.InputTag("selectedPatElectrons"),
+    muonTag             = cms.InputTag("selectedPatMuons"),
+    tauTag              = cms.InputTag("patTaus"),
+    photonTag           = cms.InputTag("selectedPatPhotons"),
+    simplejet2Tag       = cms.InputTag("selectedPatJets"),
+    simplejet3Tag       = cms.InputTag("selectedPatJetsAK8PFCHS"),
+    photonForIsoTag     = cms.InputTag("pfAllPhotons"),
+    metTag              = cms.InputTag("patMETs"),  # with Type-0+1 corrections
+    electronNoCutsTag   = cms.InputTag("gedGsfElectrons"),
+    muonNoCutsTag       = cms.InputTag("muons"),
+    hltResultsTag       = cms.InputTag("TriggerResults::HLT"),
+    lep_ptCutForBjets   = cms.double(5),
+    verbose             = cms.untracked.bool(False),
+    simplejet1Tag       = cms.InputTag("UNUSED_WAS_selectedPatJets"),
+    fatjetTag           = cms.InputTag("UNUSED_WAS_selectedPatJetsCAVHFatPF"),
+    subjetTag           = cms.InputTag("UNUSED_WAS_selectedPatJetsCAVHSubPF"),
+    filterjetTag        = cms.InputTag("UNUSED_WAS_selectedPatJetsCAVHFilterPF"),
+    metType1Tag         = cms.InputTag("UNUSED_WAS_patType1CorrectedPFMet"),
+    metType1p2Tag       = cms.InputTag("UNUSED_WAS_patType1p2CorrectedPFMet"),
+    )
+process.out.outputCommands += ['keep *_HbbAnalyzerNew_*_*']
 
 
 # ------------------------------------------------------------------------------
