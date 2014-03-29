@@ -2,15 +2,20 @@
 
 There are many ways to make Step 1 in the CMSSW world. We will use the following as reference in building our own:
 
-* Standard PF2PAT <https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATReleaseNotes70X>
+* ~~Standard PF2PAT <https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATReleaseNotes70X>~~
+  * ~~cfg: `$CMSSW_BASE/src/PhysicsTools/PatAlgos/python/patTemplate_cfg.py`~~
+  * ~~cfg: `$CMSSW_BASE/src/PhysicsTools/PatAlgos/test/patTuple_PF2PAT_cfg.py`~~
+
+* Standard PAT <https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuidePATReleaseNotes70X>
   * cfg: `$CMSSW_BASE/src/PhysicsTools/PatAlgos/python/patTemplate_cfg.py`
-  * cfg: `$CMSSW_BASE/src/PhysicsTools/PatAlgos/test/patTuple_PF2PAT_cfg.py`
+  * cfg: `$CMSSW_BASE/src/PhysicsTools/PatAlgos/test/patTuple_standard_cfg.py`
+  * cfg: `$CMSSW_BASE/src/PhysicsTools/PatAlgos/test/patTuple_data_cfg.py`
 
 * B2G framework <https://twiki.cern.ch/twiki/bin/view/CMS/B2GTopLikeBSM53X>
   * cfg: <http://cvs.web.cern.ch/cvs/cgi-bin/viewcvs.cgi/CMSSW/TopQuarkAnalysis/TopPairBSM/test/ttbsm_cfg.py?view=log> (last checked: V04-02-09)
 
 * JME framework #1 (jetToolbox) <https://twiki.cern.ch/twiki/bin/view/CMS/JetToolbox>
-  * cfg: <https://github.com/jstupak/cmssw/blob/jetToolboxRedux/RecoJets/JetProducers/test/jettoolbox_cfg.py> (last checked: b99c01ece7)
+  * cfg: <https://github.com/jstupak/cmssw/blob/jetToolboxRedux/RecoJets/JetProducers/test/jettoolbox_cfg.py> (last checked: 70a73d1819)
 
 * JME framework #2 (Bacon/PUPPI) <https://twiki.cern.ch/twiki/bin/viewauth/CMS/PUPPI>
   * cfg: <https://github.com/violatingcp/Bacon/blob/master/BaconProd/Ntupler/python/makingBacon_MC_PF.py> (last checked: b43e63e061)
