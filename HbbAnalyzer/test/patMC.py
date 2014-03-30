@@ -230,6 +230,8 @@ process.pfPileUpPFlow.checkClosestZVertex = False
 ################################################################################
 # TODO: Review both electron and muon isolation
 # TODO: Add/Modify tau ID
+# Apparently we are using detector-based reconstruction for electrons and muons
+# from PAT (not from PF2PAT), but PF-based isolation (due to usePFIso)
 
 # ------------------------------------------------------------------------------
 # Electron ID
@@ -260,7 +262,7 @@ process.eidSequence = cms.Sequence(
 # MVA 2012
 #process.load('EGamma.EGammaAnalysisTools.electronIdMVAProducer_cfi')
 process.load('EgammaAnalysis.ElectronTools.electronIdMVAProducer_cfi')
-process.mvaID = cms.Sequence(  process.mvaTrigV0 + process.mvaTrigNoIPV0 + process.mvaNonTrigV0 )
+process.mvaID = cms.Sequence( process.mvaTrigV0 + process.mvaTrigNoIPV0 + process.mvaNonTrigV0 )
 
 # ID Sources
 process.patElectrons.electronIDSources = cms.PSet(
@@ -318,14 +320,15 @@ process.patElectrons.isolationValuesNoPFId = cms.PSet(
 # Muon Isolation
 # ------------------------------------------------------------------------------
 # NB: Muon isolation cone size of 0.4 (default) is used. This agrees with POG recommendation.
-process.patMuonsPFlow.isolationValues.user = cms.VInputTag(
-    cms.InputTag("muPFIsoValueChargedAll03"+postfix),
-    cms.InputTag("muPFIsoValueCharged03"+postfix),
-    cms.InputTag("muPFIsoValueNeutral03"+postfix),
-    cms.InputTag("muPFIsoValueGamma03"+postfix),
-    cms.InputTag("muPFIsoValuePU03"+postfix),
-    cms.InputTag("muPFIsoValuePU04"+postfix),
-    )
+# NB: Ignore the above statement. Actually patMuonsPFlow is never used!
+#process.patMuonsPFlow.isolationValues.user = cms.VInputTag(
+#    cms.InputTag("muPFIsoValueChargedAll03"+postfix),
+#    cms.InputTag("muPFIsoValueCharged03"+postfix),
+#    cms.InputTag("muPFIsoValueNeutral03"+postfix),
+#    cms.InputTag("muPFIsoValueGamma03"+postfix),
+#    cms.InputTag("muPFIsoValuePU03"+postfix),
+#    cms.InputTag("muPFIsoValuePU04"+postfix),
+#    )
 
 # ------------------------------------------------------------------------------
 # Cut
@@ -974,7 +977,7 @@ process.out.outputCommands = cms.untracked.vstring(
     'keep *_HbbAnalyzerNew_*_*',
     #'keep VHbbCandidates_*_*_*',
     #'keep PileupSummaryInfos_*_*_*',
-    'keep edmTriggerResults_*_*_*',
+    'keep edmTriggerResults_TriggerResults_*_*',
     #'keep *_hltTriggerSummaryAOD_*_*',
     #'keep *_selectedVertices_*_*',
     #'keep *_TriggerResults_*_*',
