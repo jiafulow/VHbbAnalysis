@@ -27,7 +27,7 @@ process.fwliteInput = cms.PSet(
     runMin = cms.int32(-1),
     runMax = cms.int32(-1),
     skipEvents = cms.int32(0),
-    outputEvery = cms.uint32(0),  ## not implemented
+    outputEvery = cms.uint32(100),
     lumisToProcess = CfgTypes.untracked(CfgTypes.VLuminosityBlockRange()),
     )
 

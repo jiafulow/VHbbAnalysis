@@ -75,7 +75,7 @@ namespace LHAPDF {
 //#include "Math/SMatrix.h"
 
 // ZSV
-//#include "ZSV/BAnalysis/interface/SimBHadron.h"
+#include "ZSV/BAnalysis/interface/SimBHadron.h"
 
 // Move class definition to Ntupler.h ?
 //#include "VHbbAnalysis/VHbbDataFormats/interface/Ntupler.h"
@@ -822,43 +822,43 @@ typedef struct {
     float wMass;
 } TopInfo;
 
-//typedef struct {
-//    void set(const SimBHadron & sbhc, int i) {
-//        mass[i] = sbhc.mass();
-//        pt[i] = sbhc.pt();
-//        eta[i] = sbhc.eta();
-//        phi[i] = sbhc.phi();
-//        vtx_x[i] = sbhc.decPosition.x();
-//        vtx_y[i] = sbhc.decPosition.y();
-//        vtx_z[i] = sbhc.decPosition.z();
-//        pdgId[i] = sbhc.pdgId();
-//        status[i] = sbhc.status();
-//    };
-//    void reset() {
-//        for (int i = 0; i < MAXB; ++i) {
-//            mass[i] = -99; pt[i] = -99; eta[i] = -99; phi[i] = -99; vtx_x[i] = -99; vtx_y[i] = -99; vtx_z[i] = -99; pdgId[i] = -99; status[i] = -99;
-//        }
-//    };
-//    float mass[MAXB];
-//    float pt[MAXB];
-//    float eta[MAXB];
-//    float phi[MAXB];
-//    float vtx_x[MAXB];
-//    float vtx_y[MAXB];
-//    float vtx_z[MAXB];
-//    int pdgId[MAXB];
-//    int status[MAXB];
-//    //int quarkStatus[MAXB];
-//    //int brotherStatus[MAXB];
-//    //int otherId[MAXB];
-//    //bool etaOk[MAXB];
-//    //bool simOk[MAXB];
-//    //bool trackOk[MAXB];
-//    //bool cutOk[MAXB];
-//    //bool cutNewOk[MAXB];
-//    //bool mcMatchOk[MAXB];
-//    //bool matchOk[MAXB];
-//} SimBHadronInfo;
+typedef struct {
+    void set(const SimBHadron & sbhc, int i) {
+        mass[i] = sbhc.mass();
+        pt[i] = sbhc.pt();
+        eta[i] = sbhc.eta();
+        phi[i] = sbhc.phi();
+        vtx_x[i] = sbhc.decPosition.x();
+        vtx_y[i] = sbhc.decPosition.y();
+        vtx_z[i] = sbhc.decPosition.z();
+        pdgId[i] = sbhc.pdgId();
+        status[i] = sbhc.status();
+    };
+    void reset() {
+        for (int i = 0; i < MAXB; ++i) {
+            mass[i] = -99; pt[i] = -99; eta[i] = -99; phi[i] = -99; vtx_x[i] = -99; vtx_y[i] = -99; vtx_z[i] = -99; pdgId[i] = -99; status[i] = -99;
+        }
+    };
+    float mass[MAXB];
+    float pt[MAXB];
+    float eta[MAXB];
+    float phi[MAXB];
+    float vtx_x[MAXB];
+    float vtx_y[MAXB];
+    float vtx_z[MAXB];
+    int pdgId[MAXB];
+    int status[MAXB];
+    //int quarkStatus[MAXB];
+    //int brotherStatus[MAXB];
+    //int otherId[MAXB];
+    //bool etaOk[MAXB];
+    //bool simOk[MAXB];
+    //bool trackOk[MAXB];
+    //bool cutOk[MAXB];
+    //bool cutNewOk[MAXB];
+    //bool mcMatchOk[MAXB];
+    //bool matchOk[MAXB];
+} SimBHadronInfo;
 
 typedef struct {
     void set(const reco::SecondaryVertex & recoSv, const TVector3 recoPv, int isv) {
@@ -910,7 +910,7 @@ int main(int argc, char *argv[]) {
     // Declare variables
     // -------------------------------------------------------------------------
     IVFInfo IVF;
-    //SimBHadronInfo SimBs;
+    SimBHadronInfo SimBs;
     float rho, rho25, rhoN;
     int nPVs, nGoodPVs;
     METInfo MET;
@@ -1022,7 +1022,7 @@ int main(int argc, char *argv[]) {
     int runMin_(in.getParameter < int > ("runMin"));
     int runMax_(in.getParameter < int > ("runMax"));
     int skipEvents_(in.getParameter < int > ("skipEvents"));
-    unsigned int outputEvery_(in.getParameter < unsigned int > ("outputEvery"));  // not implemented
+    unsigned int outputEvery_(in.getParameter < unsigned int > ("outputEvery"));
     std::vector < edm::LuminosityBlockRange > jsonVector;
     if (in.exists("lumisToProcess") && ana.getParameter < bool > ("isMC")) {
         std::vector < edm::LuminosityBlockRange > const & lumisTemp = in.getUntrackedParameter < std::vector < edm::LuminosityBlockRange > > ("lumisToProcess");
@@ -1576,19 +1576,19 @@ int main(int argc, char *argv[]) {
     // IVF Higgs candidate
     _outTree->Branch("SVH", &SVH, "mass/F:pt/F:eta/F:phi/F:dR/F:dPhi/F:dEta/F");
 
-    //// SimBHadron
-    //_outTree->Branch("nSimBs", &nSimBs, "nSimBs/I");
-    //_outTree->Branch("SimBs_mass", &SimBs.mass, "mass[nSimBs]/F");
-    //_outTree->Branch("SimBs_pt", &SimBs.pt, "pt[nSimBs]/F");
-    //_outTree->Branch("SimBs_eta", &SimBs.eta, "eta[nSimBs]/F");
-    //_outTree->Branch("SimBs_phi", &SimBs.phi, "phi[nSimBs]/F");
-    //_outTree->Branch("SimBs_vtx_x", &SimBs.vtx_x, "vtx_x[nSimBs]/F");
-    //_outTree->Branch("SimBs_vtx_y", &SimBs.vtx_y, "vtx_y[nSimBs]/F");
-    //_outTree->Branch("SimBs_vtx_z", &SimBs.vtx_z, "vtx_z[nSimBs]/F");
-    //_outTree->Branch("SimBs_pdgId", &SimBs.pdgId, "pdgId[nSimBs]/F");
-    //_outTree->Branch("SimBs_status", &SimBs.status, "status[nSimBs]/F");
-    //// SimBHadron Higgs Candidate
-    //_outTree->Branch("SimBsH", &SimBsH, "mass/F:pt/F:eta/F:phi/F:dR/F:dPhi/F:dEta/F");
+    // SimBHadron
+    _outTree->Branch("nSimBs", &nSimBs, "nSimBs/I");
+    _outTree->Branch("SimBs_mass", &SimBs.mass, "mass[nSimBs]/F");
+    _outTree->Branch("SimBs_pt", &SimBs.pt, "pt[nSimBs]/F");
+    _outTree->Branch("SimBs_eta", &SimBs.eta, "eta[nSimBs]/F");
+    _outTree->Branch("SimBs_phi", &SimBs.phi, "phi[nSimBs]/F");
+    _outTree->Branch("SimBs_vtx_x", &SimBs.vtx_x, "vtx_x[nSimBs]/F");
+    _outTree->Branch("SimBs_vtx_y", &SimBs.vtx_y, "vtx_y[nSimBs]/F");
+    _outTree->Branch("SimBs_vtx_z", &SimBs.vtx_z, "vtx_z[nSimBs]/F");
+    _outTree->Branch("SimBs_pdgId", &SimBs.pdgId, "pdgId[nSimBs]/F");
+    _outTree->Branch("SimBs_status", &SimBs.status, "status[nSimBs]/F");
+    // SimBHadron Higgs Candidate
+    _outTree->Branch("SimBsH", &SimBsH, "mass/F:pt/F:eta/F:phi/F:dR/F:dPhi/F:dEta/F");
 
     _outTree->Branch("rho", &rho, "rho/F");
     _outTree->Branch("rho25", &rho25, "rho25/F");
@@ -1658,6 +1658,8 @@ int main(int argc, char *argv[]) {
 
         /// Loop over events
         for (ev.toBegin(); !ev.atEnd(); ++ev, ++ievt) {
+            if (ievt % outputEvery_ == 0)
+                std::cout << "--- ... Processing event: " << ievt << std::endl;
             if (ievt <= skipEvents_)  continue;
             if ((maxEvents_ >= 0) && (ievt > maxEvents_ + skipEvents_))  break;
 
@@ -1892,7 +1894,6 @@ int main(int argc, char *argv[]) {
                 FatH.pt = vhCand.FatH.p4.Pt();
                 FatH.eta = vhCand.FatH.p4.Eta();
                 FatH.phi = vhCand.FatH.p4.Phi();
-
                 nfathFilterJets = vhCand.FatH.subjetsSize;
                 for (int j = 0; j < nfathFilterJets; j++) {
                     fathFilterJets.set(vhCand.FatH.jets[j], j);
@@ -1925,7 +1926,7 @@ int main(int argc, char *argv[]) {
             V.mass = vhCand.V.p4.M();
             if (isW)  V.mass = vhCand.Mt();
             V.pt = vhCand.V.p4.Pt();
-            V.eta = vhCand.V.p4.Eta();
+            if (V.pt > 0.1) V.eta = vhCand.V.p4.Eta();  else V.eta = -99;
             V.phi = vhCand.V.p4.Phi();
             VMt = vhCand.Mt();
 
@@ -2011,7 +2012,7 @@ int main(int argc, char *argv[]) {
                 //gluon is 0 in the LHAPDF numberin
                 if (id1 == 21)  id1 = 0;
                 if (id2 == 21)  id2 = 0;
-                int _pdfmember = 0; //member = 0 is the pdf central value.
+                //int _pdfmember = 0; //member = 0 is the pdf central value.
                 //madgraph default pdf
                 //LHAPDF::usePDFMember(1,_pdfmember);
                 double oldpdf1 = LHAPDF::xfx(1, x1, Q, id1) / x1;
@@ -2141,9 +2142,10 @@ int main(int argc, char *argv[]) {
               if (vhCand.H.jets[0].btagNTracks > 0 && vhCand.H.jets[1].btagNTracks > 0){
                 for (int t=0;t!=vhCand.H.jets[0].btagNTracks;t++){
                   for (int ti=0;ti!=vhCand.H.jets[1].btagNTracks;ti++){
-                    if ((int)vhCand.H.jets[0].btagTrackIds[t] == (int)vhCand.H.jets[1].btagTrackIds[ti]){
-                      TkSharing.HiggsIPtkSharing = true;
-                    }// same trackID
+            //FIXME: not sure why seg fault here
+            //        if ((int)vhCand.H.jets[0].btagTrackIds[t] == (int)vhCand.H.jets[1].btagTrackIds[ti]){
+            //          TkSharing.HiggsIPtkSharing = true;
+            //        }// same trackID
                   }// loop tracks in second hjet
                 }// loop tracks in first hjet
               }// if tracks in jet
@@ -2195,71 +2197,71 @@ int main(int argc, char *argv[]) {
               }// if tracks in jet
             }// end if FatHiggsFlag
 
-            //// IVF
-            //fwlite::Handle < std::vector < reco::Vertex > > SVC;
-            //SVC.getByLabel(ev, "bcandidates");
-            //const std::vector < reco::Vertex > svc = *(SVC.product());
-            //
-            //IVF.reset();
-            //nSvs = svc.size();
-            //const TVector3 recoPv = aux.pvInfo.firstPVInPT2;
-            //const math::XYZPoint myPv(recoPv);
+            // IVF
+            fwlite::Handle < std::vector < reco::Vertex > > SVC;
+            SVC.getByLabel(ev, "bcandidates");
+            const std::vector < reco::Vertex > svc = *(SVC.product());
 
-            //FAKE ERROR MATRIX
-//     //look here for Matrix filling info http://project-mathlibs.web.cern.ch/project-mathlibs/sw/html/SMatrixDoc.html
-//     std::vector<double> fillMatrix(6);
-//     for (int i = 0; i<6; ++i) fillMatrix[i] = 0.;
-//     fillMatrix[0] = TMath::Power(0.002,2);
-//     fillMatrix[2] = TMath::Power(0.002,2);
-//     fillMatrix[5] = TMath::Power(0.002,2);
-//     const ROOT::Math::SMatrix<double, 3, 3, ROOT::Math::MatRepSym<double, 3> > myFakeMatrixError(fillMatrix.begin(),fillMatrix.end());
-//     const reco::Vertex recoVtxPv(myPv, myFakeMatrixError);
+            IVF.reset();
+            nSvs = svc.size();
+            const TVector3 recoPv = aux.pvInfo.firstPVInPT2;
+            const math::XYZPoint myPv(recoPv);
 
-            ////REAL ERROR MATRIX
-            //const reco::Vertex recoVtxPv(myPv, aux.pvInfo.efirstPVInPT2);
-            //for (int j = 0; j < nSvs && j < MAXB; ++j) {
-            //    const GlobalVector flightDir = flightDirection(recoPv, svc[j]);
-            //    reco::SecondaryVertex recoSv(recoVtxPv, svc[j], flightDir, true);
-            //    IVF.set(recoSv, recoPv, j);
-            //}
-            //if (nSvs > 1) {
-            //    TLorentzVector BCands_H1, BCands_H2, BCands_H;
-            //    BCands_H1.SetPtEtaPhiM(IVF.pt[0], IVF.eta[0], IVF.phi[0], IVF.massBcand[0]);
-            //    BCands_H2.SetPtEtaPhiM(IVF.pt[1], IVF.eta[1], IVF.phi[1], IVF.massBcand[1]);
-            //    BCands_H = BCands_H1 + BCands_H2;
-            //    SVH.dR = deltaR(IVF.eta[0], IVF.phi[0], IVF.eta[1], IVF.phi[1]);
-            //    SVH.dPhi = deltaPhi(IVF.phi[0], IVF.phi[1]);
-            //    SVH.dEta = TMath::Abs(IVF.eta[0] - IVF.eta[1]);
-            //    SVH.mass = BCands_H.M();
-            //    SVH.pt = BCands_H.Pt();
-            //    if (SVH.pt > 0.1) SVH.eta = BCands_H.Eta();  else SVH.eta = -99;
-            //    SVH.phi = BCands_H.Phi();
-            //}
+            ////FAKE ERROR MATRIX
+            ////look here for Matrix filling info http://project-mathlibs.web.cern.ch/project-mathlibs/sw/html/SMatrixDoc.html
+            //std::vector<double> fillMatrix(6);
+            //for (int i = 0; i<6; ++i) fillMatrix[i] = 0.;
+            //fillMatrix[0] = TMath::Power(0.002,2);
+            //fillMatrix[2] = TMath::Power(0.002,2);
+            //fillMatrix[5] = TMath::Power(0.002,2);
+            //const ROOT::Math::SMatrix<double, 3, 3, ROOT::Math::MatRepSym<double, 3> > myFakeMatrixError(fillMatrix.begin(),fillMatrix.end());
+            //const reco::Vertex recoVtxPv(myPv, myFakeMatrixError);
 
-            //// SimBHadron
-            //const SimBHadronCollection * sbhc;
-            //SimBs.reset();
-            //if (isMC_) {
-            //    fwlite::Handle < SimBHadronCollection > SBHC;
-            //    SBHC.getByLabel(ev, "bhadrons");
-            //    sbhc = SBHC.product();
-            //    nSimBs = sbhc->size();
-            //    for (int j = 0; j < nSimBs && j < MAXB; ++j)
-            //        SimBs.set(sbhc->at(j), j);
-            //    if (nSimBs > 1) {
-            //        TLorentzVector SimBs_H1, SimBs_H2, SimBs_H;
-            //        SimBs_H1.SetPtEtaPhiM(SimBs.pt[0], SimBs.eta[0], SimBs.phi[0], SimBs.mass[0]);
-            //        SimBs_H2.SetPtEtaPhiM(SimBs.pt[1], SimBs.eta[1], SimBs.phi[1], SimBs.mass[1]);
-            //        SimBs_H = SimBs_H1 + SimBs_H2;
-            //        SimBsH.dR = deltaR(SimBs.eta[0], SimBs.phi[0], SimBs.eta[1], SimBs.phi[1] );
-            //        SimBsH.dPhi = deltaPhi(SimBs.phi[0], SimBs.phi[1] );
-            //        SimBsH.dEta = TMath::Abs(SimBs.eta[0] - SimBs.eta[1] );
-            //        SimBsH.mass = SimBs_H.M();
-            //        SimBsH.pt = SimBs_H.Pt();
-            //        if (SimBsH.pt > 0.1) SimBsH.eta = SimBs_H.Eta();  else SimBsH.eta = -99;
-            //        SimBsH.phi = SimBs_H.Phi();
-            //    }
-            //}
+            //REAL ERROR MATRIX
+            const reco::Vertex recoVtxPv(myPv, aux.pvInfo.efirstPVInPT2);
+            for (int j = 0; j < nSvs && j < MAXB; ++j) {
+                const GlobalVector flightDir = flightDirection(recoPv, svc[j]);
+                reco::SecondaryVertex recoSv(recoVtxPv, svc[j], flightDir, true);
+                IVF.set(recoSv, recoPv, j);
+            }
+            if (nSvs > 1) {
+                TLorentzVector BCands_H1, BCands_H2, BCands_H;
+                BCands_H1.SetPtEtaPhiM(IVF.pt[0], IVF.eta[0], IVF.phi[0], IVF.massBcand[0]);
+                BCands_H2.SetPtEtaPhiM(IVF.pt[1], IVF.eta[1], IVF.phi[1], IVF.massBcand[1]);
+                BCands_H = BCands_H1 + BCands_H2;
+                SVH.dR = deltaR(IVF.eta[0], IVF.phi[0], IVF.eta[1], IVF.phi[1]);
+                SVH.dPhi = deltaPhi(IVF.phi[0], IVF.phi[1]);
+                SVH.dEta = TMath::Abs(IVF.eta[0] - IVF.eta[1]);
+                SVH.mass = BCands_H.M();
+                SVH.pt = BCands_H.Pt();
+                if (SVH.pt > 0.1) SVH.eta = BCands_H.Eta();  else SVH.eta = -99;
+                SVH.phi = BCands_H.Phi();
+            }
+
+            // SimBHadron
+            const SimBHadronCollection * sbhc;
+            SimBs.reset();
+            if (isMC_) {
+                fwlite::Handle < SimBHadronCollection > SBHC;
+                SBHC.getByLabel(ev, "bhadrons");
+                sbhc = SBHC.product();
+                nSimBs = sbhc->size();
+                for (int j = 0; j < nSimBs && j < MAXB; ++j)
+                    SimBs.set(sbhc->at(j), j);
+                if (nSimBs > 1) {
+                    TLorentzVector SimBs_H1, SimBs_H2, SimBs_H;
+                    SimBs_H1.SetPtEtaPhiM(SimBs.pt[0], SimBs.eta[0], SimBs.phi[0], SimBs.mass[0]);
+                    SimBs_H2.SetPtEtaPhiM(SimBs.pt[1], SimBs.eta[1], SimBs.phi[1], SimBs.mass[1]);
+                    SimBs_H = SimBs_H1 + SimBs_H2;
+                    SimBsH.dR = deltaR(SimBs.eta[0], SimBs.phi[0], SimBs.eta[1], SimBs.phi[1] );
+                    SimBsH.dPhi = deltaPhi(SimBs.phi[0], SimBs.phi[1] );
+                    SimBsH.dEta = TMath::Abs(SimBs.eta[0] - SimBs.eta[1] );
+                    SimBsH.mass = SimBs_H.M();
+                    SimBsH.pt = SimBs_H.Pt();
+                    if (SimBsH.pt > 0.1) SimBsH.eta = SimBs_H.Eta();  else SimBsH.eta = -99;
+                    SimBsH.phi = SimBs_H.Phi();
+                }
+            }
 
 
             /// MET
@@ -2834,7 +2836,7 @@ int main(int argc, char *argv[]) {
             // Fill H(bb)H(bb) generator level information
             if (isMC_) {
                 fwlite::Handle < reco::GenParticleCollection > genParticlesHandle;
-                genParticlesHandle.getByLabel(ev, "savedGenParticles");
+                genParticlesHandle.getByLabel(ev, "prunedGenParticles");
                 const reco::GenParticleCollection * genParticles = &(*genParticlesHandle.product());
 
                 for (size_t i = 0; i < genParticles->size(); ++i) {

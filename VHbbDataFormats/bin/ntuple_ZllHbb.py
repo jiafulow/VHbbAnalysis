@@ -3,16 +3,16 @@ import FWCore.ParameterSet.Types as CfgTypes
 
 process = cms.Process("FWLitePlots")
 
-channel = "MET"
-isMC = False
+channel = "ZllHbb"
+isMC = True
 #dirname = "/eos/uscms/store/user/jiafu/ZbbHinv/jftest/dataset_ZbbHinv125_FASTSIM_lfns/"
-dirname = "/pnfs/cms/WAX/11/store/user/jiafu//ZnunuHbb/EDMV42_Step2_V4a_Data_Nov27/MET_Run2012C_24Aug2012/"
+dirname = "/pnfs/cms/WAX/11/store/user/jiafu//ZnunuHbb/EDMV42_Step2_V4a_MC_Nov27/ZH_ZToNuNu_HToBB_M-125_8TeV-powheg-herwigpp/"
 
 ## INPUT
 
 process.fwliteInput = cms.PSet(
     fileNames   = cms.vstring(
-        "file:PAT.edm.0.root"
+        "file:patTuple.700dev.root"
         ),
     PUmcfileName2011B= cms.string("Summer12MCObserved.root"),
     PUdatafileName2011B = cms.string("MyDataPileupHistogramObserved.root"),
