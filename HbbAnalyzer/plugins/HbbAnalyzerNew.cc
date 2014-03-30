@@ -573,13 +573,13 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         iEvent.getByLabel("calibratedAK5PFJetsCHS", puJetIdJets);
 
         //std::cout << " pt " << jet_iter->pt() << " eta " << jet_iter->eta() << std::endl;
-        //unsigned int idx = jet_iter - simplejets2.begin();
+        unsigned int idx = jet_iter - simplejets2.begin();
         //sj.puJetIdMva = (*puJetIdMVA)[simplejets2.refAt(idx)];
         //int idflag = (*puJetIdFlag)[simplejets2.refAt(idx)];
 
-        reco::PFJetRef recojetref(puJetIdJets, jet_iter->originalObjectRef().key());
+        reco::PFJetRef recojetref(puJetIdJets, idx);
         if (fabs(recojetref->pt() - jet_iter->pt()) > 1e-2)
-            std::cout << "WARNING: patJet and recoJetRef do not match: " << recojetref->pt() << " vs " << jet_iter->pt() << std::endl;
+            std::cout << "ERROR: patJet and recoJetRef do not match: " << recojetref->pt() << " vs " << jet_iter->pt() << std::endl;
         sj.puJetIdMva = (*puJetIdMVA)[recojetref];
         int idflag = (*puJetIdFlag)[recojetref];
         //std::cout << " PU JetID MVA " << sj.puJetIdMva;
@@ -1311,8 +1311,8 @@ void HbbAnalyzerNew::produce(edm::Event & iEvent,
         //ef.id70r = elec->electronID("eidVBTFRel70");
 
         // 2012 MVA EleID
-        //ef.mvaOut = elec->electronID("mvaNonTrigV0");
-        //ef.mvaOutTrig = elec->electronID("mvaTrigV0");
+        ef.mvaOut = elec->electronID("mvaNonTrigV0");
+        ef.mvaOutTrig = elec->electronID("mvaTrigV0");
 
         // Electron trigger matching
         for (int itrig = 0; itrig != ntrigs; ++itrig) {
@@ -1655,8 +1655,8 @@ void HbbAnalyzerNew::fillSimpleJet(VHbbEvent::SimpleJet & sj,
     sj.charge = jet_iter->jetCharge();
     sj.ntracks = jet_iter->associatedTracks().size();
     sj.jetArea = jet_iter->jetArea();
-
-    if (jet_iter->hasTagInfo("secondaryVertexTagInfos")) {
+    const reco::SecondaryVertexTagInfo * tf = jet_iter->tagInfoSecondaryVertex();
+    if (tf) {
         //sj.tche = jet_iter->bDiscriminator("trackCountingHighEffBJetTags");
         //sj.tchp = jet_iter->bDiscriminator("trackCountingHighPurBJetTags");
         sj.jp = jet_iter->bDiscriminator("jetProbabilityBJetTags");
@@ -1688,7 +1688,7 @@ void HbbAnalyzerNew::fillSimpleJet(VHbbEvent::SimpleJet & sj,
     }
 
     /// Add CSV secondary vertex info
-    const reco::SecondaryVertexTagInfo * tf = jet_iter->tagInfoSecondaryVertex();
+    //const reco::SecondaryVertexTagInfo * tf = jet_iter->tagInfoSecondaryVertex();
     if (tf) {
         math::XYZTLorentzVectorD vertexSum;
         for (size_t vi = 0; vi < tf->nVertices(); vi++) {
@@ -1714,7 +1714,7 @@ void HbbAnalyzerNew::fillSimpleJet(VHbbEvent::SimpleJet & sj,
         }
     }
 
-    if (jet_iter->hasTagInfo("secondaryVertexTagInfos")) {
+    if (tf) {
         /// Add CSV track IP info
         const reco::SecondaryVertexTagInfo * svTagInfos = jet_iter->tagInfoSecondaryVertex();  // identical to tf?
         const reco::TrackIPTagInfo * ipTagInfos = jet_iter->tagInfoTrackIP();

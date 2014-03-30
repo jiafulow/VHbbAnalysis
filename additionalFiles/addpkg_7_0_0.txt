@@ -28,6 +28,13 @@
 # ------------------------------------------------------------------------------
 git cms-addpkg PhysicsTools/PatAlgos
 git cms-merge-topic -u cms-analysis-tools:7_0_0_pre12-photon
+# Fix patEventContentNoCleaning
+sed -i 's/\(.*drop .*_selectedPatJets_pfCandidates_.*\)/#\1/' PhysicsTools/PatAlgos/python/patEventContent_cff.py
+# Fix supportedBtagDiscr
+sed -i 's/\(.*\)#\(.*combinedSecondaryVertexV1BJetTags.*\)/\1\2/' PhysicsTools/PatAlgos/python/recoLayer0/bTagging_cff.py
+sed -i 's/\(.*\)#\(.*combinedSecondaryVertexSoftPFLeptonV1BJetTags.*\)/\1\2/' PhysicsTools/PatAlgos/python/recoLayer0/bTagging_cff.py
+# Fix jetTools.py
+sed -i 's/"ak", "kt", "sc", "ic"/"ak", "kt", "gk", "ca", "sc", "ic"/' PhysicsTools/PatAlgos/python/tools/jetTools.py
 
 
 # ------------------------------------------------------------------------------
@@ -72,7 +79,7 @@ touch RecoJets/JetProducers/data/dummy.txt
 
 # Get rid of warnings
 cp RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_chs_Dec2012.orig.weights.xml
-#sed -i 's/jetPt \&gt; 20\.0/jetPt \&gt; 0.0/' RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml
+sed -i 's/jetPt \&gt; 20\.0/jetPt \&gt; 0.0/' RecoJets/JetProducers/data/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml
 
 
 # ------------------------------------------------------------------------------
@@ -117,6 +124,8 @@ cd ..
 # ------------------------------------------------------------------------------
 # Compile & Run
 # ------------------------------------------------------------------------------
+# lhapdffull is needed for PDF reweighting
+scram setup lhapdffull
 scram b -j8
 
 #cmsRun VHbbAnalysis/HbbAnalyzer/test/patData.py

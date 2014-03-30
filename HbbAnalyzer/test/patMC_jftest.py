@@ -96,7 +96,8 @@ process.out.outputCommands += [
     'keep recoPFCandidates_particleFlow_*_*',
     #'keep double_*_rho_*',
     'keep double_fixedGridRho*_*_*',
-    'keep *_offlinePrimaryVertices_*_*'
+    'keep *_offlinePrimaryVertices_*_*',
+    'keep edmTriggerResults_TriggerResults_*_*',
     ]
 if runOnMC:
     process.out.outputCommands += [
@@ -267,12 +268,15 @@ doMuIso04 = True
 
 ## MVA electron ID
 ## Won't work for CMSSW_7_X_Y
-#process.load('EgammaAnalysis.ElectronTools.electronIdMVAProducer_cfi')
-#process.mvaID = cms.Sequence( process.mvaTrigV0 + process.mvaTrigNoIPV0 + process.mvaNonTrigV0 )
-## append them
-#getattr(process,"patElectrons"+postfix).electronIDSources.mvaTrigV0 = cms.InputTag("mvaTrigV0")
-#getattr(process,"patElectrons"+postfix).electronIDSources.mvaNonTrigV0 = cms.InputTag("mvaNonTrigV0")
-#getattr(process,"patElectrons"+postfix).electronIDSources.mvaTrigNoIPV0 = cms.InputTag("mvaTrigNoIPV0")
+process.load('EgammaAnalysis.ElectronTools.electronIdMVAProducer_cfi')
+process.mvaTrigV0.electronTag = "gedGsfElectrons"
+process.mvaTrigNoIPV0.electronTag = "gedGsfElectrons"
+process.mvaNonTrigV0.electronTag = "gedGsfElectrons"
+process.mvaID = cms.Sequence( process.mvaTrigV0 + process.mvaTrigNoIPV0 + process.mvaNonTrigV0 )
+# append them
+getattr(process,"patElectrons"+postfix).electronIDSources.mvaTrigV0 = cms.InputTag("mvaTrigV0")
+getattr(process,"patElectrons"+postfix).electronIDSources.mvaNonTrigV0 = cms.InputTag("mvaNonTrigV0")
+getattr(process,"patElectrons"+postfix).electronIDSources.mvaTrigNoIPV0 = cms.InputTag("mvaTrigNoIPV0")
 
 # ------------------------------------------------------------------------------
 # Muon ID
@@ -325,7 +329,7 @@ from RecoJets.Configuration.RecoPFJets_cff import \
     ca15PFJetsCHSMassDropFiltered, ca15PFJetsCHSFiltered
 #setattr(process, "ak4PFJets"+postfix, ak5PFJets.clone( rParam = 0.4 ))
 process.ak4PFJets = ak5PFJets.clone( rParam = 0.4 )
-#process.kt6PFJets = kt6PFJets
+process.kt6PFJets = kt6PFJets
 process.ca15PFJetsCHS = ca8PFJetsCHS.clone( rParam = 1.5 )
 process.ca8PFJetsCHSPruned = ca8PFJetsCHSPruned.clone( doAreaFastjet = cms.bool(True) )
 process.ca15PFJetsCHSFiltered = ca15PFJetsCHSFiltered.clone(
@@ -837,7 +841,7 @@ process.patTrigger.packTriggerPathNames = cms.bool(True)
 # ------------------------------------------------------------------------------
 if runOnMC:
     #process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
-    prunedGenParticles = cms.EDProducer("GenParticlePruner",
+    process.prunedGenParticles = cms.EDProducer("GenParticlePruner",
         src = cms.InputTag("genParticles"),
         select = cms.vstring(
             "drop *", # this is the default
