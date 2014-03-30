@@ -44,10 +44,10 @@ sed -i 's/"ak", "kt", "sc", "ic"/"ak", "kt", "gk", "ca", "sc", "ic"/' PhysicsToo
 # TWiki revision    : r53 - 14 Jan 2014
 # Commit SHA        : (from release)
 # ------------------------------------------------------------------------------
-#git cms-addpkg EgammaAnalysis/ElectronTools
-#cd EgammaAnalysis/ElectronTools/data/
-#cat download.url | xargs wget
-#cd -
+git cms-addpkg EgammaAnalysis/ElectronTools
+cd EgammaAnalysis/ElectronTools/data/
+cat download.url | xargs wget
+cd -
 
 
 # ------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ sed -i 's/jetPt \&gt; 20\.0/jetPt \&gt; 0.0/' RecoJets/JetProducers/data/TMVACla
 # ------------------------------------------------------------------------------
 # b-tagging
 # ------------------------------------------------------------------------------
- git cms-addpkg RecoBTag/SecondaryVertex
+git cms-addpkg RecoBTag/SecondaryVertex
 
 # Steal from Andrea Rizzi's bb-correlation repository
 wget --no-check-certificate https://raw.githubusercontent.com/arizzi/bb-correlation/master/CMSSW/BAnalysis/BCandidateProducer/plugins/BCandidateProducer.cc -O RecoBTag/SecondaryVertex/plugins/BCandidateProducer.cc
@@ -118,7 +118,7 @@ cp additionalFiles/sandbox/TobTecFakesFilter.cc ../RecoMET/METFilters/plugins/
 cp additionalFiles/sandbox/metOptionalFilters_cff.py ../RecoMET/METFilters/python/
 # Use the 53x PileupJetID training files
 cp additionalFiles/sandbox/PileupJetID_53x_cfi.py ../RecoJets/JetProducers/python/
-cd ..
+cd -
 
 
 # ------------------------------------------------------------------------------
@@ -127,5 +127,7 @@ cd ..
 # lhapdffull is needed for PDF reweighting
 scram setup lhapdffull
 scram b -j8
+rehash
 
-#cmsRun VHbbAnalysis/HbbAnalyzer/test/patData.py
+#cd VHbbAnalysis/HbbAnalyzer/test/
+#cmsRun patMC_700dev.py
