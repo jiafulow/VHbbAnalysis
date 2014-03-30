@@ -2124,78 +2124,79 @@ int main(int argc, char *argv[]) {
             eebadscFlag = patFilter.accept("eebadscFilter");
 
             /// Track Sharing Flags
-            TkSharing.HiggsCSVtkSharing = TkSharing.HiggsIPtkSharing = TkSharing.HiggsSVtkSharing = TkSharing.FatHiggsCSVtkSharing = TkSharing.FatHiggsIPtkSharing = TkSharing.FatHiggsSVtkSharing = false;
-
-            if(vhCand.H.HiggsFlag){
-              // csv tracks
-              if (vhCand.H.jets[0].csvNTracks > 0 && vhCand.H.jets[1].csvNTracks > 0){
-                for (int t=0;t!=vhCand.H.jets[0].csvNTracks;t++){
-                  for (int ti=0;ti!=vhCand.H.jets[1].csvNTracks;ti++){
-                    if ((int)vhCand.H.jets[0].csvTrackIds[t] == (int)vhCand.H.jets[1].csvTrackIds[ti]){
-                      TkSharing.HiggsCSVtkSharing = true;
-                    }// same trackID
-                  }// loop tracks in second hjet
-                }// loop tracks in first hjet
-              }// if tracks in jet
-
-              // ip tracks
-              if (vhCand.H.jets[0].btagNTracks > 0 && vhCand.H.jets[1].btagNTracks > 0){
-                for (int t=0;t!=vhCand.H.jets[0].btagNTracks;t++){
-                  for (int ti=0;ti!=vhCand.H.jets[1].btagNTracks;ti++){
             //FIXME: not sure why seg fault here
+            //TkSharing.HiggsCSVtkSharing = TkSharing.HiggsIPtkSharing = TkSharing.HiggsSVtkSharing = TkSharing.FatHiggsCSVtkSharing = TkSharing.FatHiggsIPtkSharing = TkSharing.FatHiggsSVtkSharing = false;
+            //
+            //if(vhCand.H.HiggsFlag){
+            //  // csv tracks
+            //  if (vhCand.H.jets[0].csvNTracks > 0 && vhCand.H.jets[1].csvNTracks > 0){
+            //    for (int t=0;t!=vhCand.H.jets[0].csvNTracks;t++){
+            //      for (int ti=0;ti!=vhCand.H.jets[1].csvNTracks;ti++){
+            //        if ((int)vhCand.H.jets[0].csvTrackIds[t] == (int)vhCand.H.jets[1].csvTrackIds[ti]){
+            //          TkSharing.HiggsCSVtkSharing = true;
+            //        }// same trackID
+            //      }// loop tracks in second hjet
+            //    }// loop tracks in first hjet
+            //  }// if tracks in jet
+            //
+            //  // ip tracks
+            //  if (vhCand.H.jets[0].btagNTracks > 0 && vhCand.H.jets[1].btagNTracks > 0){
+            //    for (int t=0;t!=vhCand.H.jets[0].btagNTracks;t++){
+            //      for (int ti=0;ti!=vhCand.H.jets[1].btagNTracks;ti++){
+            //
             //        if ((int)vhCand.H.jets[0].btagTrackIds[t] == (int)vhCand.H.jets[1].btagTrackIds[ti]){
             //          TkSharing.HiggsIPtkSharing = true;
             //        }// same trackID
-                  }// loop tracks in second hjet
-                }// loop tracks in first hjet
-              }// if tracks in jet
-
-              // sv tracks
-              if (vhCand.H.jets[0].vtxNTracks > 0 && vhCand.H.jets[1].vtxNTracks > 0){
-                for (int t=0;t!=vhCand.H.jets[0].vtxNTracks;t++){
-                  for (int ti=0;ti!=vhCand.H.jets[1].vtxNTracks;ti++){
-                    if ((int)vhCand.H.jets[0].vtxTrackIds[t] == (int)vhCand.H.jets[1].vtxTrackIds[ti]){
-                      TkSharing.HiggsSVtkSharing = true;
-                    }// same trackID
-                  }// loop tracks in second hjet
-                }// loop tracks in first hjet
-              }// if tracks in jet
-            } // end if HiggsFlag
-
-            if(vhCand.FatH.FatHiggsFlag && nfathFilterJets > 1){
-              // csv tracks
-              if (vhCand.FatH.jets[0].csvNTracks > 0 && vhCand.FatH.jets[1].csvNTracks > 0){
-                for (int t=0;t!=vhCand.FatH.jets[0].csvNTracks;t++){
-                  for (int ti=0;ti!=vhCand.FatH.jets[1].csvNTracks;ti++){
-                    if ((int)vhCand.FatH.jets[0].csvTrackIds[t] == (int)vhCand.FatH.jets[1].csvTrackIds[ti]){
-                      TkSharing.FatHiggsCSVtkSharing = true;
-                    }// same trackID
-                  }// loop tracks in second hjet
-                }// loop tracks in first hjet
-              }// if tracks in jet
-
-              // ip tracks
-              if (vhCand.FatH.jets[0].btagNTracks > 0 && vhCand.FatH.jets[1].btagNTracks > 0){
-                for (int t=0;t!=vhCand.FatH.jets[0].btagNTracks;t++){
-                  for (int ti=0;ti!=vhCand.FatH.jets[1].btagNTracks;ti++){
-                    if ((int)vhCand.FatH.jets[0].btagTrackIds[t] == (int)vhCand.FatH.jets[1].btagTrackIds[ti]){
-                      TkSharing.FatHiggsIPtkSharing = true;
-                    }// same trackID
-                  }// loop tracks in second hjet
-                }// loop tracks in first hjet
-              }// if tracks in jet
-
-              // sv tracks
-              if (vhCand.FatH.jets[0].vtxNTracks > 0 && vhCand.FatH.jets[1].vtxNTracks > 0){
-                for (int t=0;t!=vhCand.FatH.jets[0].vtxNTracks;t++){
-                  for (int ti=0;ti!=vhCand.FatH.jets[1].vtxNTracks;ti++){
-                    if ((int)vhCand.FatH.jets[0].vtxTrackIds[t] == (int)vhCand.FatH.jets[1].vtxTrackIds[ti]){
-                      TkSharing.FatHiggsSVtkSharing = true;
-                    }// same trackID
-                  }// loop tracks in second hjet
-                }// loop tracks in first hjet
-              }// if tracks in jet
-            }// end if FatHiggsFlag
+            //      }// loop tracks in second hjet
+            //    }// loop tracks in first hjet
+            //  }// if tracks in jet
+            //
+            //  // sv tracks
+            //  if (vhCand.H.jets[0].vtxNTracks > 0 && vhCand.H.jets[1].vtxNTracks > 0){
+            //    for (int t=0;t!=vhCand.H.jets[0].vtxNTracks;t++){
+            //      for (int ti=0;ti!=vhCand.H.jets[1].vtxNTracks;ti++){
+            //        if ((int)vhCand.H.jets[0].vtxTrackIds[t] == (int)vhCand.H.jets[1].vtxTrackIds[ti]){
+            //          TkSharing.HiggsSVtkSharing = true;
+            //        }// same trackID
+            //      }// loop tracks in second hjet
+            //    }// loop tracks in first hjet
+            //  }// if tracks in jet
+            //} // end if HiggsFlag
+            //
+            //if(vhCand.FatH.FatHiggsFlag && nfathFilterJets > 1){
+            //  // csv tracks
+            //  if (vhCand.FatH.jets[0].csvNTracks > 0 && vhCand.FatH.jets[1].csvNTracks > 0){
+            //    for (int t=0;t!=vhCand.FatH.jets[0].csvNTracks;t++){
+            //      for (int ti=0;ti!=vhCand.FatH.jets[1].csvNTracks;ti++){
+            //        if ((int)vhCand.FatH.jets[0].csvTrackIds[t] == (int)vhCand.FatH.jets[1].csvTrackIds[ti]){
+            //          TkSharing.FatHiggsCSVtkSharing = true;
+            //        }// same trackID
+            //      }// loop tracks in second hjet
+            //    }// loop tracks in first hjet
+            //  }// if tracks in jet
+            //
+            //  // ip tracks
+            //  if (vhCand.FatH.jets[0].btagNTracks > 0 && vhCand.FatH.jets[1].btagNTracks > 0){
+            //    for (int t=0;t!=vhCand.FatH.jets[0].btagNTracks;t++){
+            //      for (int ti=0;ti!=vhCand.FatH.jets[1].btagNTracks;ti++){
+            //        if ((int)vhCand.FatH.jets[0].btagTrackIds[t] == (int)vhCand.FatH.jets[1].btagTrackIds[ti]){
+            //          TkSharing.FatHiggsIPtkSharing = true;
+            //        }// same trackID
+            //      }// loop tracks in second hjet
+            //    }// loop tracks in first hjet
+            //  }// if tracks in jet
+            //
+            //  // sv tracks
+            //  if (vhCand.FatH.jets[0].vtxNTracks > 0 && vhCand.FatH.jets[1].vtxNTracks > 0){
+            //    for (int t=0;t!=vhCand.FatH.jets[0].vtxNTracks;t++){
+            //      for (int ti=0;ti!=vhCand.FatH.jets[1].vtxNTracks;ti++){
+            //        if ((int)vhCand.FatH.jets[0].vtxTrackIds[t] == (int)vhCand.FatH.jets[1].vtxTrackIds[ti]){
+            //          TkSharing.FatHiggsSVtkSharing = true;
+            //        }// same trackID
+            //      }// loop tracks in second hjet
+            //    }// loop tracks in first hjet
+            //  }// if tracks in jet
+            //}// end if FatHiggsFlag
 
             // IVF
             fwlite::Handle < std::vector < reco::Vertex > > SVC;
