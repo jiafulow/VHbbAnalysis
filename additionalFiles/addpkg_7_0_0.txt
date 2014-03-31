@@ -68,7 +68,7 @@ git cms-addpkg RecoJets/JetProducers
 #cat download.url | xargs wget
 #cd -
 
-# Steal from Phil Harris's Jets_Short repository
+# Steal from Phil Harris's Jets_Short repository to use 53x working points
 # Commit SHA        : 832d3b54cd70d627a858abbe9af752a976bd5897
 wget --no-check-certificate https://raw.githubusercontent.com/violatingcp/Jets_Short/832d3b/RecoJets/JetProducers/python/PileupJetIDCutParams_cfi.py -O RecoJets/JetProducers/python/PileupJetIDCutParams_cfi.py
 wget --no-check-certificate https://raw.githubusercontent.com/violatingcp/Jets_Short/832d3b/RecoJets/JetProducers/python/PileupJetIDParams_cfi.py -O RecoJets/JetProducers/python/PileupJetIDParams_cfi.py

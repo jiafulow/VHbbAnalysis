@@ -599,8 +599,14 @@ process.calibratedAK5PFJetsCHS = cms.EDProducer('PFJetCorrectionProducer',
     correctors = cms.vstring("ak5PFCHSL1FastL2L3"+residual)
 )
 from RecoJets.JetProducers.PileupJetID_53x_cfi import pileupJetIdProducerChs, pileupJetIdProducer
-process.pileupJetIdProducerCHS = pileupJetIdProducerChs.clone( jets = cms.InputTag('calibratedAK5PFJetsCHS') )
-process.pileupJetIdProducer = pileupJetIdProducer.clone( jets = cms.InputTag('calibratedAK5PFJets') )
+process.pileupJetIdProducerCHS = pileupJetIdProducerChs.clone(
+    jets = cms.InputTag('calibratedAK5PFJetsCHS'),
+    rho = cms.InputTag("fixedGridRhoFastjetAll"),
+)
+process.pileupJetIdProducer = pileupJetIdProducer.clone(
+    jets = cms.InputTag('calibratedAK5PFJets'),
+    rho = cms.InputTag("fixedGridRhoFastjetAll"),
+)
 process.out.outputCommands += ['keep *_pileupJetIdProducerCHS_*_*', 'keep *_pileupJetIdProducer_*_*']
 
 # ------------------------------------------------------------------------------
@@ -854,13 +860,14 @@ if runOnMC:
             "++keep abs(pdgId) == 12 || abs(pdgId) == 14 || abs(pdgId) == 16", # keep neutrinos and their ancestors
             "++keep pdgId == 22 && status == 1 && pt > 10",                    # keep gamma above 10 GeV
             "drop   status == 2",                                              # drop the shower part of the history
-            "keep++ abs(pdgId) == 15",                                         # but keep keep taus with their daughters
+            "keep++ abs(pdgId) == 15",                                         # but keep taus with their daughters
             "++keep 4 <= abs(pdgId) <= 6 ",                                    # keep also heavy quarks
             "++keep (400 < abs(pdgId) < 600) || (4000 < abs(pdgId) < 6000)",   # and their hadrons
             "drop   status == 2 && abs(pdgId) == 21",                          # but remove again gluons in the inheritance chain
         )
     )
-    process.out.outputCommands += ['keep *_prunedGenParticles_*_*']
+    process.out.outputCommands += ['keep *_prunedGenParticles_*_*', 'keep *_genMetTrue_*_*']
+    #process.out.outputCommands += ['keep *_genParticlesForJets_*_*', 'keep *_genMetTrue_*_*']
 
 
 # ------------------------------------------------------------------------------
